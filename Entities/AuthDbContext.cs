@@ -10,7 +10,7 @@ namespace AuthApi
         public DbSet<Person> People { get; set; }
         public DbSet<Gender> Gender { get; set; }
         public DbSet<MaritalStatus> MaritalStatus { get; set; }
-        public DbSet<Notionality> Notionality { get; set; }
+        public DbSet<Nationality> Nationality { get; set; }
         public DbSet<Occupation> Occupation { get; set; }
 
 
@@ -27,6 +27,21 @@ namespace AuthApi
             modelBuilder.Entity<Person>()
                 .Property( b => b.UpdatedAt)
                 .HasComputedColumnSql("getDate()");
+
+
+            // Seed DB
+            modelBuilder.Entity<Gender>().HasData(
+                new Gender(){ Id=1, Name="Masculino"},
+                new Gender(){ Id=2, Name="Femenino"}
+            );
+            modelBuilder.Entity<MaritalStatus>().HasData(
+                new MaritalStatus(){ Id=1, Name="SOLTERO(A)"},
+                new MaritalStatus(){ Id=2, Name="CASADO(A)"},
+                new MaritalStatus(){ Id=3, Name="DIVORCIADO(A)"},
+                new MaritalStatus(){ Id=4, Name="UDO(A)"},
+                new MaritalStatus(){ Id=5, Name="UNION LIBRE"}
+            );
+
         }
 
     }

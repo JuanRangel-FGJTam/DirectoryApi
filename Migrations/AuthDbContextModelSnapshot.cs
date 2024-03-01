@@ -37,6 +37,18 @@ namespace AuthApi.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Gender");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "Masculino"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Femenino"
+                        });
                 });
 
             modelBuilder.Entity("AuthApi.Entities.MaritalStatus", b =>
@@ -54,9 +66,36 @@ namespace AuthApi.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("MaritalStatus");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "SOLTERO(A)"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "CASADO(A)"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            Name = "DIVORCIADO(A)"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            Name = "UDO(A)"
+                        },
+                        new
+                        {
+                            Id = 5,
+                            Name = "UNION LIBRE"
+                        });
                 });
 
-            modelBuilder.Entity("AuthApi.Entities.Notionality", b =>
+            modelBuilder.Entity("AuthApi.Entities.Nationality", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -70,7 +109,7 @@ namespace AuthApi.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Notionality");
+                    b.ToTable("Nationality");
                 });
 
             modelBuilder.Entity("AuthApi.Entities.Occupation", b =>
@@ -131,7 +170,7 @@ namespace AuthApi.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("NotionalityId")
+                    b.Property<int?>("NationalityId")
                         .HasColumnType("int");
 
                     b.Property<int?>("OccupationId")
@@ -156,7 +195,7 @@ namespace AuthApi.Migrations
 
                     b.HasIndex("MaritalStatusId");
 
-                    b.HasIndex("NotionalityId");
+                    b.HasIndex("NationalityId");
 
                     b.HasIndex("OccupationId");
 
@@ -196,9 +235,9 @@ namespace AuthApi.Migrations
                         .WithMany()
                         .HasForeignKey("MaritalStatusId");
 
-                    b.HasOne("AuthApi.Entities.Notionality", "Notionality")
+                    b.HasOne("AuthApi.Entities.Nationality", "Nationality")
                         .WithMany()
-                        .HasForeignKey("NotionalityId");
+                        .HasForeignKey("NationalityId");
 
                     b.HasOne("AuthApi.Entities.Occupation", "Occupation")
                         .WithMany()
@@ -208,7 +247,7 @@ namespace AuthApi.Migrations
 
                     b.Navigation("MaritalStatus");
 
-                    b.Navigation("Notionality");
+                    b.Navigation("Nationality");
 
                     b.Navigation("Occupation");
                 });

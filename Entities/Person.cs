@@ -34,10 +34,9 @@ namespace AuthApi.Entities
 
         public Gender? Gender {get; set;}
         public MaritalStatus? MaritalStatus {get;set;}
-        public Notionality? Notionality {get;set;}
+        public Nationality? Nationality {get;set;}
         public Occupation? Occupation {get;set;}
         
     }
-
     
 }

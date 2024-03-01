@@ -3,10 +3,12 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace AuthApi.Migrations
 {
     /// <inheritdoc />
-    public partial class initial_tables : Migration
+    public partial class initial_migration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -47,7 +49,7 @@ namespace AuthApi.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Notionality", x => x.Id);
+                    table.PrimaryKey("PK_Nationality", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -113,15 +115,36 @@ namespace AuthApi.Migrations
                         principalTable: "MaritalStatus",
                         principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_People_Notionality_NotionalityId",
+                        name: "FK_People_Nationality_NationalityId",
                         column: x => x.NationalityId,
-                        principalTable: "Notionality",
+                        principalTable: "Nationality",
                         principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_People_Occupation_OccupationId",
                         column: x => x.OccupationId,
                         principalTable: "Occupation",
                         principalColumn: "Id");
+                });
+
+            migrationBuilder.InsertData(
+                table: "Gender",
+                columns: new[] { "Id", "Name" },
+                values: new object[,]
+                {
+                    { 1, "Masculino" },
+                    { 2, "Femenino" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "MaritalStatus",
+                columns: new[] { "Id", "Name" },
+                values: new object[,]
+                {
+                    { 1, "SOLTERO(A)" },
+                    { 2, "CASADO(A)" },
+                    { 3, "DIVORCIADO(A)" },
+                    { 4, "UDO(A)" },
+                    { 5, "UNION LIBRE" }
                 });
 
             migrationBuilder.CreateIndex(
@@ -161,7 +184,7 @@ namespace AuthApi.Migrations
                 name: "MaritalStatus");
 
             migrationBuilder.DropTable(
-                name: "Notionality");
+                name: "Nationality");
 
             migrationBuilder.DropTable(
                 name: "Occupation");
