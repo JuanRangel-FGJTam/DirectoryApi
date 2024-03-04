@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Mvc;
 using AuthApi.Entities;
 using AuthApi.Models;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace AuthApi.Controllers
 {
@@ -23,34 +26,37 @@ namespace AuthApi.Controllers
             // * Validate request
             if (!ModelState.IsValid)
             {
-                return BadRequest();
+                return BadRequest( ModelState );
             }
 
             // * Get relations and validate
-            var _errorsRelations = new Dictionary<string, object>();
-            Gender? _gender = dbContext.Gender.Find( personRequest.GenderID );
-            if( _gender == null){
-                _errorsRelations.Add( "GenderID", new string[]{ $"Gender id {personRequest.GenderID} not found "} );
+            var errorsRelations = new Dictionary<string, object>();
+
+            var gender = dbContext.Gender.Find( personRequest.GenderID );
+            if( gender == null){
+                errorsRelations.Add( "GenderID", new string[]{ $"Gender id {personRequest.GenderID} not found "} );
             }
-            MaritalStatus? _maritalStatus = dbContext.MaritalStatus.Find( personRequest.MaritalStatusID );
-            if( _maritalStatus == null){
-                _errorsRelations.Add( "MaritalStatusID", new string[]{ $"Marital status id {personRequest.MaritalStatusID} not found "} );
+            
+            var maritalStatus = dbContext.MaritalStatus.Find( personRequest.MaritalStatusID );
+            if( maritalStatus == null){
+                errorsRelations.Add( "MaritalStatusID", new string[]{ $"Marital status id {personRequest.MaritalStatusID} not found "} );
             }
-            Nationality? _nationality = dbContext.Nationality.Find( personRequest.NationalityID );
-            if( _nationality == null){
-                _errorsRelations.Add( "NationalityID", new string[]{ $"Nationality id {personRequest.NationalityID} not found "} );
+            
+            var nationality = dbContext.Nationality.Find( personRequest.NationalityID );
+            if( nationality == null){
+                errorsRelations.Add( "NationalityID", new string[]{ $"Nationality id {personRequest.NationalityID} not found "} );
             }
-            Occupation? _occupation = dbContext.Occupation.Find( personRequest.OccupationID ); 
-            if( _maritalStatus == null){
-                _errorsRelations.Add( "OccupationID", new string[]{ $"Occupation id {personRequest.OccupationID} not found "} );
+            
+            var occupation = dbContext.Occupation.Find( personRequest.OccupationID ); 
+            if( occupation == null){
+                errorsRelations.Add( "OccupationID", new string[]{ $"Occupation id {personRequest.OccupationID} not found "} );
             }
 
-            if( _errorsRelations.Values.Count > 0)
+            if( errorsRelations.Values.Count > 0)
             {
-
                 return BadRequest(new {
-                    Title = "One o more relations are not found",
-                    Errors = _errorsRelations
+                    Title = "One or more relations are not found",
+                    Errors = errorsRelations
                 });
             }
 
@@ -64,10 +70,10 @@ namespace AuthApi.Controllers
                 LastName = personRequest.LastName,
                 Email = personRequest.Email,
                 BirthDate = personRequest.BirthDate,
-                Gender = _gender,
-                MaritalStatus = _maritalStatus,
-                Nationality = _nationality,
-                Occupation = _occupation
+                Gender = gender,
+                MaritalStatus = maritalStatus,
+                Nationality = nationality,
+                Occupation = occupation
             };
             
             // * Insert into db 
@@ -76,6 +82,153 @@ namespace AuthApi.Controllers
 
             // * Return response
             return Created("Person created", _person );
+        }
+
+        [HttpGet]
+        [Route ("{person_id}")]
+        public ActionResult<Person> GetPerson( string person_id )
+        {
+            Person? person = dbContext.People
+                .Include(p => p.Addresses)
+                .Include( p => p.ContactInformations)
+                .FirstOrDefault(p => p.Id == Guid.Parse(person_id) );
+
+            if( person == null)
+            {
+                return NotFound();
+                
+            }
+
+            var jsonResult = JsonSerializer.Serialize(person, new JsonSerializerOptions {
+                    ReferenceHandler = ReferenceHandler.IgnoreCycles
+                });
+            return Ok( jsonResult );
+        }
+
+        [HttpPost]
+        [Route("Address")]
+        public IActionResult StoreAddress( [FromBody] AddressRequest addressRequest )
+        {
+
+            // * Validate request
+            if (!ModelState.IsValid)
+            {
+                return BadRequest( ModelState );
+            }
+
+            // * Get relations and validate them
+            var errorsRelations = new Dictionary<string, object>();
+            
+            var person = dbContext.People.Find( addressRequest.PersonID );
+            if( person == null){
+                errorsRelations.Add( "PersonID", new string[]{ $"Person id {addressRequest.PersonID} not found "} );
+            }
+
+            var country = dbContext.Countries.Find( addressRequest.CountryID ); 
+            if( country == null){
+                errorsRelations.Add( "CountryID", new string[]{ $"Occupation id {addressRequest.CountryID} not found "} );
+            }
+
+            var state = dbContext.States.Find( addressRequest.StateID ); 
+            if( state == null){
+                errorsRelations.Add( "StateID", new string[]{ $"Occupation id {addressRequest.StateID} not found "} );
+            }
+
+            var municipality = dbContext.Municipalities.Find( addressRequest.MunicipalityID ); 
+            if( municipality == null){
+                errorsRelations.Add( "MunicipalityID", new string[]{ $"Occupation id {addressRequest.MunicipalityID} not found "} );
+            }
+
+            // Colony Id is optional
+            Colony? colony = null;
+            if( addressRequest.ColonyID != null)
+            {
+                colony = dbContext.Colonies.Find( addressRequest.ColonyID ); 
+                if( colony == null){
+                    errorsRelations.Add( "ColonyID", new string[]{ $"Occupation id {addressRequest.ColonyID} not found "} );
+                }
+            }
+
+
+            if( errorsRelations.Values.Count > 0)
+            {
+                return BadRequest(new
+                {
+                    Title = "One or more relations are not found",
+                    Errors = errorsRelations
+                });
+            }
+
+            // * Create address model
+            var _address = new Address(){
+                Person = person!,
+                Country = country!,
+                State = state!,
+                Municipality = municipality!,
+                Colony = colony,
+                Street = addressRequest.Street??"",
+                Number = addressRequest.Number,
+                NumberInside = addressRequest.NumberInside,
+                ZipCode = addressRequest.ZipCode
+            };
+            
+            // * Insert into db 
+            dbContext.Addresses.Add( _address);
+            dbContext.SaveChanges();
+
+            // * Return response
+            return Created("Address stored", _address );
+        }
+  
+        [HttpPost]
+        [Route("Contact")]
+        public IActionResult StoreContact( ContactRequest contactRequest )
+        {
+
+            // Validate request
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            // Get relations and validate them
+            var errorsRelations = new Dictionary<string, string>();
+
+            var person = dbContext.People.Find(Guid.Parse( contactRequest.PersonID) );
+            if (person == null)
+            {
+                errorsRelations.Add("PersonID", $"Person id {contactRequest.PersonID} is not found");
+            }
+
+            var contactType = dbContext.ContactTypes.Find(contactRequest.ContactTypeID);
+            if (contactType == null)
+            {
+                errorsRelations.Add("ContactTypeID", $"Contact type id {contactRequest.ContactTypeID} not found");
+            }
+
+            if (errorsRelations.Count > 0)
+            {
+                return BadRequest(new
+                {
+                    Title = "One or more relations are not found",
+                    Errors = errorsRelations
+                });
+            }
+
+            // Create model
+            var contactInformation = new ContactInformation
+            {
+                Person = person!,
+                ContactType = contactType!,
+                Value = contactRequest.Value
+            };
+
+            // Insert into db 
+            dbContext.ContactInformations.Add( contactInformation );
+            dbContext.SaveChanges();
+
+            // Return response
+            return Created("Contact stored", contactInformation);
         }
 
     }

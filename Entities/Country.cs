@@ -7,11 +7,14 @@ using System.Threading.Tasks;
 
 namespace AuthApi.Entities
 {
-    public class Nationality
+    [Table("Countries")]
+    public class Country
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id {get;set;}
+        public string ISO {get;set;} = null!;
         public string Name {get;set;} = null!;
+        public int PhoneCode {get;set;}
     }
 }

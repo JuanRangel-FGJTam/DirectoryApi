@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using AuthApi.Entities;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
+using Microsoft.EntityFrameworkCore;
 
 namespace AuthApi.Controllers
 {
@@ -41,5 +43,40 @@ namespace AuthApi.Controllers
             return Ok( dbContext.MaritalStatus.ToArray() );
         }
 
+        [HttpGet]
+        [Route("ContactTypes")]
+        public ActionResult<IEnumerable<ContactType>> GetContactTypes()
+        {
+            return Ok( dbContext.ContactTypes.ToArray() );
+        }
+
+        [HttpGet]
+        [Route("Countries")]
+        public ActionResult<IEnumerable<Country>> GetCountries()
+        {
+            return Ok( dbContext.Countries.ToArray() );
+        }
+
+        [HttpGet]
+        [Route("States")]
+        public ActionResult<IEnumerable<State>> GetStates()
+        {
+            return Ok( dbContext.States.Include( c => c.Country ).ToList() );
+        }
+
+        [HttpGet]
+        [Route("Municipalities")]
+        public ActionResult<IEnumerable<Municipality>> GetMunicipalities()
+        {   
+            return Ok( dbContext.Municipalities.Include( c => c.State ).ToArray() );
+        }
+
+        [HttpGet]
+        [Route("Colonies")]
+        public ActionResult<IEnumerable<Colony>> GetColonies()
+        {
+            return Ok( dbContext.Colonies.Include( c =>c.Municipality ).ToArray() );
+        }
+        
     }
 }
