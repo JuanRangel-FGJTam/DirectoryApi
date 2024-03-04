@@ -11,8 +11,9 @@ namespace AuthApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class PersonController(AuthDbContext context) : ControllerBase
+    public class PersonController(ILogger<CatalogController> logger, AuthDbContext context) : ControllerBase
     {
+        private readonly ILogger<CatalogController> _logger = logger;
         private readonly AuthDbContext dbContext = context;
         
         [HttpPost]
