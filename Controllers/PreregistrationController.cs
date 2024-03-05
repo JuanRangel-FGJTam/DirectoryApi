@@ -5,14 +5,17 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using AuthApi.Models;
 using AuthApi.Entities;
+using AuthApi.Data;
+using AuthApi.Helper;
 
 namespace AuthApi.Controllers
 {
     [ApiController]
+    [CAuthorize]
     [Route("api/[controller]")]
-    public class PreregistrationController(AuthDbContext context) : ControllerBase
+    public class PreregistrationController(DirectoryDBContext context) : ControllerBase
     {
-        private readonly AuthDbContext dbContext = context;
+        private readonly DirectoryDBContext dbContext = context;
 
         [HttpPost]
         public IActionResult RegisterUser( PreregistrationRequest request )

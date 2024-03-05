@@ -3,21 +3,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using AuthApi.Data;
 using AuthApi.Entities;
 using AuthApi.Models;
-using System.ComponentModel.DataAnnotations;
-using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+using AuthApi.Helper;
 
 namespace AuthApi.Controllers
 {
     [ApiController]
+    [CAuthorize]
     [Route("api/[controller]")]
-    public class PersonController(ILogger<CatalogController> logger, AuthDbContext context) : ControllerBase
+    public class PersonController(ILogger<CatalogController> logger, DirectoryDBContext context) : ControllerBase
     {
         private readonly ILogger<CatalogController> _logger = logger;
-        private readonly AuthDbContext dbContext = context;
+        private readonly DirectoryDBContext dbContext = context;
         
         [HttpPost]
         public IActionResult RegisterUser( PersonRequest personRequest )

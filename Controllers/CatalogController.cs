@@ -1,19 +1,22 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using AuthApi.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.EntityFrameworkCore;
+using AuthApi.Data;
+using AuthApi.Entities;
+using AuthApi.Helper;
 
 namespace AuthApi.Controllers
 {
     [ApiController]
+    [CAuthorize]
     [Route("api/[controller]")]
-    public class CatalogController(ILogger<CatalogController> logger, AuthDbContext context) : ControllerBase
+    public class CatalogController(ILogger<CatalogController> logger, DirectoryDBContext context) : ControllerBase
     {
         private readonly ILogger<CatalogController> _logger = logger;
-        private readonly AuthDbContext dbContext = context;
+        private readonly DirectoryDBContext dbContext = context;
 
         [HttpGet]
         [Route("Occupations")]
