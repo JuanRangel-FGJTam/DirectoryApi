@@ -30,9 +30,7 @@ namespace AuthApi.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            
-            
-            // Convert all columns in comel case
+            // * Convert all columns in comel case
             foreach( var entity in modelBuilder.Model.GetEntityTypes() )
             {
                 foreach( var property in entity.GetProperties() )
@@ -42,7 +40,7 @@ namespace AuthApi.Data
                 }
             }
 
-            // Person entity
+            // * Person entity
             var personEntity = modelBuilder.Entity<Person>();
             personEntity.Property( p => p.Curp).HasConversion(
                 v => cryptographyService.EncryptData(v??""),
@@ -67,14 +65,27 @@ namespace AuthApi.Data
             personEntity.Property( p => p.CreatedAt).HasDefaultValueSql("getDate()");
             personEntity.Property( p => p.UpdatedAt).HasComputedColumnSql("getDate()");
 
+            // * Address entity
+            var addressEntity = modelBuilder.Entity<Address>();
+            addressEntity.Property( b => b.CreatedAt).HasComputedColumnSql("getDate()");
+            addressEntity.Property( b => b.UpdatedAt).HasComputedColumnSql("getDate()");
 
-            modelBuilder.Entity<Address>().Property( b => b.CreatedAt).HasComputedColumnSql("getDate()");
-            modelBuilder.Entity<Address>().Property( b => b.UpdatedAt).HasComputedColumnSql("getDate()");
+            // * Contact information entity
+            var contactInformation = modelBuilder.Entity<ContactInformation>();
+            contactInformation.Property( b => b.CreatedAt).HasComputedColumnSql("getDate()");
+            contactInformation.Property( b => b.UpdatedAt).HasComputedColumnSql("getDate()");
 
-            modelBuilder.Entity<ContactInformation>().Property( b => b.CreatedAt).HasComputedColumnSql("getDate()");
-            modelBuilder.Entity<ContactInformation>().Property( b => b.UpdatedAt).HasComputedColumnSql("getDate()");
-
-            // Seed DB
+            // * Seed DB
+            modelBuilder.Entity<User>().HasData(
+                new User
+                {
+                    Id = 1,
+                    FirstName = "System",
+                    LastName = "",
+                    Username = "System",
+                    Password = "System",
+                }
+            );
             modelBuilder.Entity<Gender>().HasData(
                 new Gender(){ Id=1, Name="Masculino"},
                 new Gender(){ Id=2, Name="Femenino"}
@@ -93,22 +104,10 @@ namespace AuthApi.Data
                 new ContactType(){ Id=4, Name="CORREO ELECTRONICO" }
             );
 
-            modelBuilder.Entity<User>().HasData(
-                new User
-                {
-                    Id = 1,
-                    FirstName = "System",
-                    LastName = "",
-                    Username = "System",
-                    Password = "System",
-                }
-            );
-
             base.OnModelCreating(modelBuilder);
             
         }
 
-        
 
     }
 }
