@@ -69,11 +69,16 @@ namespace AuthApi.Data
             var addressEntity = modelBuilder.Entity<Address>();
             addressEntity.Property( b => b.CreatedAt).HasComputedColumnSql("getDate()");
             addressEntity.Property( b => b.UpdatedAt).HasComputedColumnSql("getDate()");
+            addressEntity.Navigation(n => n.Country).AutoInclude();
+            addressEntity.Navigation(n => n.State).AutoInclude();
+            addressEntity.Navigation(n => n.Municipality).AutoInclude();
+            addressEntity.Navigation(n => n.Colony).AutoInclude();
 
             // * Contact information entity
             var contactInformation = modelBuilder.Entity<ContactInformation>();
             contactInformation.Property( b => b.CreatedAt).HasComputedColumnSql("getDate()");
             contactInformation.Property( b => b.UpdatedAt).HasComputedColumnSql("getDate()");
+            contactInformation.Navigation( n => n.ContactType ).AutoInclude();
 
             // * Seed DB
             modelBuilder.Entity<User>().HasData(

@@ -14,13 +14,34 @@ namespace AuthApi.Controllers
     [ApiController]
     [CAuthorize]
     [Route("api/[controller]")]
-    public class PersonController(ILogger<CatalogController> logger, DirectoryDBContext context) : ControllerBase
+    public class PeopleController(ILogger<PeopleController> logger, DirectoryDBContext context) : ControllerBase
     {
-        private readonly ILogger<CatalogController> _logger = logger;
+        private readonly ILogger<PeopleController> _logger = logger;
         private readonly DirectoryDBContext dbContext = context;
         
+        [HttpGet]
+        public ActionResult<Person> GetAllPeople( [FromQuery] int chunk = 100, [FromQuery] int skip = 0 )
+        {
+
+            // * Get data
+            var data = this.dbContext.People
+                .Include(p => p.Addresses)
+                .Include(p => p.ContactInformations)
+                .Include(p => p.Gender)
+                .Include(p => p.MaritalStatus)
+                .Include(p => p.Nationality)
+                .Include(p => p.Occupation)
+                .OrderBy(p => p.CreatedAt)
+                .Skip(skip)
+                .Take(chunk)
+                .ToArray();
+
+            // * Return response
+            return Ok( data );
+        }
+
         [HttpPost]
-        public IActionResult RegisterUser( PersonRequest personRequest )
+        public IActionResult StorePerson( PersonRequest personRequest )
         {
 
             // * Validate request
@@ -69,7 +90,7 @@ namespace AuthApi.Controllers
                 FirstName = personRequest.FirstName,
                 LastName = personRequest.LastName,
                 Email = personRequest.Email,
-                BirthDate = personRequest.BirthDate,
+                BirthDate = personRequest.BirthDate!.Value,
                 Gender = gender,
                 MaritalStatus = maritalStatus,
                 Nationality = nationality,
@@ -88,10 +109,24 @@ namespace AuthApi.Controllers
         [Route ("{person_id}")]
         public ActionResult<Person> GetPerson( string person_id )
         {
+            // Validate ID
+            Guid _personID = Guid.Empty;
+            try{
+                _personID = Guid.Parse( person_id );
+            }catch(Exception){
+                return BadRequest( new {
+                    message = $"Person id format not valid"
+                });
+            }
+
             var person = dbContext.People
                 .Include(p => p.Addresses)
                 .Include( p => p.ContactInformations)
-                .FirstOrDefault(p => p.Id == Guid.Parse(person_id) );
+                .Include(p => p.Gender)
+                .Include(p => p.MaritalStatus)
+                .Include(p => p.Nationality)
+                .Include(p => p.Occupation)
+                .FirstOrDefault(p => p.Id == _personID );
 
             if( person == null)
             {
@@ -100,6 +135,100 @@ namespace AuthApi.Controllers
             
             return Ok( person );
         }
+
+        [HttpPatch]
+        [Route ("{personID}")]
+        public IActionResult UpdatePerson( string personID, [FromBody] PersonRequest personRequest  )
+        {
+            // Validate ID
+            Guid _personID = Guid.Empty;
+            try{
+                _personID = Guid.Parse( personID );
+            }catch(Exception){
+                return BadRequest( new {
+                    message = $"Person id format not valid"
+                });
+            }
+
+            // validate person id
+            Person? person = this.dbContext.People.Find( _personID );
+            if( person == null){
+                return BadRequest(new {
+                    message = $"Person id {personID} not found"
+                });
+            }
+            
+            // Update information
+            if(personRequest.Name != null )
+            {
+                person.Name = personRequest.Name;
+            }
+
+            if(personRequest.FirstName != null )
+            {
+                person.FirstName = personRequest.FirstName;
+            }
+
+            if(personRequest.LastName != null )
+            {
+                person.LastName = personRequest.LastName;
+            }
+
+            if(personRequest.Rfc != null )
+            {
+                person.Rfc = personRequest.Rfc;
+            }
+
+            if(personRequest.Curp != null )
+            {
+                person.Curp = personRequest.Curp;
+            }
+
+            if(personRequest.Curp != null )
+            {
+                person.Curp = personRequest.Curp;
+            }
+
+            if(personRequest.BirthDate != null )
+            {
+                person.BirthDate = personRequest.BirthDate.Value;
+            }
+
+            if(personRequest.GenderID > 0)
+            {
+                var _gender = this.dbContext.Gender.Find( personRequest.GenderID );
+                person.Gender = _gender;
+            }
+
+            if(personRequest.MaritalStatusID > 0 )
+            {
+                var _maritalStatus = this.dbContext.MaritalStatus.Find( personRequest.MaritalStatusID );
+                person.MaritalStatus = _maritalStatus;
+            }
+            if(personRequest.NationalityID > 0 )
+            {
+                var _nationality = this.dbContext.Nationality.Find( personRequest.NationalityID );
+                person.Nationality = _nationality;
+            }
+
+            if(personRequest.OccupationID > 0 )
+            {
+                var _occupation = this.dbContext.Occupation.Find( personRequest.OccupationID );
+                person.Occupation = _occupation;
+            }
+
+
+            // Aply changes
+            this.dbContext.Update( person );
+            this.dbContext.SaveChanges();
+
+            return Ok( new {
+                message = $"Person {personID} updated"
+            });
+        }
+
+
+
 
         [HttpPost]
         [Route("Address")]
@@ -174,22 +303,34 @@ namespace AuthApi.Controllers
             // * Return response
             return Created("Address stored", _address );
         }
-  
+
         [HttpPost]
         [Route("Contact")]
         public IActionResult StoreContact( ContactRequest contactRequest )
         {
 
+            
             // Validate request
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
+            
+            // Validate ID
+            Guid _personID = Guid.Empty;
+            try{
+                _personID = Guid.Parse( contactRequest.PersonID );
+            }catch(Exception){
+                return BadRequest( new {
+                    message = $"Person id format not valid"
+                });
+            }
+
 
             // Get relations and validate them
             var errorsRelations = new Dictionary<string, string>();
 
-            var person = dbContext.People.Find(Guid.Parse( contactRequest.PersonID) );
+            var person = dbContext.People.Find( _personID );
             if (person == null)
             {
                 errorsRelations.Add("PersonID", $"Person id {contactRequest.PersonID} is not found");
