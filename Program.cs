@@ -15,6 +15,9 @@ builder.Services.AddDbContext<DirectoryDBContext>( options=>{
     options.UseSqlServer( builder.Configuration.GetConnectionString("AuthApi") );
 });
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ICryptographyService>( o => 
+    new AesCryptographyService( builder.Configuration.GetValue<string>("Secret")!)
+);
 
 builder.Services.AddSwaggerGen(swagger =>
 {

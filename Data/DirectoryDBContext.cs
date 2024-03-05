@@ -21,25 +21,52 @@ namespace AuthApi.Data
         public DbSet<ContactInformation> ContactInformations { get; set; }
         public DbSet<User> Users {get;set;}
 
-        public DirectoryDBContext(DbContextOptions options) : base(options)
+        private readonly ICryptographyService cryptographyService;
+
+        public DirectoryDBContext(DbContextOptions options, ICryptographyService cryptographyService ) : base(options)
         {
+            this.cryptographyService = cryptographyService;
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             
+            
+            // Convert all columns in comel case
             foreach( var entity in modelBuilder.Model.GetEntityTypes() )
             {
                 foreach( var property in entity.GetProperties() )
                 {
-                    // Cammel case
                     var _propertyName = property.Name;
                     property.SetColumnName(  Char.ToLowerInvariant(_propertyName[0]) + _propertyName.Substring(1) );
                 }
             }
 
-            modelBuilder.Entity<Person>().Property( b => b.CreatedAt).HasDefaultValueSql("getDate()");
-            modelBuilder.Entity<Person>().Property( b => b.UpdatedAt).HasComputedColumnSql("getDate()");
+            // Person entity
+            var personEntity = modelBuilder.Entity<Person>();
+            personEntity.Property( p => p.Curp).HasConversion(
+                v => cryptographyService.EncryptData(v??""),
+                v => cryptographyService.DecryptData(v)
+            );
+            personEntity.Property( p => p.Rfc).HasConversion(
+                v => cryptographyService.EncryptData(v??""),
+                v => cryptographyService.DecryptData(v)
+            );
+            personEntity.Property( p => p.Name).HasConversion(
+                v => cryptographyService.EncryptData(v??""),
+                v => cryptographyService.DecryptData(v)
+            );
+            personEntity.Property( p => p.FirstName).HasConversion(
+                v => cryptographyService.EncryptData(v??""),
+                v => cryptographyService.DecryptData(v)
+            );
+            personEntity.Property( p => p.LastName).HasConversion(
+                v => cryptographyService.EncryptData(v??""),
+                v => cryptographyService.DecryptData(v)
+            );
+            personEntity.Property( p => p.CreatedAt).HasDefaultValueSql("getDate()");
+            personEntity.Property( p => p.UpdatedAt).HasComputedColumnSql("getDate()");
+
 
             modelBuilder.Entity<Address>().Property( b => b.CreatedAt).HasComputedColumnSql("getDate()");
             modelBuilder.Entity<Address>().Property( b => b.UpdatedAt).HasComputedColumnSql("getDate()");
@@ -80,6 +107,8 @@ namespace AuthApi.Data
             base.OnModelCreating(modelBuilder);
             
         }
+
+        
 
     }
 }
