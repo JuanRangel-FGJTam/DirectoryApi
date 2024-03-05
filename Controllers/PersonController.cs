@@ -88,7 +88,7 @@ namespace AuthApi.Controllers
         [Route ("{person_id}")]
         public ActionResult<Person> GetPerson( string person_id )
         {
-            Person? person = dbContext.People
+            var person = dbContext.People
                 .Include(p => p.Addresses)
                 .Include( p => p.ContactInformations)
                 .FirstOrDefault(p => p.Id == Guid.Parse(person_id) );
@@ -96,13 +96,9 @@ namespace AuthApi.Controllers
             if( person == null)
             {
                 return NotFound();
-                
             }
-
-            var jsonResult = JsonSerializer.Serialize(person, new JsonSerializerOptions {
-                    ReferenceHandler = ReferenceHandler.IgnoreCycles
-                });
-            return Ok( jsonResult );
+            
+            return Ok( person );
         }
 
         [HttpPost]
@@ -148,7 +144,6 @@ namespace AuthApi.Controllers
                     errorsRelations.Add( "ColonyID", new string[]{ $"Occupation id {addressRequest.ColonyID} not found "} );
                 }
             }
-
 
             if( errorsRelations.Values.Count > 0)
             {

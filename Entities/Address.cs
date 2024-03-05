@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.Identity.Client;
 
@@ -15,6 +16,7 @@ namespace AuthApi.Entities
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public Guid ID {get;set;}
         
+        [JsonIgnore]
         public Person Person {get;set;} = null!;
         
         public Country Country {get;set;} = null!;
@@ -32,11 +34,14 @@ namespace AuthApi.Entities
         public string? NumberInside {get;set;}
         
         public int ZipCode {get;set;}
-
+        
+        [JsonIgnore]
         public DateTime CreatedAt {get;set;}
-
+        
+        [JsonIgnore]
         public DateTime UpdatedAt {get;set;}
         
+        [JsonIgnore]
         public DateTime? DeletedAt {get;set;}
 
     }
