@@ -2,10 +2,10 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using AuthApi.Entities;
 
-namespace AuthApi
+namespace AuthApi.Data
 {
     
-    public class AuthDbContext : DbContext {
+    public class DirectoryDBContext : DbContext {
         public DbSet<Preregistration> Preregistrations { get; set; }
         public DbSet<Person> People { get; set; }
         public DbSet<Gender> Gender { get; set; }
@@ -19,13 +19,25 @@ namespace AuthApi
         public DbSet<Country> Countries { get; set; }
         public DbSet<Address> Addresses { get; set; }
         public DbSet<ContactInformation> ContactInformations { get; set; }
+        public DbSet<User> Users {get;set;}
 
-        public AuthDbContext(DbContextOptions options) : base(options)
+        public DirectoryDBContext(DbContextOptions options) : base(options)
         {
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            
+            foreach( var entity in modelBuilder.Model.GetEntityTypes() )
+            {
+                foreach( var property in entity.GetProperties() )
+                {
+                    // Cammel case
+                    var _propertyName = property.Name;
+                    property.SetColumnName(  Char.ToLowerInvariant(_propertyName[0]) + _propertyName.Substring(1) );
+                }
+            }
+
             modelBuilder.Entity<Person>().Property( b => b.CreatedAt).HasDefaultValueSql("getDate()");
             modelBuilder.Entity<Person>().Property( b => b.UpdatedAt).HasComputedColumnSql("getDate()");
 
@@ -34,7 +46,6 @@ namespace AuthApi
 
             modelBuilder.Entity<ContactInformation>().Property( b => b.CreatedAt).HasComputedColumnSql("getDate()");
             modelBuilder.Entity<ContactInformation>().Property( b => b.UpdatedAt).HasComputedColumnSql("getDate()");
-
 
             // Seed DB
             modelBuilder.Entity<Gender>().HasData(
@@ -55,6 +66,19 @@ namespace AuthApi
                 new ContactType(){ Id=4, Name="CORREO ELECTRONICO" }
             );
 
+            modelBuilder.Entity<User>().HasData(
+                new User
+                {
+                    Id = 1,
+                    FirstName = "System",
+                    LastName = "",
+                    Username = "System",
+                    Password = "System",
+                }
+            );
+
+            base.OnModelCreating(modelBuilder);
+            
         }
 
     }
