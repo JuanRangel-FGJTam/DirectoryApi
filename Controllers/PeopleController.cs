@@ -25,8 +25,6 @@ namespace AuthApi.Controllers
 
             // * Get data
             var data = this.dbContext.People
-                .Include(p => p.Addresses)
-                .Include(p => p.ContactInformations)
                 .Include(p => p.Gender)
                 .Include(p => p.MaritalStatus)
                 .Include(p => p.Nationality)
@@ -120,8 +118,8 @@ namespace AuthApi.Controllers
             }
 
             var person = dbContext.People
-                .Include(p => p.Addresses)
-                .Include( p => p.ContactInformations)
+                .Include(p => p.Addresses.Where( a => a.DeletedAt == null))
+                .Include( p => p.ContactInformations.Where( a => a.DeletedAt == null))
                 .Include(p => p.Gender)
                 .Include(p => p.MaritalStatus)
                 .Include(p => p.Nationality)
@@ -227,82 +225,6 @@ namespace AuthApi.Controllers
             });
         }
 
-
-
-
-        [HttpPost]
-        [Route("Address")]
-        public IActionResult StoreAddress( [FromBody] AddressRequest addressRequest )
-        {
-
-            // * Validate request
-            if (!ModelState.IsValid)
-            {
-                return BadRequest( ModelState );
-            }
-
-            // * Get relations and validate them
-            var errorsRelations = new Dictionary<string, object>();
-            
-            var person = dbContext.People.Find( addressRequest.PersonID );
-            if( person == null){
-                errorsRelations.Add( "PersonID", new string[]{ $"Person id {addressRequest.PersonID} not found "} );
-            }
-
-            var country = dbContext.Countries.Find( addressRequest.CountryID ); 
-            if( country == null){
-                errorsRelations.Add( "CountryID", new string[]{ $"Occupation id {addressRequest.CountryID} not found "} );
-            }
-
-            var state = dbContext.States.Find( addressRequest.StateID ); 
-            if( state == null){
-                errorsRelations.Add( "StateID", new string[]{ $"Occupation id {addressRequest.StateID} not found "} );
-            }
-
-            var municipality = dbContext.Municipalities.Find( addressRequest.MunicipalityID ); 
-            if( municipality == null){
-                errorsRelations.Add( "MunicipalityID", new string[]{ $"Occupation id {addressRequest.MunicipalityID} not found "} );
-            }
-
-            // Colony Id is optional
-            Colony? colony = null;
-            if( addressRequest.ColonyID != null)
-            {
-                colony = dbContext.Colonies.Find( addressRequest.ColonyID ); 
-                if( colony == null){
-                    errorsRelations.Add( "ColonyID", new string[]{ $"Occupation id {addressRequest.ColonyID} not found "} );
-                }
-            }
-
-            if( errorsRelations.Values.Count > 0)
-            {
-                return BadRequest(new
-                {
-                    Title = "One or more relations are not found",
-                    Errors = errorsRelations
-                });
-            }
-
-            // * Create address model
-            var _address = new Address(){
-                Person = person!,
-                Country = country!,
-                State = state!,
-                Municipality = municipality!,
-                Colony = colony,
-                Street = addressRequest.Street??"",
-                Number = addressRequest.Number,
-                NumberInside = addressRequest.NumberInside,
-                ZipCode = addressRequest.ZipCode
-            };
-            
-            // * Insert into db 
-            dbContext.Addresses.Add( _address);
-            dbContext.SaveChanges();
-
-            // * Return response
-            return Created("Address stored", _address );
-        }
 
         [HttpPost]
         [Route("Contact")]
