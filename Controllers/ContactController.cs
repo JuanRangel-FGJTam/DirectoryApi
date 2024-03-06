@@ -35,7 +35,7 @@ namespace AuthApi.Controllers
             
             ContactInformation? contact = this.dbContext.ContactInformations
                 .Include( a => a.ContactType )
-                .Where( a => a.ID == contactID && a.DeletedAt == null )
+                .Where( a => a.Id == contactID && a.DeletedAt == null )
                 .FirstOrDefault();
 
             if( contact == null)
@@ -118,7 +118,7 @@ namespace AuthApi.Controllers
         public IActionResult DeleteContact( [FromRoute] Guid contactID )
         {
 
-            ContactInformation? currentContact = dbContext.ContactInformations.Where( c => c.ID == contactID &&  c.DeletedAt == null).FirstOrDefault();
+            ContactInformation? currentContact = dbContext.ContactInformations.Where( c => c.Id == contactID &&  c.DeletedAt == null).FirstOrDefault();
             if( currentContact == null)
             {
                 return BadRequest( new {

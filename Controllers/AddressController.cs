@@ -48,7 +48,7 @@ namespace AuthApi.Controllers
                 .Include( a => a.Municipality)
                 .Include( a => a.State)
                 .Include( a => a.Country)
-                .Where( a => a.ID == _addressID )
+                .Where( a => a.Id == _addressID )
                 .FirstOrDefault();
 
             if( address == null)
@@ -139,7 +139,7 @@ namespace AuthApi.Controllers
         public IActionResult HttpDeleteAddress( [FromRoute] Guid addressID )
         {
 
-            Address? address = dbContext.Addresses.Where( a => a.DeletedAt == null && a.ID == addressID).FirstOrDefault();
+            Address? address = dbContext.Addresses.Where( a => a.DeletedAt == null && a.Id == addressID).FirstOrDefault();
             if( address == null)
             {
                 return BadRequest( new {
@@ -168,7 +168,7 @@ namespace AuthApi.Controllers
 
 
             // * Validate addres id
-            Address? currentAddress = dbContext.Addresses.Where( a => a.ID == addressID && a.DeletedAt == null ).FirstOrDefault();
+            Address? currentAddress = dbContext.Addresses.Where( a => a.Id == addressID && a.DeletedAt == null ).FirstOrDefault();
             if( currentAddress == null){
                 return BadRequest(new {
                     message = $"Addres id {addressID} not found"

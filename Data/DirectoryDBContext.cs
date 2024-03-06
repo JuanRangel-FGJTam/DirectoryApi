@@ -62,13 +62,23 @@ namespace AuthApi.Data
                 v => cryptographyService.EncryptData(v??""),
                 v => cryptographyService.DecryptData(v)
             );
-            personEntity.Property( p => p.CreatedAt).HasDefaultValueSql("getDate()");
-            personEntity.Property( p => p.UpdatedAt).HasComputedColumnSql("getDate()");
-
+            personEntity.Property( p => p.CreatedAt)
+                .HasDefaultValueSql("getDate()")
+                .HasColumnType("datetime");
+            personEntity.Property( p => p.UpdatedAt)
+                .HasDefaultValueSql("getDate()")
+                .HasColumnType("datetime")
+                .ValueGeneratedOnAddOrUpdate();
+                
             // * Address entity
             var addressEntity = modelBuilder.Entity<Address>();
-            addressEntity.Property( b => b.CreatedAt).HasComputedColumnSql("getDate()");
-            addressEntity.Property( b => b.UpdatedAt).HasComputedColumnSql("getDate()");
+            addressEntity.Property( b => b.CreatedAt)
+                .HasDefaultValueSql("getDate()")
+                .HasColumnType("datetime");
+            addressEntity.Property( b => b.UpdatedAt)
+                .HasDefaultValueSql("getDate()")
+                .HasColumnType("datetime")
+                .ValueGeneratedOnAddOrUpdate();
             addressEntity.Navigation(n => n.Country).AutoInclude();
             addressEntity.Navigation(n => n.State).AutoInclude();
             addressEntity.Navigation(n => n.Municipality).AutoInclude();
@@ -76,8 +86,13 @@ namespace AuthApi.Data
 
             // * Contact information entity
             var contactInformation = modelBuilder.Entity<ContactInformation>();
-            contactInformation.Property( b => b.CreatedAt).HasComputedColumnSql("getDate()");
-            contactInformation.Property( b => b.UpdatedAt).HasComputedColumnSql("getDate()");
+            contactInformation.Property( b => b.CreatedAt)
+                .HasDefaultValueSql("getDate()")
+                .HasColumnType("datetime");
+            contactInformation.Property( b => b.UpdatedAt)
+                .HasDefaultValueSql("getDate()")
+                .HasColumnType("datetime")
+                .ValueGeneratedOnAddOrUpdate();
             contactInformation.Navigation( n => n.ContactType ).AutoInclude();
 
             // * Seed DB

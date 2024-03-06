@@ -14,7 +14,7 @@ namespace AuthApi.Entities
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public Guid ID {get;set;}
+        public Guid Id {get;set;}
         
         [JsonIgnore]
         public Person Person {get;set;} = null!;
