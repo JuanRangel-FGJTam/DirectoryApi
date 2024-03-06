@@ -11,6 +11,8 @@ using AuthApi.Helper;
 
 namespace AuthApi.Controllers
 {
+    
+    /// <summary></summary>
     [ApiController]
     [CAuthorize]
     [Route("api/[controller]")]
@@ -19,6 +21,12 @@ namespace AuthApi.Controllers
         private readonly ILogger<PeopleController> _logger = logger;
         private readonly DirectoryDBContext dbContext = context;
         
+        
+        /// <summary>
+        /// Return all people stored
+        /// </summary>
+        /// <remarks> This endpoint returns all people stored.</remarks>
+        /// <response code="200">Returns the person created</response>
         [HttpGet]
         public ActionResult<Person> GetAllPeople( [FromQuery] int chunk = 100, [FromQuery] int skip = 0 )
         {
@@ -38,6 +46,14 @@ namespace AuthApi.Controllers
             return Ok( data );
         }
 
+
+        /// <summary>
+        ///  Store a person in the database
+        /// </summary>
+        /// <param name="personRequest"></param>
+        /// <response code="201">Stored the person</response>
+        /// <response code="400">The request is not valid</response>
+        /// <response code="401">Auth token is not valid or is not present</response>
         [HttpPost]
         public IActionResult StorePerson( PersonRequest personRequest )
         {
@@ -103,6 +119,13 @@ namespace AuthApi.Controllers
             return Created("Person created", _person );
         }
 
+        /// <summary>
+        ///  Retrive the data of the person 
+        /// </summary>
+        /// <param name="person_id"></param>
+        /// <response code="200">Return the person data</response>
+        /// <response code="400">The request is not valid</response>
+        /// <response code="401">Auth token is not valid or is not present</response>
         [HttpGet]
         [Route ("{person_id}")]
         public ActionResult<Person> GetPerson( string person_id )
@@ -134,6 +157,15 @@ namespace AuthApi.Controllers
             return Ok( person );
         }
 
+        /// <summary>
+        /// Udate the person data
+        /// </summary>
+        /// <param name="personID"></param>
+        /// <param name="personRequest"></param>
+        /// <returns></returns>
+        /// <response code="201">The person is updated</response>
+        /// <response code="400">The request is not valid</response>
+        /// <response code="401">Auth token is not valid or is not present</response>
         [HttpPatch]
         [Route ("{personID}")]
         public IActionResult UpdatePerson( string personID, [FromBody] PersonRequest personRequest  )

@@ -13,21 +13,24 @@ using AuthApi.Models;
 
 namespace AuthApi.Controllers
 {
+    /// <summary></summary>
     [ApiController]
     [Route("api/[controller]")]
     [CAuthorize]
-    public class AddressController : ControllerBase
+    public class AddressController(ILogger<AddressController> logger, DirectoryDBContext context) : ControllerBase
     {
-        private readonly ILogger<AddressController> _logger;
-        private readonly DirectoryDBContext dbContext;
-
-        public AddressController(ILogger<AddressController> logger, DirectoryDBContext context)
-        {
-            this._logger = logger;
-            this.dbContext = context;
-        }
+        private readonly ILogger<AddressController> _logger = logger;
+        private readonly DirectoryDBContext dbContext = context;
 
 
+        /// <summary>
+        /// Get the address info
+        /// </summary>
+        /// <param name="addressID"></param>
+        /// <returns></returns>
+        /// <response code="200">Get the address</response>
+        /// <response code="400">The request is not valid</response>
+        /// <response code="401">Auth token is not valid or is not present</response>
         [HttpGet]
         [Route("{addressID}")]
         public ActionResult<Address> GetAddress( [FromRoute] string addressID )
@@ -61,6 +64,14 @@ namespace AuthApi.Controllers
             return Ok( address );
         }
 
+        /// <summary>
+        /// Store the address
+        /// </summary>
+        /// <param name="addressRequest"></param>
+        /// <returns></returns>
+        /// <response code="201">The Address is stored</response>
+        /// <response code="400">The request is not valid</response>
+        /// <response code="401">Auth token is not valid or is not present</response>
         [HttpPost]
         public IActionResult StoreAddress( [FromBody] AddressRequest addressRequest )
         {
@@ -133,7 +144,16 @@ namespace AuthApi.Controllers
             // * Return response
             return Created("Address stored", _address );
         }
+        
 
+        /// <summary>
+        /// Delete the address
+        /// </summary>
+        /// <param name="addressID"></param>
+        /// <returns></returns>
+        /// <response code="200">The Address is deleted</response>
+        /// <response code="400">The request is not valid</response>
+        /// <response code="401">Auth token is not valid or is not present</response>
         [HttpDelete]
         [Route("{addressID}")]
         public IActionResult HttpDeleteAddress( [FromRoute] Guid addressID )
@@ -158,6 +178,15 @@ namespace AuthApi.Controllers
         }
 
 
+        /// <summary>
+        /// Udpate the address
+        /// </summary>
+        /// <param name="addressID"></param>
+        /// <param name="addressRequest"></param>
+        /// <returns></returns>
+        /// <response code="200">The Address is updated</response>
+        /// <response code="400">The request is not valid</response>
+        /// <response code="401">Auth token is not valid or is not present</response>
         [HttpPatch]
         [Route("{addressID}")]
         public IActionResult UpdateAddress( [FromRoute] Guid addressID, [FromBody] AddressRequest addressRequest )

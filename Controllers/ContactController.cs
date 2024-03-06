@@ -13,21 +13,23 @@ using AuthApi.Models;
 
 namespace AuthApi.Controllers
 {
+    /// <summary></summary>
     [ApiController]
     [Route("api/[controller]")]
     [CAuthorize]
-    public class ContactController : ControllerBase
+    public class ContactController(ILogger<ContactController> logger, DirectoryDBContext context) : ControllerBase
     {
-        private readonly ILogger<ContactController> _logger;
-        private readonly DirectoryDBContext dbContext;
+        private readonly ILogger<ContactController> _logger = logger;
+        private readonly DirectoryDBContext dbContext = context;
 
-        public ContactController(ILogger<ContactController> logger, DirectoryDBContext context)
-        {
-            this._logger = logger;
-            this.dbContext = context;
-        }
-
-
+        /// <summary>
+        /// Get the contact information
+        /// </summary>
+        /// <param name="contactID"></param>
+        /// <returns></returns>
+        /// <response code="200">Return the contact infor</response>
+        /// <response code="400">The request is not valid</response>
+        /// <response code="401">Auth token is not valid or is not present</response>
         [HttpGet]
         [Route("{contactID}")]
         public ActionResult<Address> GetContact( [FromRoute] Guid contactID )
@@ -49,6 +51,14 @@ namespace AuthApi.Controllers
         }
 
 
+        /// <summary>
+        /// Store a new contact info
+        /// </summary>
+        /// <param name="contactRequest"></param>
+        /// <returns></returns>
+        /// <response code="201">The contact is stored</response>
+        /// <response code="400">The request is not valid</response>
+        /// <response code="401">Auth token is not valid or is not present</response>
         [HttpPost]
         [Route("")]
         public IActionResult StoreContact( ContactRequest contactRequest )
@@ -112,7 +122,14 @@ namespace AuthApi.Controllers
             return Created("Contact stored", contactInformation);
         }
 
-
+        /// <summary>
+        /// Delete the contact information
+        /// </summary>
+        /// <param name="contactID"></param>
+        /// <returns></returns>
+        /// <response code="200">The contact information is deleted</response>
+        /// <response code="400">The request is not valid</response>
+        /// <response code="401">Auth token is not valid or is not present</response>
         [HttpDelete]
         [Route("{contactID}")]
         public IActionResult DeleteContact( [FromRoute] Guid contactID )
@@ -135,7 +152,15 @@ namespace AuthApi.Controllers
 
         }
 
-
+        /// <summary>
+        /// Update the contact information
+        /// </summary>
+        /// <param name="contactID"></param>
+        /// <param name="contactRequest"></param>
+        /// <returns></returns>
+        /// <response code="200">The contact information is deleted</response>
+        /// <response code="400">The request is not valid</response>
+        /// <response code="401">Auth token is not valid or is not present</response>
         [HttpPatch]
         [Route("{contactID}")]
         public IActionResult UpdateContact( [FromRoute] Guid contactID, [FromBody] ContactRequest contactRequest )

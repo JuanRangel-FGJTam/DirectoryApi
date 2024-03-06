@@ -10,6 +10,8 @@ using AuthApi.Helper;
 
 namespace AuthApi.Controllers
 {
+
+    /// <summary></summary>
     [ApiController]
     [CAuthorize]
     [Route("api/[controller]")]
@@ -17,6 +19,9 @@ namespace AuthApi.Controllers
     {
         private readonly DirectoryDBContext dbContext = context;
 
+
+        /// <summary>
+        /// </summary>
         [HttpPost]
         public IActionResult RegisterUser( PreregistrationRequest request )
         {

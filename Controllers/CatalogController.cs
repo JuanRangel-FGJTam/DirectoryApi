@@ -10,6 +10,8 @@ using AuthApi.Helper;
 
 namespace AuthApi.Controllers
 {
+    
+    /// <summary></summary>
     [ApiController]
     [CAuthorize]
     [Route("api/[controller]")]
@@ -18,6 +20,10 @@ namespace AuthApi.Controllers
         private readonly ILogger<CatalogController> _logger = logger;
         private readonly DirectoryDBContext dbContext = context;
 
+        /// <summary>
+        ///  Get ocupations catalog
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         [Route("Occupations")]
         public ActionResult<IEnumerable<Occupation>> GetOccupations()
@@ -25,6 +31,10 @@ namespace AuthApi.Controllers
             return Ok( dbContext.Occupation.ToArray() );
         }
 
+        /// <summary>
+        ///  Get genders catalog
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         [Route("Genders")]
         public ActionResult<IEnumerable<Gender>> GetGenders()
@@ -32,6 +42,10 @@ namespace AuthApi.Controllers
             return Ok( dbContext.Gender.ToArray() );
         }
 
+        /// <summary>
+        ///  Get nationalities catalog
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         [Route("Nationalities")]
         public ActionResult<IEnumerable<Nationality>> GetNationalities()
@@ -39,6 +53,10 @@ namespace AuthApi.Controllers
             return Ok( dbContext.Nationality.ToArray() );
         }
 
+        /// <summary>
+        ///  Get marital status catalog
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         [Route("MaritalStatuses")]
         public ActionResult<IEnumerable<MaritalStatus>> GetMaritalStatuses()
@@ -46,6 +64,10 @@ namespace AuthApi.Controllers
             return Ok( dbContext.MaritalStatus.ToArray() );
         }
 
+        /// <summary>
+        ///  Get contact types catalog
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         [Route("ContactTypes")]
         public ActionResult<IEnumerable<ContactType>> GetContactTypes()
@@ -53,6 +75,10 @@ namespace AuthApi.Controllers
             return Ok( dbContext.ContactTypes.ToArray() );
         }
 
+        /// <summary>
+        ///  Get countries catalog
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         [Route("Countries")]
         public ActionResult<IEnumerable<Country>> GetCountries()
@@ -60,6 +86,10 @@ namespace AuthApi.Controllers
             return Ok( dbContext.Countries.ToArray() );
         }
 
+        /// <summary>
+        ///  Get states catalog
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         [Route("States")]
         public ActionResult<IEnumerable<State>> GetStates()
@@ -67,13 +97,21 @@ namespace AuthApi.Controllers
             return Ok( dbContext.States.Include( c => c.Country ).ToList() );
         }
 
+        /// <summary>
+        ///  Get municipalities catalog
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         [Route("Municipalities")]
         public ActionResult<IEnumerable<Municipality>> GetMunicipalities()
         {   
             return Ok( dbContext.Municipalities.Include( c => c.State ).ToArray() );
         }
-
+        
+        /// <summary>
+        ///  Get colonies catalog
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         [Route("Colonies")]
         public ActionResult<IEnumerable<Colony>> GetColonies()

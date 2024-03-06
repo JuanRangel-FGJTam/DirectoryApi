@@ -106,24 +106,6 @@ namespace AuthApi.Data
                     Password = "System",
                 }
             );
-            modelBuilder.Entity<Gender>().HasData(
-                new Gender(){ Id=1, Name="Masculino"},
-                new Gender(){ Id=2, Name="Femenino"}
-            );
-            modelBuilder.Entity<MaritalStatus>().HasData(
-                new MaritalStatus(){ Id=1, Name="SOLTERO(A)"},
-                new MaritalStatus(){ Id=2, Name="CASADO(A)"},
-                new MaritalStatus(){ Id=3, Name="DIVORCIADO(A)"},
-                new MaritalStatus(){ Id=4, Name="UDO(A)"},
-                new MaritalStatus(){ Id=5, Name="UNION LIBRE"}
-            );
-            modelBuilder.Entity<ContactType>().HasData(
-                new ContactType(){ Id=1, Name="TELEFONO CELULAR" },
-                new ContactType(){ Id=2, Name="TELEFONO DE CASA" },
-                new ContactType(){ Id=3, Name="TELEFONO DE TRABAJO" },
-                new ContactType(){ Id=4, Name="CORREO ELECTRONICO" }
-            );
-
             base.OnModelCreating(modelBuilder);
             
         }
