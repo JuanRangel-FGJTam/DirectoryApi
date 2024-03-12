@@ -563,8 +563,8 @@ namespace AuthApi.Migrations
                             Id = 1,
                             FirstName = "System",
                             LastName = "",
-                            Password = "System",
-                            Username = "System",
+                            Password = "Cc7J4tIRCw53U7P7iyUANkY+YNrN2SGRsld54JJecnI=",
+                            Username = "system",
                             isActive = false
                         });
                 });

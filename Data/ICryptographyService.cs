@@ -9,5 +9,9 @@ namespace AuthApi.Data
     {
         public string EncryptData( string data );
         public string DecryptData(string encryptedData);
+
+        public string HashData( string data );
+        public bool Validate( string data, string hashedData );
+
     }
 }

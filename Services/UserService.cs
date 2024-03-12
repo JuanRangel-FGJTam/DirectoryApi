@@ -15,11 +15,13 @@ namespace AuthApi.Services
     {
         private readonly IConfiguration _appSettings;
         private readonly DirectoryDBContext db;
+        private readonly ICryptographyService cryptographyService;
 
-        public UserService( IConfiguration appSettings, DirectoryDBContext _db)
+        public UserService( IConfiguration appSettings, DirectoryDBContext _db, ICryptographyService cryptographyService)
         {
             _appSettings = appSettings;
             db = _db;
+            this.cryptographyService = cryptographyService;
         }
 
 
@@ -49,7 +51,7 @@ namespace AuthApi.Services
 
         public async Task<AuthenticateResponse?> Authenticate(AuthenticateRequest model)
         {
-             var user = await db.Users.SingleOrDefaultAsync(x => x.Username == model.Username && x.Password == model.Password);
+            var user = await db.Users.SingleOrDefaultAsync(x => x.Username == model.Username && x.Password == cryptographyService.HashData(model.Password));
 
             // return null if user not found
             if (user == null) return null;

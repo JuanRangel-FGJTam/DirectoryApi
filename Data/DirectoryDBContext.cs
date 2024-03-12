@@ -1,6 +1,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using AuthApi.Entities;
+using AuthApi.Data.Utils;
 
 namespace AuthApi.Data
 {
@@ -102,8 +103,8 @@ namespace AuthApi.Data
                     Id = 1,
                     FirstName = "System",
                     LastName = "",
-                    Username = "System",
-                    Password = "System",
+                    Username = "system",
+                    Password = cryptographyService.HashData("system")
                 }
             );
             base.OnModelCreating(modelBuilder);
