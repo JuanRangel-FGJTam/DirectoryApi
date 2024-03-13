@@ -8,6 +8,9 @@ using AuthApi.Models;
 using AuthApi.Data;
 using AuthApi.Entities;
 using AuthApi.Helper;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using System.ComponentModel.DataAnnotations;
+using AuthApi.Data.Exceptions;
 
 namespace AuthApi.Services
 {
@@ -25,28 +28,60 @@ namespace AuthApi.Services
         }
 
 
-        public async Task<User?> AddAndUpdateUser(User userObj)
+        /// <summary>
+        ///  Create new user 
+        /// </summary>
+        /// <param name="userRequest"></param>
+        /// <returns>Id generated of the user</returns>
+        /// <exception cref="DbUpdateException"></exception>
+        /// <exception cref="SimpleValidationException"></exception>
+        public async Task<int?> CreateUser(UserRequest userRequest)
+        {
+
+            // Validate password
+            var errorMessages = new List<KeyValuePair<string,string>>();
+            if( userRequest.Password != userRequest.ConfirmPassword)
+            {
+                errorMessages.Add( new KeyValuePair<string,string>("password", "The passwords are not equals") );
+            }
+            if( !errorMessages.IsNullOrEmpty() ){
+                throw new SimpleValidationException( "Validation fail at create user", errorMessages );
+            }
+
+            var _newUser = new User(){
+                FirstName = userRequest.FirstName,
+                LastName = userRequest.LastName,
+                Username = userRequest.Username,
+                Password = cryptographyService.HashData( userRequest.Password),
+                isActive = true
+            };
+
+            db.Users.Add( _newUser );
+            await db.SaveChangesAsync();
+            return _newUser.Id;
+        }
+        public async Task<User?> AddAndUpdateUser(User user)
         {
             bool isSuccess = false;
-            if (userObj.Id > 0)
+            if (user.Id > 0)
             {
-                var obj = await db.Users.FirstOrDefaultAsync(c => c.Id == userObj.Id);
+                var obj = await db.Users.FirstOrDefaultAsync(c => c.Id == user.Id);
                 if (obj != null)
                 {
                     // obj.Address = userObj.Address;
-                    obj.FirstName = userObj.FirstName;
-                    obj.LastName = userObj.LastName;
+                    obj.FirstName = user.FirstName;
+                    obj.LastName = user.LastName;
                     db.Users.Update(obj);
                     isSuccess = await db.SaveChangesAsync() > 0;
                 }
             }
             else
             {
-                await db.Users.AddAsync(userObj);
+                await db.Users.AddAsync(user);
                 isSuccess = await db.SaveChangesAsync() > 0;
             }
 
-            return isSuccess ? userObj: null;
+            return isSuccess ? user: null;
         }
 
         public async Task<AuthenticateResponse?> Authenticate(AuthenticateRequest model)

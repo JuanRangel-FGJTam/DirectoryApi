@@ -9,6 +9,9 @@ using AuthApi.Data;
 using AuthApi.Models;
 using AuthApi.Helper;
 using AuthApi.Entities;
+using AuthApi.Data.Exceptions;
+using System.Net.Http.Headers;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace AuthApi.Controllers
 {
@@ -43,17 +46,45 @@ namespace AuthApi.Controllers
         /// <summary>
         /// Stoew new user
         /// </summary>
-        /// <param name="userObj"></param>
+        /// <param name="userRequest"></param>
         /// <returns></returns>
         /// <response code="200">New user stored</response>
         /// <response code="400">The request is not valid</response>
-        /// <response code="401">Auth token is not valid or is not present</response>
         [HttpPost]
-        [CAuthorize]
-        public async Task<IActionResult> Post([FromBody] User userObj)
+        public async Task<IActionResult> Post([FromBody] UserRequest userRequest)
         {
-            userObj.Id = 0;
-            return Ok(await userService.AddAndUpdateUser(userObj));
+
+            if( !ModelState.IsValid){
+                // Process erroros
+                var _errorsMessages = new List<KeyValuePair<string,string>>();
+                foreach( var error in ModelState  ){
+                    _errorsMessages.Add( new KeyValuePair<string, string>( error.Key, error.Value.Errors.First().ErrorMessage ) );
+                }
+                
+                // Return bad request
+                return BadRequest( new {
+                    title = "Request validations fail",
+                    message = "The request is not valid",
+                    errors = _errorsMessages
+                }  );
+            }
+
+            try
+            {
+                var userId = await userService.CreateUser(userRequest);
+                return Ok( new{
+                    title = "User created successfully",
+                    user_id = userId
+                });
+            }
+            catch (SimpleValidationException validationException)
+            {
+                return BadRequest( new {
+                    title = "Request validations fail",
+                    message = validationException.Message,
+                    errors = validationException.ValidationErrors
+                });
+            }
         }
 
         /// <summary>
