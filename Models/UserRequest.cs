@@ -17,8 +17,10 @@ namespace AuthApi.Models
         public string? LastName { get; set; } = null!;
         
         [Required]
-        [JsonPropertyName("username")]
-        public string? Username { get; set; }
+        [JsonPropertyName("email")]
+        [DataType(DataType.EmailAddress)]
+        [EmailAddress]
+        public string? Email { get; set; }
         
         [Required]
         [JsonPropertyName("password")]
@@ -28,6 +30,7 @@ namespace AuthApi.Models
         [JsonPropertyName("confirmPassword")]
         public string? ConfirmPassword { get; set; } = null!;
     }
+
     public class UserUpdateRequest
     {   
         [JsonPropertyName("firstName")]
@@ -36,8 +39,10 @@ namespace AuthApi.Models
         [JsonPropertyName("lastName")]
         public string? LastName { get; set; } = null!;
         
-        [JsonPropertyName("username")]
-        public string? Username { get; set; }
+        [JsonPropertyName("email")]
+        [DataType(DataType.EmailAddress)]
+        [EmailAddress]
+        public string? Email { get; set; }
         
         [JsonPropertyName("password")]
         public string? Password { get; set; } = null!;

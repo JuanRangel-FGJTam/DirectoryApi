@@ -20,7 +20,7 @@ namespace AuthApi.Models
             Id = user.Id;
             FirstName = user.FirstName;
             LastName = user.LastName;
-            Username = user.Username;
+            Username = user.Email;
             Token = token;
         }
     }

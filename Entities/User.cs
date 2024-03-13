@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text.Json.Serialization;
@@ -14,7 +15,9 @@ namespace AuthApi.Entities
         public int Id { get; set; }
         public required string FirstName { get; set; }
         public string LastName { get; set; } = null!;
-        public required string Username { get; set; }
+
+        [DataType(DataType.EmailAddress)]
+        public required string Email { get; set; }
 
         [JsonIgnore]
         public string Password { get; set; } = null!;

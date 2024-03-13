@@ -103,7 +103,7 @@ namespace AuthApi.Data
                     Id = 1,
                     FirstName = "System",
                     LastName = "",
-                    Username = "system",
+                    Email = "system@email.com",
                     Password = cryptographyService.HashData("system")
                 }
             );

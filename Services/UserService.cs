@@ -47,13 +47,14 @@ namespace AuthApi.Services
             }
 
             var _newUser = new User(){
-                FirstName = userRequest.FirstName,
-                LastName = userRequest.LastName,
-                Username = userRequest.Username,
-                Password = cryptographyService.HashData( userRequest.Password),
+                FirstName = userRequest.FirstName!,
+                LastName = userRequest.LastName??"",
+                Email = userRequest.Email!,
+                Password = cryptographyService.HashData( userRequest.Password!),
                 isActive = true
             };
 
+            // Store user
             db.Users.Add( _newUser );
             await db.SaveChangesAsync();
             return _newUser.Id;
@@ -73,7 +74,7 @@ namespace AuthApi.Services
             // Set new values
             _user.FirstName = userUpdateRequest.FirstName != null ? userUpdateRequest.FirstName : _user.FirstName;
             _user.LastName = userUpdateRequest.LastName !=null ?userUpdateRequest.LastName :_user.LastName;
-            _user.Username = userUpdateRequest.Username != null ?userUpdateRequest.Username : _user.Username;
+            _user.Email = userUpdateRequest.Email != null ?userUpdateRequest.Email : _user.Email;
             if( userUpdateRequest.Password != null){
                 if( !ValidatePassword(userUpdateRequest.Password, userUpdateRequest.ConfirmPassword, out KeyValuePair<string,string>? validationResult )){
                     errorMessages.Add( validationResult!.Value  );
@@ -91,7 +92,7 @@ namespace AuthApi.Services
 
         public async Task<AuthenticateResponse?> Authenticate(AuthenticateRequest model)
         {
-            var user = await db.Users.SingleOrDefaultAsync(x => x.Username == model.Username && x.Password == cryptographyService.HashData(model.Password));
+            var user = await db.Users.SingleOrDefaultAsync(x => x.Email == model.Email && x.Password == cryptographyService.HashData(model.Password!));
 
             // return null if user not found
             if (user == null) return null;
