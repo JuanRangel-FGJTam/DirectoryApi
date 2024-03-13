@@ -38,14 +38,25 @@ namespace AuthApi.Services
         public async Task<int?> CreateUser(UserRequest userRequest)
         {
 
-            // Validate password
             var errorMessages = new List<KeyValuePair<string,string>>();
 
+            // Validate password
             if( !ValidatePassword( userRequest.Password!, userRequest.ConfirmPassword, out KeyValuePair<string,string>? validationResult )){
                 errorMessages.Add( validationResult!.Value  );
+            }
+
+            // Validate email unique
+            if( db.Users.Where( u => u.Email.Equals( userRequest.Email )).Count() > 0 ){
+                errorMessages.Add( new KeyValuePair<string, string>( "email", "The email is already stored in the database") );
+            }
+
+            // Throw validaton messages
+            if( !errorMessages.IsNullOrEmpty())
+            {
                 throw new SimpleValidationException( "Validations fail at create user", errorMessages );
             }
 
+            // Create user entity
             var _newUser = new User(){
                 FirstName = userRequest.FirstName!,
                 LastName = userRequest.LastName??"",
@@ -67,6 +78,25 @@ namespace AuthApi.Services
             var _user = await db.Users.FirstOrDefaultAsync( u => u.Id == userId);
             if( _user == null){
                 errorMessages.Add( new KeyValuePair<string, string>("userId", "User not found"));
+                
+            }
+
+            // Validate email unique
+            if( userUpdateRequest.Email != null){
+
+                var _emailExistQuery = db.Users.Where( u => u.Email.Equals( userUpdateRequest.Email)).AsQueryable();
+                if( _user != null ){
+                    _emailExistQuery = _emailExistQuery.Where( u => u.Id != _user.Id);
+                    
+                }
+                if( _emailExistQuery.Count() > 0){
+                    errorMessages.Add( new KeyValuePair<string, string>( "email", "The email is already stored in the database") );
+                }
+            }
+
+            // Throw validaton messages
+            if( !errorMessages.IsNullOrEmpty())
+            {
                 throw new SimpleValidationException( "Validations fail at update user", errorMessages );
             }
 

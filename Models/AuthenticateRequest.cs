@@ -11,12 +11,12 @@ namespace AuthApi.Models
     public class AuthenticateRequest
     {
         [JsonPropertyName("email")]
-        [DefaultValue("System")]
         [Required]
+        [DataType(DataType.EmailAddress)]
+        [EmailAddress]
         public string? Email { get; set; }
 
         [JsonPropertyName("password")]
-        [DefaultValue("System")]
         [Required]
         public string? Password { get; set; }
     }

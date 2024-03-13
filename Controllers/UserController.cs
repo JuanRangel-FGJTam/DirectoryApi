@@ -12,6 +12,7 @@ using AuthApi.Entities;
 using AuthApi.Data.Exceptions;
 using System.Net.Http.Headers;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.IdentityModel.Tokens;
 
 namespace AuthApi.Controllers
 {
@@ -34,9 +35,9 @@ namespace AuthApi.Controllers
         [HttpPost("authenticate")]
         public async Task<IActionResult> Authenticate([FromBody] AuthenticateRequest model)
         {
-
+             // Validate request
             if( !ModelState.IsValid){
-                // Process erroros
+                // Process errors
                 var _errorsMessages = new List<KeyValuePair<string,string>>();
                 foreach( var error in ModelState  ){
                     _errorsMessages.Add( new KeyValuePair<string, string>( error.Key, error.Value.Errors.First().ErrorMessage ) );
@@ -118,8 +119,25 @@ namespace AuthApi.Controllers
         [CAuthorize]
         public async Task<IActionResult> Put( [FromRoute] int userID, [FromBody] UserUpdateRequest userUpdateRequest )
         {
-            try
-            {
+            // Validate request
+            if( !ModelState.IsValid){
+                // Process errors
+                var _errorsMessages = new List<KeyValuePair<string,string>>();
+                foreach( var error in ModelState ){
+                    if( !error.Value.Errors.IsNullOrEmpty()){
+                        _errorsMessages.Add( new KeyValuePair<string, string>( error.Key, error.Value.Errors.First().ErrorMessage ) );
+                    }
+                }
+                
+                // Return bad request
+                return UnprocessableEntity( new {
+                    title = "Request validations fail",
+                    message = "The request is not valid",
+                    errors = _errorsMessages
+                }  );
+            }
+
+            try {
                 var userUpdated = await userService.UpdateUser( userID, userUpdateRequest );
                 return Ok( new{
                     title = "User updated successfully",
