@@ -33,16 +33,16 @@ namespace AuthApi.Models
 
         [Required]
         [Range(1, 99)]
-        public int GenderID {get; set;}
+        public int GenderId {get; set;}
         
         [Range(1, 99)]
-        public int MaritalStatusID {get;set;}
+        public int MaritalStatusId {get;set;}
         
         [Range(1, 99)]
-        public int NationalityID {get;set;}
+        public int NationalityId {get;set;}
         
         [Range(1, 99)]
-        public int OccupationID {get;set;}
+        public int OccupationId {get;set;}
 
     }
 }

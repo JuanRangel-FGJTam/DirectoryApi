@@ -67,24 +67,24 @@ namespace AuthApi.Controllers
             // * Get relations and validate
             var errorsRelations = new Dictionary<string, object>();
 
-            var gender = dbContext.Gender.Find( personRequest.GenderID );
+            var gender = dbContext.Gender.Find( personRequest.GenderId );
             if( gender == null){
-                errorsRelations.Add( "GenderID", new string[]{ $"Gender id {personRequest.GenderID} not found "} );
+                errorsRelations.Add( "GenderID", new string[]{ $"Gender id {personRequest.GenderId} not found "} );
             }
             
-            var maritalStatus = dbContext.MaritalStatus.Find( personRequest.MaritalStatusID );
+            var maritalStatus = dbContext.MaritalStatus.Find( personRequest.MaritalStatusId );
             if( maritalStatus == null){
-                errorsRelations.Add( "MaritalStatusID", new string[]{ $"Marital status id {personRequest.MaritalStatusID} not found "} );
+                errorsRelations.Add( "MaritalStatusID", new string[]{ $"Marital status id {personRequest.MaritalStatusId} not found "} );
             }
             
-            var nationality = dbContext.Nationality.Find( personRequest.NationalityID );
+            var nationality = dbContext.Nationality.Find( personRequest.NationalityId );
             if( nationality == null){
-                errorsRelations.Add( "NationalityID", new string[]{ $"Nationality id {personRequest.NationalityID} not found "} );
+                errorsRelations.Add( "NationalityID", new string[]{ $"Nationality id {personRequest.NationalityId} not found "} );
             }
             
-            var occupation = dbContext.Occupation.Find( personRequest.OccupationID ); 
+            var occupation = dbContext.Occupation.Find( personRequest.OccupationId ); 
             if( occupation == null){
-                errorsRelations.Add( "OccupationID", new string[]{ $"Occupation id {personRequest.OccupationID} not found "} );
+                errorsRelations.Add( "OccupationID", new string[]{ $"Occupation id {personRequest.OccupationId} not found "} );
             }
 
             if( errorsRelations.Values.Count > 0)
@@ -141,8 +141,12 @@ namespace AuthApi.Controllers
             }
 
             var person = dbContext.People
-                .Include(p => p.Addresses.Where( a => a.DeletedAt == null))
-                .Include( p => p.ContactInformations.Where( a => a.DeletedAt == null))
+                .Include(p =>  ( p.Addresses ?? Array.Empty<Address>() )
+                    .Where( a => a != null && a.DeletedAt == null)
+                )
+                .Include( p => ( p.ContactInformations ?? Array.Empty<ContactInformation>() )
+                    .Where( a => a != null && a.DeletedAt == null)
+                )
                 .Include(p => p.Gender)
                 .Include(p => p.MaritalStatus)
                 .Include(p => p.Nationality)
@@ -224,26 +228,26 @@ namespace AuthApi.Controllers
                 person.BirthDate = personRequest.BirthDate.Value;
             }
 
-            if(personRequest.GenderID > 0)
+            if(personRequest.GenderId > 0)
             {
-                var _gender = this.dbContext.Gender.Find( personRequest.GenderID );
+                var _gender = this.dbContext.Gender.Find( personRequest.GenderId );
                 person.Gender = _gender;
             }
 
-            if(personRequest.MaritalStatusID > 0 )
+            if(personRequest.MaritalStatusId > 0 )
             {
-                var _maritalStatus = this.dbContext.MaritalStatus.Find( personRequest.MaritalStatusID );
+                var _maritalStatus = this.dbContext.MaritalStatus.Find( personRequest.MaritalStatusId );
                 person.MaritalStatus = _maritalStatus;
             }
-            if(personRequest.NationalityID > 0 )
+            if(personRequest.NationalityId > 0 )
             {
-                var _nationality = this.dbContext.Nationality.Find( personRequest.NationalityID );
+                var _nationality = this.dbContext.Nationality.Find( personRequest.NationalityId );
                 person.Nationality = _nationality;
             }
 
-            if(personRequest.OccupationID > 0 )
+            if(personRequest.OccupationId > 0 )
             {
-                var _occupation = this.dbContext.Occupation.Find( personRequest.OccupationID );
+                var _occupation = this.dbContext.Occupation.Find( personRequest.OccupationId );
                 person.Occupation = _occupation;
             }
 
