@@ -10,7 +10,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions( o => {
+    o.JsonSerializerOptions.AllowTrailingCommas = true;
+});
 builder.Services.AddDbContext<DirectoryDBContext>( options=>{
     options.UseSqlServer( builder.Configuration.GetConnectionString("AuthApi") );
 });
@@ -54,6 +56,9 @@ builder.Services.AddSwaggerGen(swagger =>
     });
 });
 
+builder.Services.ConfigureHttpJsonOptions( o => {
+    o.SerializerOptions.AllowTrailingCommas = true;
+});
 
 var app = builder.Build();
 
