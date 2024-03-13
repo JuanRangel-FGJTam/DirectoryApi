@@ -15,7 +15,7 @@ namespace AuthApi.Controllers
 {
     
     /// <summary> </summary>
-    [Route("[controller]")]
+    [Route("home")]
     public class HomeController(ILogger<HomeController> logger ) : ControllerBase
     {
         private readonly ILogger<HomeController> _logger = logger;

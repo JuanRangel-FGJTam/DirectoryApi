@@ -14,7 +14,7 @@ namespace AuthApi.Controllers
 {
 
     /// <summary> </summary>
-    [Route("[controller]")]
+    [Route("user")]
     public class UserController(ILogger<UserController> logger, IUserService service ) : ControllerBase
     {
         private readonly ILogger<UserController> _logger = logger;

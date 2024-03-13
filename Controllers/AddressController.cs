@@ -15,7 +15,7 @@ namespace AuthApi.Controllers
 {
     /// <summary></summary>
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/address")]
     [CAuthorize]
     public class AddressController(ILogger<AddressController> logger, DirectoryDBContext context) : ControllerBase
     {

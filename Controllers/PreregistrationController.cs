@@ -14,7 +14,7 @@ namespace AuthApi.Controllers
     /// <summary></summary>
     [ApiController]
     [CAuthorize]
-    [Route("api/[controller]")]
+    [Route("api/pre-registration")]
     public class PreregistrationController(DirectoryDBContext context) : ControllerBase
     {
         private readonly DirectoryDBContext dbContext = context;

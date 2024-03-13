@@ -14,7 +14,7 @@ namespace AuthApi.Controllers
     /// <summary></summary>
     [ApiController]
     [CAuthorize]
-    [Route("api/[controller]")]
+    [Route("api/catalog")]
     public class CatalogController(ILogger<CatalogController> logger, DirectoryDBContext context) : ControllerBase
     {
         private readonly ILogger<CatalogController> _logger = logger;
@@ -25,7 +25,7 @@ namespace AuthApi.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        [Route("Occupations")]
+        [Route("occupations")]
         public ActionResult<IEnumerable<Occupation>> GetOccupations()
         {
             return Ok( dbContext.Occupation.ToArray() );
@@ -36,7 +36,7 @@ namespace AuthApi.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        [Route("Genders")]
+        [Route("genders")]
         public ActionResult<IEnumerable<Gender>> GetGenders()
         {
             return Ok( dbContext.Gender.ToArray() );
@@ -47,7 +47,7 @@ namespace AuthApi.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        [Route("Nationalities")]
+        [Route("nationalities")]
         public ActionResult<IEnumerable<Nationality>> GetNationalities()
         {
             return Ok( dbContext.Nationality.ToArray() );
@@ -58,7 +58,7 @@ namespace AuthApi.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        [Route("MaritalStatuses")]
+        [Route("marital-statuses")]
         public ActionResult<IEnumerable<MaritalStatus>> GetMaritalStatuses()
         {
             return Ok( dbContext.MaritalStatus.ToArray() );
@@ -69,7 +69,7 @@ namespace AuthApi.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        [Route("ContactTypes")]
+        [Route("contact-types")]
         public ActionResult<IEnumerable<ContactType>> GetContactTypes()
         {
             return Ok( dbContext.ContactTypes.ToArray() );
@@ -80,7 +80,7 @@ namespace AuthApi.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        [Route("Countries")]
+        [Route("countries")]
         public ActionResult<IEnumerable<Country>> GetCountries()
         {
             return Ok( dbContext.Countries.ToArray() );
@@ -91,7 +91,7 @@ namespace AuthApi.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        [Route("States")]
+        [Route("states")]
         public ActionResult<IEnumerable<State>> GetStates()
         {
             return Ok( dbContext.States.Include( c => c.Country ).ToList() );
@@ -102,7 +102,7 @@ namespace AuthApi.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        [Route("Municipalities")]
+        [Route("municipalities")]
         public ActionResult<IEnumerable<Municipality>> GetMunicipalities()
         {   
             return Ok( dbContext.Municipalities.Include( c => c.State ).ToArray() );
@@ -113,7 +113,7 @@ namespace AuthApi.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        [Route("Colonies")]
+        [Route("colonies")]
         public ActionResult<IEnumerable<Colony>> GetColonies()
         {
             return Ok( dbContext.Colonies.Include( c =>c.Municipality ).ToArray() );

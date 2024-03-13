@@ -15,7 +15,7 @@ namespace AuthApi.Controllers
     /// <summary></summary>
     [ApiController]
     [CAuthorize]
-    [Route("api/[controller]")]
+    [Route("api/people")]
     public class PeopleController(ILogger<PeopleController> logger, DirectoryDBContext context) : ControllerBase
     {
         private readonly ILogger<PeopleController> _logger = logger;
@@ -122,18 +122,18 @@ namespace AuthApi.Controllers
         /// <summary>
         ///  Retrive the data of the person 
         /// </summary>
-        /// <param name="person_id"></param>
+        /// <param name="personID"></param>
         /// <response code="200">Return the person data</response>
         /// <response code="400">The request is not valid</response>
         /// <response code="401">Auth token is not valid or is not present</response>
         [HttpGet]
-        [Route ("{person_id}")]
-        public ActionResult<Person> GetPerson( string person_id )
+        [Route ("{personID}")]
+        public ActionResult<Person> GetPerson( string personID )
         {
             // Validate ID
             Guid _personID = Guid.Empty;
             try{
-                _personID = Guid.Parse( person_id );
+                _personID = Guid.Parse( personID );
             }catch(Exception){
                 return BadRequest( new {
                     message = $"Person id format not valid"
