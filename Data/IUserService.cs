@@ -11,6 +11,6 @@ namespace AuthApi.Data
         Task<IEnumerable<User>> GetAll();
         Task<User?> GetById(int id);
         Task<int?> CreateUser(UserRequest userRequest);
-        Task<User?> AddAndUpdateUser(User user);
+        Task<User?> UpdateUser(int userId, UserUpdateRequest userUpdateRequest);
     }
 }

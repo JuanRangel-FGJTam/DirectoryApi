@@ -32,26 +32,7 @@ namespace AuthApi.Controllers
         /// <response code="400">The request is not valid</response>
         /// <response code="401">Auth token is not valid or is not present</response>
         [HttpPost("authenticate")]
-        public async Task<IActionResult> Authenticate(AuthenticateRequest model)
-        {
-            var response = await userService.Authenticate( model );
-
-            if (response == null){
-                return BadRequest(new { message = "Username or password is incorrect" });
-            }
-
-            return Ok(response);
-        }
-
-        /// <summary>
-        /// Stoew new user
-        /// </summary>
-        /// <param name="userRequest"></param>
-        /// <returns></returns>
-        /// <response code="200">New user stored</response>
-        /// <response code="400">The request is not valid</response>
-        [HttpPost]
-        public async Task<IActionResult> Post([FromBody] UserRequest userRequest)
+        public async Task<IActionResult> Authenticate([FromBody] AuthenticateRequest model)
         {
 
             if( !ModelState.IsValid){
@@ -69,6 +50,42 @@ namespace AuthApi.Controllers
                 }  );
             }
 
+            var response = await userService.Authenticate( model );
+
+            if (response == null){
+                return BadRequest(new { message = "Username or password is incorrect" });
+            }
+
+            return Ok(response);
+        }
+
+        /// <summary>
+        /// Stoew new user
+        /// </summary>
+        /// <param name="userRequest"></param>
+        /// <returns></returns>
+        /// <response code="200">New user stored</response>
+        /// <response code="400">The request is not valid</response>
+        /// <response code="422">Validations request fail</response>
+        [HttpPost]
+        public async Task<IActionResult> Post([FromBody] UserRequest userRequest)
+        {
+
+            if( !ModelState.IsValid){
+                // Process erroros
+                var _errorsMessages = new List<KeyValuePair<string,string>>();
+                foreach( var error in ModelState  ){
+                    _errorsMessages.Add( new KeyValuePair<string, string>( error.Key, error.Value.Errors.First().ErrorMessage ) );
+                }
+                
+                // Return bad request
+                return UnprocessableEntity( new {
+                    title = "Request validations fail",
+                    message = "The request is not valid",
+                    errors = _errorsMessages
+                }  );
+            }
+
             try
             {
                 var userId = await userService.CreateUser(userRequest);
@@ -79,7 +96,7 @@ namespace AuthApi.Controllers
             }
             catch (SimpleValidationException validationException)
             {
-                return BadRequest( new {
+                return UnprocessableEntity( new {
                     title = "Request validations fail",
                     message = validationException.Message,
                     errors = validationException.ValidationErrors
@@ -90,17 +107,34 @@ namespace AuthApi.Controllers
         /// <summary>
         /// Update an user
         /// </summary>
-        /// <param name="id"></param>
-        /// <param name="userObj"></param>
+        /// <param name="userID"></param>
+        /// <param name="userUpdateRequest"></param>
         /// <returns></returns>
         /// <response code="200">User udpated or stored</response>
         /// <response code="400">The request is not valid</response>
         /// <response code="401">Auth token is not valid or is not present</response>
-        [HttpPut("{id}")]
+        /// <response code="422">Validations request fail</response>
+        [HttpPut("{userID}")]
         [CAuthorize]
-        public async Task<IActionResult> Put(int id, [FromBody] User userObj)
+        public async Task<IActionResult> Put( [FromRoute] int userID, [FromBody] UserUpdateRequest userUpdateRequest )
         {
-            return Ok(await userService.AddAndUpdateUser(userObj));
+            try
+            {
+                var userUpdated = await userService.UpdateUser( userID, userUpdateRequest );
+                return Ok( new{
+                    title = "User updated successfully",
+                    user_id = userUpdated!.Id
+                });
+            }
+            catch (SimpleValidationException validationException)
+            {
+                return UnprocessableEntity( new {
+                    title = "Request validations fail",
+                    message = validationException.Message,
+                    errors = validationException.ValidationErrors
+                });
+            }
+
         }
         
     }
