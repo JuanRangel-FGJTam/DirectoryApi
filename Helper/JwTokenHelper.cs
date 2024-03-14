@@ -5,6 +5,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using AuthApi.Data;
 using AuthApi.Entities;
 using Microsoft.IdentityModel.Tokens;
 
@@ -12,24 +13,35 @@ namespace AuthApi.Helper
 {
     public class JwTokenHelper
     {
-        public static async Task<string> GenerateJwtToken(User user, string secret)
+
+        private static readonly TimeSpan TokenLifetime = TimeSpan.FromDays(15);
+        public static async Task<string> GenerateJwtToken(User user, JwtSettings jwtSettings)
         {
             //Generate token that is valid for 7 days
             var tokenHandler = new JwtSecurityTokenHandler();
             var token = await Task.Run(() =>
             {
 
-                var key = Encoding.ASCII.GetBytes( secret );
+                var tokenKey = Encoding.ASCII.GetBytes( jwtSettings.Key );
 
-                var tokenDescriptor = new SecurityTokenDescriptor
-                {
-                    Subject = new ClaimsIdentity( new[] {
-                        new Claim("id", user.Id.ToString()),
-                    }),
-                    Expires = DateTime.UtcNow.AddMonths(3),
-                    SigningCredentials = new SigningCredentials( new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                var claims = new List<Claim>{
+                    new("userId", user.Id.ToString()),
+                    new( JwtRegisteredClaimNames.Email, user.Email),
+                    new( JwtRegisteredClaimNames.Name, string.Join(" ", new []{user.FirstName, user.LastName} ) )
                 };
-                return tokenHandler.CreateToken(tokenDescriptor);
+
+                var tokenDescriptor = new SecurityTokenDescriptor{
+                    Subject = new ClaimsIdentity(claims),
+                    Expires = DateTime.UtcNow.Add(TokenLifetime),
+                    Issuer = jwtSettings.Issuer,
+                    Audience = jwtSettings.Audience,
+                    SigningCredentials = new SigningCredentials(
+                        new SymmetricSecurityKey(tokenKey),
+                        SecurityAlgorithms.HmacSha256Signature
+                    )
+                };
+
+                return tokenHandler.CreateToken( tokenDescriptor);
             });
 
             return tokenHandler.WriteToken(token);

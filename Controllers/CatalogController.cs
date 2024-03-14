@@ -7,13 +7,13 @@ using Microsoft.EntityFrameworkCore;
 using AuthApi.Data;
 using AuthApi.Entities;
 using AuthApi.Helper;
+using Microsoft.AspNetCore.Authorization;
 
 namespace AuthApi.Controllers
 {
     
-    /// <summary></summary>
+    [Authorize]
     [ApiController]
-    [CAuthorize]
     [Route("api/catalog")]
     public class CatalogController(ILogger<CatalogController> logger, DirectoryDBContext context) : ControllerBase
     {

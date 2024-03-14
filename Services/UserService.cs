@@ -128,8 +128,8 @@ namespace AuthApi.Services
             if (user == null) return null;
 
             // authentication successful so generate jwt token
-            var _secret = _appSettings.GetValue<string>("Secret");
-            var token = await JwTokenHelper.GenerateJwtToken(user, _secret! );
+            var jwtSettings = _appSettings.GetSection("JwtSettings").Get<JwtSettings>();
+            var token = await JwTokenHelper.GenerateJwtToken(user, jwtSettings! );
 
             return new AuthenticateResponse( user, token);
         }
