@@ -88,6 +88,21 @@ namespace AuthApi.Controllers
                 errorsRelations.Add( "OccupationID", new string[]{ $"Occupation id {personRequest.OccupationId} not found "} );
             }
 
+            var rfcStored =  dbContext.People.Where( p => p.DeletedAt == null && p.Rfc == personRequest.Rfc ).Count();
+            if(rfcStored > 0){
+                errorsRelations.Add( "rfc", new string[]{ $"The RFC is already sotored"} );
+            }
+
+            var curpStored =  dbContext.People.Where( p => p.DeletedAt == null && p.Curp == personRequest.Curp ).Count();
+            if(curpStored > 0){
+                errorsRelations.Add( "curp", new string[]{ $"The CURP is already sotored"} );
+            }
+
+            var emailStored =  dbContext.People.Where( p => p.DeletedAt == null && p.Email == personRequest.Email ).Count();
+            if(emailStored > 0){
+                errorsRelations.Add( "email", new string[]{ $"The Email is already sotored"} );
+            }
+
             if( errorsRelations.Values.Count > 0)
             {
                 return BadRequest(new {
@@ -186,6 +201,10 @@ namespace AuthApi.Controllers
                 });
             }
 
+            // * Get relations and validate
+            var errorsRelations = new Dictionary<string, object>();
+
+
             // validate person id
             Person? person = this.dbContext.People.Find( _personID );
             if( person == null){
@@ -212,17 +231,28 @@ namespace AuthApi.Controllers
 
             if(personRequest.Rfc != null )
             {
+                var rfcStored =  dbContext.People.Where( p => p.DeletedAt == null && p.Rfc == personRequest.Rfc && p.Id != _personID ).Count();
+                if(rfcStored > 0){
+                    errorsRelations.Add( "rfc", new string[]{ $"The RFC is already sotored"} );
+                }
                 person.Rfc = personRequest.Rfc;
             }
 
             if(personRequest.Curp != null )
             {
+                var curpStored =  dbContext.People.Where( p => p.DeletedAt == null && p.Curp == personRequest.Curp && p.Id != _personID ).Count();
+                if(curpStored > 0){
+                    errorsRelations.Add( "curp", new string[]{ $"The CURP is already sotored"} );
+                }
                 person.Curp = personRequest.Curp;
             }
 
-            if(personRequest.Curp != null )
+            if( errorsRelations.Values.Count > 0)
             {
-                person.Curp = personRequest.Curp;
+                return BadRequest(new {
+                    Title = "One or more relations are not found",
+                    Errors = errorsRelations
+                });
             }
 
             if(personRequest.BirthDate != null )
