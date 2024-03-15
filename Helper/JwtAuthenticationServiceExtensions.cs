@@ -13,9 +13,6 @@ namespace AuthApi.Helper
     {
         public static void AddJwtAuthentication(this IServiceCollection services, JwtSettings jwtSettings)
         {
-            
-            Console.WriteLine("(-) Hola mundo!!! " + jwtSettings.Issuer + " " + jwtSettings.Key);
-
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;

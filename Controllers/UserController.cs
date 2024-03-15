@@ -13,6 +13,7 @@ using AuthApi.Data.Exceptions;
 using System.Net.Http.Headers;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Authorization;
 
 namespace AuthApi.Controllers
 {
@@ -115,8 +116,8 @@ namespace AuthApi.Controllers
         /// <response code="400">The request is not valid</response>
         /// <response code="401">Auth token is not valid or is not present</response>
         /// <response code="422">Validations request fail</response>
+        [Authorize]
         [HttpPut("{userID}")]
-        [CAuthorize]
         public async Task<IActionResult> Put( [FromRoute] int userID, [FromBody] UserUpdateRequest userUpdateRequest )
         {
             // Validate request

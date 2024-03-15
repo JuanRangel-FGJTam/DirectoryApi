@@ -7,13 +7,14 @@ using AuthApi.Models;
 using AuthApi.Entities;
 using AuthApi.Data;
 using AuthApi.Helper;
+using Microsoft.AspNetCore.Authorization;
 
 namespace AuthApi.Controllers
 {
 
     /// <summary></summary>
+    [Authorize]
     [ApiController]
-    [CAuthorize]
     [Route("api/pre-registration")]
     public class PreregistrationController(DirectoryDBContext context) : ControllerBase
     {

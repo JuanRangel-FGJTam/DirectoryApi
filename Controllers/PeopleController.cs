@@ -8,13 +8,14 @@ using AuthApi.Data;
 using AuthApi.Entities;
 using AuthApi.Models;
 using AuthApi.Helper;
+using Microsoft.AspNetCore.Authorization;
 
 namespace AuthApi.Controllers
 {
     
     /// <summary></summary>
+    [Authorize]
     [ApiController]
-    [CAuthorize]
     [Route("api/people")]
     public class PeopleController(ILogger<PeopleController> logger, DirectoryDBContext context) : ControllerBase
     {

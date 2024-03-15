@@ -10,13 +10,14 @@ using AuthApi.Data;
 using AuthApi.Entities;
 using AuthApi.Helper;
 using AuthApi.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace AuthApi.Controllers
 {
     /// <summary></summary>
+    [Authorize]
     [ApiController]
     [Route("api/address")]
-    [CAuthorize]
     public class AddressController(ILogger<AddressController> logger, DirectoryDBContext context) : ControllerBase
     {
         private readonly ILogger<AddressController> _logger = logger;
