@@ -99,8 +99,8 @@ namespace AuthApi.Controllers
 
             // * Convert PersonRequest into Person
             var _person = new Person(){
-                Rfc = personRequest.Rfc,
-                Curp = personRequest.Curp,
+                Rfc = personRequest.Rfc!,
+                Curp = personRequest.Curp!,
                 Name = personRequest.Name,
                 FirstName = personRequest.FirstName,
                 LastName = personRequest.LastName,
@@ -109,7 +109,8 @@ namespace AuthApi.Controllers
                 Gender = gender,
                 MaritalStatus = maritalStatus,
                 Nationality = nationality,
-                Occupation = occupation
+                Occupation = occupation,
+                AppOwner = personRequest.AppName
             };
             
             // * Insert into db 

@@ -43,5 +43,7 @@ namespace AuthApi.Entities
 
         public virtual IEnumerable<Address>? Addresses {get;set;}
         public virtual IEnumerable<ContactInformation>? ContactInformations {get;set;}
+
+        public string? AppOwner {get;set;}
     }
 }

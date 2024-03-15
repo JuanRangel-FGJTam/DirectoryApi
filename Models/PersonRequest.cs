@@ -10,10 +10,10 @@ namespace AuthApi.Models
     {
 
         [Required]
-        public string Rfc {get;set;} = "";
+        public string? Rfc {get;set;}
         
         [Required]
-        public string Curp {get;set;} = "";
+        public string? Curp {get;set;}
         
         [Required]
         public string? Name {get;set;}
@@ -43,6 +43,8 @@ namespace AuthApi.Models
         
         [Range(1, 99)]
         public int OccupationId {get;set;}
+
+        public string? AppName {get;set;}
 
     }
 }
