@@ -135,39 +135,7 @@ namespace AuthApi.Controllers
             return Created("Person created", _person );
         }
 
-        /// <summary>
-        ///  Retrive the data of the person 
-        /// </summary>
-        /// <param name="personID"></param>
-        /// <response code="200">Return the person data</response>
-        /// <response code="400">The request is not valid</response>
-        /// <response code="401">Auth token is not valid or is not present</response>
-        [HttpGet]
-        [Route ("{personID}")]
-        public ActionResult<Person> GetPerson( string personID )
-        {
-            // Validate ID
-            Guid _personID = Guid.Empty;
-            try{
-                _personID = Guid.Parse( personID );
-            }catch(Exception){
-                return BadRequest( new {
-                    message = $"Person id format not valid"
-                });
-            }
-
-            var person = this.personService.GetPeople()
-                .Include(p => p.Addresses.Where( a=> a != null && a.DeletedAt == null ) )
-                .Include(p => p.ContactInformations.Where( a => a != null && a.DeletedAt == null))
-                .FirstOrDefault(p => p.Id == _personID);
-
-            if ( person == null)
-            {
-                return NotFound();
-            }
-            
-            return Ok( person );
-        }
+        
 
         /// <summary>
         /// Udate the person data
@@ -308,5 +276,40 @@ namespace AuthApi.Controllers
             return Ok("Not implemented");
         }
 
+
+        /// <summary>
+        ///  Retrive the data of the person 
+        /// </summary>
+        /// <param name="personID"></param>
+        /// <response code="200">Return the person data</response>
+        /// <response code="400">The request is not valid</response>
+        /// <response code="401">Auth token is not valid or is not present</response>
+        [HttpGet]
+        [Route ("{personID}")]
+        public ActionResult<Person> GetPerson( string personID )
+        {
+            // Validate ID
+            Guid _personID = Guid.Empty;
+            try{
+                _personID = Guid.Parse( personID );
+            }catch(Exception){
+                return BadRequest( new {
+                    message = $"Person id format not valid"
+                });
+            }
+
+            var person = this.personService.GetPeople()
+                .Include(p => p.Addresses.Where( a=> a != null && a.DeletedAt == null ) )
+                .Include(p => p.ContactInformations.Where( a => a != null && a.DeletedAt == null))
+                .FirstOrDefault(p => p.Id == _personID);
+
+            if ( person == null)
+            {
+                return NotFound();
+            }
+            
+            return Ok( person );
+        }
+        
     }
 }
