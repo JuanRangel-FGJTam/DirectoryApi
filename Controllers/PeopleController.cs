@@ -120,7 +120,7 @@ namespace AuthApi.Controllers
                 FirstName = personRequest.FirstName,
                 LastName = personRequest.LastName,
                 Email = personRequest.Email,
-                BirthDate = personRequest.BirthDate!.Value,
+                Birthdate = personRequest.BirthDate!.Value,
                 Gender = gender,
                 MaritalStatus = maritalStatus,
                 Nationality = nationality,
@@ -257,7 +257,7 @@ namespace AuthApi.Controllers
 
             if(personRequest.BirthDate != null )
             {
-                person.BirthDate = personRequest.BirthDate.Value;
+                person.Birthdate = personRequest.BirthDate.Value;
             }
 
             if(personRequest.GenderId > 0)

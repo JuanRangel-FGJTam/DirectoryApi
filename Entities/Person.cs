@@ -24,7 +24,7 @@ namespace AuthApi.Entities
         
         public string? Email {get;set;}
 
-        public DateTime BirthDate {get;set;}
+        public DateTime Birthdate {get;set;}
         
         public DateTime CreatedAt {get;set;}
         
@@ -45,5 +45,6 @@ namespace AuthApi.Entities
         public virtual IEnumerable<ContactInformation>? ContactInformations {get;set;}
 
         public string? AppOwner {get;set;}
+        public string? Password {get;set;}
     }
 }
