@@ -20,6 +20,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ICryptographyService>( o => 
     new AesCryptographyService( builder.Configuration.GetValue<string>("Secret")!)
 );
+builder.Services.AddScoped<PersonService>();
 builder.Services.AddMySwaggerConfig();
 builder.Services.ConfigureHttpJsonOptions( o => {
     o.SerializerOptions.AllowTrailingCommas = true;

@@ -9,6 +9,9 @@ using AuthApi.Entities;
 using AuthApi.Models;
 using AuthApi.Helper;
 using Microsoft.AspNetCore.Authorization;
+using System.Net.Http.Headers;
+using AuthApi.Services;
+using System.Runtime.Serialization;
 
 namespace AuthApi.Controllers
 {
@@ -17,10 +20,11 @@ namespace AuthApi.Controllers
     [Authorize]
     [ApiController]
     [Route("api/people")]
-    public class PeopleController(ILogger<PeopleController> logger, DirectoryDBContext context) : ControllerBase
+    public class PeopleController(ILogger<PeopleController> logger, DirectoryDBContext context, PersonService personService) : ControllerBase
     {
         private readonly ILogger<PeopleController> _logger = logger;
         private readonly DirectoryDBContext dbContext = context;
+        private readonly PersonService personService = personService;
         
         
         /// <summary>
@@ -31,20 +35,15 @@ namespace AuthApi.Controllers
         [HttpGet]
         public ActionResult<Person> GetAllPeople( [FromQuery] int chunk = 100, [FromQuery] int skip = 0 )
         {
+            var peopleQuery = this.personService.GetPeople();
 
-            // * Get data
-            var data = this.dbContext.People
-                .Include(p => p.Gender)
-                .Include(p => p.MaritalStatus)
-                .Include(p => p.Nationality)
-                .Include(p => p.Occupation)
-                .OrderBy(p => p.CreatedAt)
+            var dataPeople = peopleQuery.OrderBy(p => p.CreatedAt)
                 .Skip(skip)
                 .Take(chunk)
                 .ToArray();
 
             // * Return response
-            return Ok( data );
+            return Ok( dataPeople );
         }
 
 
@@ -157,20 +156,12 @@ namespace AuthApi.Controllers
                 });
             }
 
-            var person = dbContext.People
-                .Include(p =>  ( p.Addresses ?? Array.Empty<Address>() )
-                    .Where( a => a != null && a.DeletedAt == null)
-                )
-                .Include( p => ( p.ContactInformations ?? Array.Empty<ContactInformation>() )
-                    .Where( a => a != null && a.DeletedAt == null)
-                )
-                .Include(p => p.Gender)
-                .Include(p => p.MaritalStatus)
-                .Include(p => p.Nationality)
-                .Include(p => p.Occupation)
-                .FirstOrDefault(p => p.Id == _personID );
+            var person = this.personService.GetPeople()
+                .Include(p => p.Addresses.Where( a=> a != null && a.DeletedAt == null ) )
+                .Include(p => p.ContactInformations.Where( a => a != null && a.DeletedAt == null))
+                .FirstOrDefault(p => p.Id == _personID);
 
-            if( person == null)
+            if ( person == null)
             {
                 return NotFound();
             }
@@ -291,6 +282,30 @@ namespace AuthApi.Controllers
             return Ok( new {
                 message = $"Person {personID} updated"
             });
+        }
+
+
+        [HttpGet]
+        [Route("search")]
+        public IActionResult SearchPerson( [FromQuery] string email, [FromQuery] int hiddenName ){
+            var people =  this.personService.Search( email, null,null, PersonService.SearchMode.Equals );
+            return Ok( people.Select( p => new {
+                Id = p.Id,
+                FullName = hiddenName == 1 ?HiddenText.Hidden(p.FullName) :p.FullName,
+                Birthdate = p.Birthdate.ToString("yyyy-MM-dd"),
+                Email = p.Email,
+                Gender = p.Gender != null ?p.Gender.Name:"",
+                Curp = p.Curp
+            }));
+        }
+
+        [HttpGet]
+        [Route("me")]
+        public IActionResult GetCurrentDataUser(){
+            foreach( var claim in HttpContext.User.Claims ){
+                Console.WriteLine( $"(-) >> {claim.Type}: {claim.Value}" );
+            }
+            return Ok("Not implemented");
         }
 
     }

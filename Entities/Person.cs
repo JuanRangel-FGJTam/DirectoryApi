@@ -46,5 +46,12 @@ namespace AuthApi.Entities
 
         public string? AppOwner {get;set;}
         public string? Password {get;set;}
+
+        [NotMapped]
+        public string FullName {
+            get {
+                return string.Join(' ', new string[]{Name??"", FirstName??"", LastName??""});
+            }
+        }
     }
 }
