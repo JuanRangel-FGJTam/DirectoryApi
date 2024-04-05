@@ -9,7 +9,6 @@ namespace AuthApi.Models
     public class PersonRequest
     {
 
-        [Required]
         public string? Rfc {get;set;}
         
         [Required]
@@ -31,20 +30,23 @@ namespace AuthApi.Models
         [Required]
         public DateTime? BirthDate {get;set;}
 
-        [Required]
         [Range(1, 99)]
-        public int GenderId {get; set;}
+        public int? GenderId {get; set;}
         
         [Range(1, 99)]
-        public int MaritalStatusId {get;set;}
+        public int? MaritalStatusId {get;set;}
         
         [Range(1, 99)]
-        public int NationalityId {get;set;}
+        public int? NationalityId {get;set;}
         
         [Range(1, 99)]
-        public int OccupationId {get;set;}
+        public int? OccupationId {get;set;}
 
         public string? AppName {get;set;}
+
+        public string? Password {get;set;}
+
+        public string? ConfirmedPassword {get;set;}
 
     }
 }

@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Authorization;
 using System.Net.Http.Headers;
 using AuthApi.Services;
 using System.Runtime.Serialization;
+using System.ComponentModel.DataAnnotations;
 
 namespace AuthApi.Controllers
 {
@@ -64,75 +65,29 @@ namespace AuthApi.Controllers
                 return BadRequest( ModelState );
             }
 
-            // * Get relations and validate
-            var errorsRelations = new Dictionary<string, object>();
-
-            var gender = dbContext.Gender.Find( personRequest.GenderId );
-            if( gender == null){
-                errorsRelations.Add( "GenderID", new string[]{ $"Gender id {personRequest.GenderId} not found "} );
-            }
-            
-            var maritalStatus = dbContext.MaritalStatus.Find( personRequest.MaritalStatusId );
-            if( maritalStatus == null){
-                errorsRelations.Add( "MaritalStatusID", new string[]{ $"Marital status id {personRequest.MaritalStatusId} not found "} );
-            }
-            
-            var nationality = dbContext.Nationality.Find( personRequest.NationalityId );
-            if( nationality == null){
-                errorsRelations.Add( "NationalityID", new string[]{ $"Nationality id {personRequest.NationalityId} not found "} );
-            }
-            
-            var occupation = dbContext.Occupation.Find( personRequest.OccupationId ); 
-            if( occupation == null){
-                errorsRelations.Add( "OccupationID", new string[]{ $"Occupation id {personRequest.OccupationId} not found "} );
-            }
-
-            var rfcStored =  dbContext.People.Where( p => p.DeletedAt == null && p.Rfc == personRequest.Rfc ).Count();
-            if(rfcStored > 0){
-                errorsRelations.Add( "rfc", new string[]{ $"The RFC is already stored"} );
-            }
-
-            var curpStored =  dbContext.People.Where( p => p.DeletedAt == null && p.Curp == personRequest.Curp ).Count();
-            if(curpStored > 0){
-                errorsRelations.Add( "curp", new string[]{ $"The CURP is already stored"} );
-            }
-
-            var emailStored =  dbContext.People.Where( p => p.DeletedAt == null && p.Email == personRequest.Email ).Count();
-            if(emailStored > 0){
-                errorsRelations.Add( "email", new string[]{ $"The Email is already stored"} );
-            }
-
-            if( errorsRelations.Values.Count > 0)
+            try
             {
-                return BadRequest(new {
-                    Title = "One or more relations are not found",
-                    Errors = errorsRelations
+                var person = this.personService.StorePerson(personRequest);
+                return Created("Person created", person );
+                
+            }
+            catch (ValidationException ve)
+            {
+                var errorsData = (Dictionary<string, object>) ve.Value!;
+                return UnprocessableEntity(new {
+                    Title = "One or more field had errors",
+                    Errors = errorsData
                 });
             }
-
-
-            // * Convert PersonRequest into Person
-            var _person = new Person(){
-                Rfc = personRequest.Rfc!,
-                Curp = personRequest.Curp!,
-                Name = personRequest.Name,
-                FirstName = personRequest.FirstName,
-                LastName = personRequest.LastName,
-                Email = personRequest.Email,
-                Birthdate = personRequest.BirthDate!.Value,
-                Gender = gender,
-                MaritalStatus = maritalStatus,
-                Nationality = nationality,
-                Occupation = occupation,
-                AppOwner = personRequest.AppName
-            };
+            catch (System.Exception ex)
+            {
+                return BadRequest(new {
+                    Title = "Unhandle exception",
+                    Message = ex.Message,
+                    Errors = Array.Empty<string>()
+                });
+            }
             
-            // * Insert into db 
-            dbContext.People.Add( _person );
-            dbContext.SaveChanges();
-
-            // * Return response
-            return Created("Person created", _person );
         }
 
         
@@ -310,6 +265,6 @@ namespace AuthApi.Controllers
             
             return Ok( person );
         }
-        
+
     }
 }

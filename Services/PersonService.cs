@@ -1,10 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Threading.Tasks;
 using AuthApi.Data;
 using AuthApi.Entities;
+using AuthApi.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.VisualBasic;
 
 namespace AuthApi.Services
@@ -62,5 +66,95 @@ namespace AuthApi.Services
 
         }
 
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="personRequest"></param>
+        /// <exception cref="ValidationException"></exception>
+        public Person? StorePerson( PersonRequest personRequest)
+        {
+
+            // * Create person entity
+            var _person = new Person(){
+                Rfc = personRequest.Rfc??"",
+                Curp = personRequest.Curp!,
+                Name = personRequest.Name,
+                FirstName = personRequest.FirstName,
+                LastName = personRequest.LastName,
+                Email = personRequest.Email,
+                Birthdate = personRequest.BirthDate!.Value,
+                AppOwner = personRequest.AppName
+            };
+
+            var errorsRelations = new Dictionary<string, object>();
+
+            // Validate unique parameters
+            var rfcStored =  dbContext.People.Where( p => p.DeletedAt == null && p.Rfc == personRequest.Rfc ).Count();
+            if(rfcStored > 0){
+                errorsRelations.Add( "rfc", new string[]{ $"The RFC is already stored"} );
+            }
+
+            var curpStored =  dbContext.People.Where( p => p.DeletedAt == null && p.Curp == personRequest.Curp ).Count();
+            if(curpStored > 0){
+                errorsRelations.Add( "curp", new string[]{ $"The CURP is already stored"} );
+            }
+
+            var emailStored =  dbContext.People.Where( p => p.DeletedAt == null && p.Email == personRequest.Email ).Count();
+            if(emailStored > 0){
+                errorsRelations.Add( "email", new string[]{ $"The Email is already stored"} );
+            }
+            
+            // Validate relations
+            if( personRequest.GenderId != null){
+                try{
+                    _person.Gender = dbContext.Gender.Find(personRequest.GenderId) ?? throw new Exception("Gender id not found");
+                }catch(Exception err)
+                {
+                    errorsRelations.Add("GenderID", err.Message);
+                }
+            }
+
+            if( personRequest.MaritalStatusId != null){
+                try{
+                    _person.MaritalStatus = dbContext.MaritalStatus.Find(personRequest.MaritalStatusId) ?? throw new Exception("Marital status id not found");
+                }catch(Exception err)
+                {
+                    errorsRelations.Add("MaritalStatusId", err.Message);
+                }
+            }
+
+            if( personRequest.NationalityId != null){
+                try{
+                    _person.Nationality = dbContext.Nationality.Find(personRequest.NationalityId) ?? throw new Exception("Nationality id not found");
+                }catch(Exception err)
+                {
+                    errorsRelations.Add("NationalityId", err.Message);
+                }
+            }
+
+            if( personRequest.OccupationId != null){
+                try{
+                    _person.Occupation = dbContext.Occupation.Find(personRequest.OccupationId) ?? throw new Exception("Occupation id not found");
+                }catch(Exception err)
+                {
+                    errorsRelations.Add("OccupationId", err.Message);
+                }
+            }
+
+            if( !errorsRelations.IsNullOrEmpty() ){
+                throw new ValidationException("Some errors at store the person", null, errorsRelations );
+            }
+
+
+            // * Register person
+            this.dbContext.People.Add( _person );
+            this.dbContext.SaveChanges();
+
+            return this.dbContext.People.Find(_person.Id);
+        }
+
     }
+
+    
 }
