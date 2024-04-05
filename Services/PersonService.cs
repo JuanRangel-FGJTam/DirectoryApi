@@ -13,10 +13,11 @@ using Microsoft.VisualBasic;
 
 namespace AuthApi.Services
 {
-    public class PersonService(DirectoryDBContext dbContext)
+    public class PersonService(DirectoryDBContext dbContext, ICryptographyService cryptographyService)
     {
         
         private readonly DirectoryDBContext dbContext = dbContext;
+        private readonly ICryptographyService cryptographyService = cryptographyService;
 
         public enum SearchMode {
             Like = 1,
@@ -68,7 +69,7 @@ namespace AuthApi.Services
 
 
         /// <summary>
-        /// 
+        /// Stored new person
         /// </summary>
         /// <param name="personRequest"></param>
         /// <exception cref="ValidationException"></exception>
@@ -103,6 +104,14 @@ namespace AuthApi.Services
             var emailStored =  dbContext.People.Where( p => p.DeletedAt == null && p.Email == personRequest.Email ).Count();
             if(emailStored > 0){
                 errorsRelations.Add( "email", new string[]{ $"The Email is already stored"} );
+            }
+
+            if( !string.IsNullOrEmpty(personRequest.Password) ){
+                if( !personRequest.Password.Equals( personRequest.ConfirmedPassword, StringComparison.CurrentCultureIgnoreCase )){
+                    errorsRelations.Add( "ConfirmedPassword", "The password are not equals." );
+                }else{
+                    _person.Password = cryptographyService.HashData( personRequest.Password );
+                }
             }
             
             // Validate relations
@@ -152,6 +161,20 @@ namespace AuthApi.Services
             this.dbContext.SaveChanges();
 
             return this.dbContext.People.Find(_person.Id);
+        }
+
+
+        /// <summary>
+        /// Set a new password for the person
+        /// </summary>
+        /// <param name="person_id"></param>
+        /// <param name="password"></param>
+        /// <exception cref="ValidationException"></exception>
+        public void SetPassword( Guid person_id, string password){
+            var person = dbContext.People.Find(person_id)?? throw new ValidationException("Person not found");
+            person.Password = cryptographyService.HashData( password );
+            dbContext.People.Update( person);
+            dbContext.SaveChanges();
         }
 
     }
