@@ -89,17 +89,17 @@ namespace AuthApi.Controllers
 
             var rfcStored =  dbContext.People.Where( p => p.DeletedAt == null && p.Rfc == personRequest.Rfc ).Count();
             if(rfcStored > 0){
-                errorsRelations.Add( "rfc", new string[]{ $"The RFC is already sotored"} );
+                errorsRelations.Add( "rfc", new string[]{ $"The RFC is already stored"} );
             }
 
             var curpStored =  dbContext.People.Where( p => p.DeletedAt == null && p.Curp == personRequest.Curp ).Count();
             if(curpStored > 0){
-                errorsRelations.Add( "curp", new string[]{ $"The CURP is already sotored"} );
+                errorsRelations.Add( "curp", new string[]{ $"The CURP is already stored"} );
             }
 
             var emailStored =  dbContext.People.Where( p => p.DeletedAt == null && p.Email == personRequest.Email ).Count();
             if(emailStored > 0){
-                errorsRelations.Add( "email", new string[]{ $"The Email is already sotored"} );
+                errorsRelations.Add( "email", new string[]{ $"The Email is already stored"} );
             }
 
             if( errorsRelations.Values.Count > 0)
@@ -224,7 +224,7 @@ namespace AuthApi.Controllers
             {
                 var rfcStored =  dbContext.People.Where( p => p.DeletedAt == null && p.Rfc == personRequest.Rfc && p.Id != _personID ).Count();
                 if(rfcStored > 0){
-                    errorsRelations.Add( "rfc", new string[]{ $"The RFC is already sotored"} );
+                    errorsRelations.Add( "rfc", new string[]{ $"The RFC is already stored"} );
                 }
                 person.Rfc = personRequest.Rfc;
             }
@@ -233,7 +233,7 @@ namespace AuthApi.Controllers
             {
                 var curpStored =  dbContext.People.Where( p => p.DeletedAt == null && p.Curp == personRequest.Curp && p.Id != _personID ).Count();
                 if(curpStored > 0){
-                    errorsRelations.Add( "curp", new string[]{ $"The CURP is already sotored"} );
+                    errorsRelations.Add( "curp", new string[]{ $"The CURP is already stored"} );
                 }
                 person.Curp = personRequest.Curp;
             }
