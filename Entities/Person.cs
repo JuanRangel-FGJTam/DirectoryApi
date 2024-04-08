@@ -13,7 +13,7 @@ namespace AuthApi.Entities
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public Guid Id {get;set;}
         
-        public string Rfc {get;set;} = "";
+        public string? Rfc {get;set;}
         
         public string Curp {get;set;} = "";
         
