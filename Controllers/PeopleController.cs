@@ -17,7 +17,6 @@ using System.ComponentModel.DataAnnotations;
 namespace AuthApi.Controllers
 {
     
-    /// <summary></summary>
     [Authorize]
     [ApiController]
     [Route("api/people")]
@@ -49,10 +48,44 @@ namespace AuthApi.Controllers
 
 
         /// <summary>
-        ///  Store a person in the database
+        ///  Store a new person in the database
         /// </summary>
+        /// <remarks>
+        /// Sample request with the minal data required:
+        /// 
+        ///     POST api/people
+        ///     {
+        ///       "curp": "RAAE190394MTSNLL02",
+        ///       "name": "Juan Salvador",
+        ///       "firstName": "Rangel",
+        ///       "lastName": "Almaguer",
+        ///       "email": "juan.rangel@fgjtam.gob.mx",
+        ///       "birthdate": "1993-12-17"
+        ///     }
+        ///     
+        /// 
+        /// Sample request with all the data available:
+        /// 
+        ///     POST api/people
+        ///     {
+        ///        "rfc": "RAAJ931217SX4",
+        ///        "curp": "RAAJ931217MTSNLL02",
+        ///        "name": "Juan Salvador",
+        ///        "firstName": "Rangel",
+        ///        "lastName": "Almaguer",
+        ///        "email": "juan.rangel@fgjtam.gob.mx",
+        ///        "birthdate": "1993-12-17",
+        ///        "GenderID": 1,
+        ///        "OccupationID": 1,
+        ///        "NationalityID": 31,
+        ///        "MaritalStatusID": 1,
+        ///        "appName": "appname.fgjtam.gob.mx",
+        ///        "password": "password123$",
+        ///        "confirmedPassword": "password123$"
+        ///     }
+        /// </remarks>
         /// <param name="personRequest"></param>
-        /// <response code="201">Stored the person</response>
+        /// <response code="201">Succsessfull stored the person</response>
         /// <response code="400">The request is not valid</response>
         /// <response code="401">Auth token is not valid or is not present</response>
         [HttpPost]
@@ -95,6 +128,9 @@ namespace AuthApi.Controllers
         /// <summary>
         /// Udate the person data
         /// </summary>
+        /// <remarks>
+        /// You can pass only the fields you want to update
+        /// </remarks>
         /// <param name="personID"></param>
         /// <param name="personRequest"></param>
         /// <returns></returns>
@@ -169,9 +205,9 @@ namespace AuthApi.Controllers
                 });
             }
 
-            if(personRequest.BirthDate != null )
+            if(personRequest.Birthdate != null )
             {
-                person.Birthdate = personRequest.BirthDate.Value;
+                person.Birthdate = personRequest.Birthdate.Value;
             }
 
             if(personRequest.GenderId > 0)
@@ -208,20 +244,52 @@ namespace AuthApi.Controllers
         }
 
 
+        /// <summary>
+        /// Seach the person by the email
+        /// </summary>
+        /// <remarks>
+        /// Seek in the database if the email is already stored in the database and if exist return de data of the person.
+        /// 
+        /// Data returned:
+        /// 
+        ///     {
+        ///       "Id": int,
+        ///       "FullName": string,
+        ///       "Birthdate": string (yyy-MM-dd),
+        ///       "Email": string,
+        ///       "Gender": string,
+        ///       "Curp": string
+        ///     }
+        /// </remarks>
+        /// <param name="email"></param>
+        /// <param name="hiddenName"></param>
+        /// <response code="200">Return the person related with the email</response>
+        /// <response code="404">There is no person with the email searched</response>
         [HttpGet]
         [Route("search")]
         public IActionResult SearchPerson( [FromQuery] string email, [FromQuery] int hiddenName ){
             var people =  this.personService.Search( email, null,null, PersonService.SearchMode.Equals );
-            return Ok( people.Select( p => new {
-                Id = p.Id,
-                FullName = hiddenName == 1 ?HiddenText.Hidden(p.FullName) :p.FullName,
-                Birthdate = p.Birthdate.ToString("yyyy-MM-dd"),
-                Email = p.Email,
-                Gender = p.Gender != null ?p.Gender.Name:"",
-                Curp = p.Curp
-            }));
+
+            var person = people.FirstOrDefault();
+            if( person == null){
+                return NotFound();
+            }
+
+            return Ok( new {
+                Id = person.Id,
+                FullName = hiddenName == 1 ?HiddenText.Hidden(person.FullName) :person.FullName,
+                Birthdate = person.Birthdate.ToString("yyyy-MM-dd"),
+                Email = person.Email,
+                Gender = person.Gender != null ?person.Gender.Name:"",
+                Curp = person.Curp
+            });
         }
 
+
+        /// <summary>
+        /// Not implemented
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         [Route("me")]
         public IActionResult GetCurrentDataUser(){

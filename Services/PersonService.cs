@@ -84,7 +84,7 @@ namespace AuthApi.Services
                 FirstName = personRequest.FirstName,
                 LastName = personRequest.LastName,
                 Email = personRequest.Email,
-                Birthdate = personRequest.BirthDate!.Value,
+                Birthdate = personRequest.Birthdate!.Value,
                 AppOwner = personRequest.AppName
             };
 

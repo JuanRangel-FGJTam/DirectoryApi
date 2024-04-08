@@ -46,6 +46,9 @@ namespace AuthApi.Helper
                     }
                 });
 
+               var filePath = Path.Combine(AppContext.BaseDirectory, "AuthApi.xml");
+               swagger.IncludeXmlComments(filePath);
+
             });
         }
     }

@@ -28,7 +28,7 @@ namespace AuthApi.Models
         public string? Email {get;set;}
 
         [Required]
-        public DateTime? BirthDate {get;set;}
+        public DateTime? Birthdate {get;set;}
 
         [Range(1, 99)]
         public int? GenderId {get; set;}
