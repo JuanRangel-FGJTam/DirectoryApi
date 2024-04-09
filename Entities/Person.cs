@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace AuthApi.Entities
 {
@@ -45,6 +46,8 @@ namespace AuthApi.Entities
         public virtual IEnumerable<ContactInformation>? ContactInformations {get;set;}
 
         public string? AppOwner {get;set;}
+
+        [JsonIgnore]
         public string? Password {get;set;}
 
         [NotMapped]
