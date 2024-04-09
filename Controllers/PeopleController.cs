@@ -13,6 +13,8 @@ using System.Net.Http.Headers;
 using AuthApi.Services;
 using System.Runtime.Serialization;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.IdentityModel.Tokens;
 
 namespace AuthApi.Controllers
 {
@@ -332,6 +334,65 @@ namespace AuthApi.Controllers
             }
             
             return Ok( person );
+        }
+        
+        /// <summary>
+        /// Validate the person email and password
+        /// </summary>
+        /// <remarks>
+        /// 
+        /// Sample of succsess returned data:
+        /// 
+        ///     Httpcode 200
+        ///     {
+        ///       "Id": string,
+        ///       "FullName": string,
+        ///       "Email": string
+        ///     }
+        ///     
+        /// 
+        /// Sample of fail the request:
+        /// 
+        ///     Httpcode 401|404:
+        ///     {
+        ///       "Message": string
+        ///     }
+        ///     
+        /// </remarks>
+        /// <param name="authenticateRequest"></param>
+        /// <returns></returns>
+        /// <response code="200">Return the person data of the email </response>
+        /// <response code="400">The email or password are not present in the request</response>
+        /// <response code="401">The email or the password are incorrect</response>
+        /// <response code="404">The email was not found on the database</response>
+        [HttpPost]
+        [Route("auth")]
+        public ActionResult AuthPerson([FromBody] AuthenticateRequest authenticateRequest){
+
+            if( !ModelState.IsValid){
+                return BadRequest(ModelState);
+            }
+
+            var _persons = this.personService.Search( authenticateRequest.Email!, null, null );
+            if( _persons.IsNullOrEmpty()){
+                return NotFound(new {
+                    Message = "El correo no se encuentra registrado en la base de datos"
+                });
+            }
+
+            var person = this.personService.AuthPerson( authenticateRequest.Email!, authenticateRequest.Password!);
+            if( person == null){
+                return Unauthorized(new {
+                    Message = "Usuario y/o contraseña incorrectos"
+                });
+            }
+
+            return Ok(new{
+                Id = person.Id,
+                Name = person.FullName,
+                Email = person.Email
+            });
+
         }
 
     }

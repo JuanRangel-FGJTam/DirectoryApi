@@ -177,6 +177,13 @@ namespace AuthApi.Services
             dbContext.SaveChanges();
         }
 
+
+        public Person? AuthPerson( string email, string password)
+        {
+            var hashedPassword = this.cryptographyService.HashData(password);
+            return this.dbContext.People.Where( p => p.Email == email && p.Password == hashedPassword).FirstOrDefault();
+        }
+
     }
 
     
