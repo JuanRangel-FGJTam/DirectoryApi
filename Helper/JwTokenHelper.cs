@@ -14,9 +14,10 @@ namespace AuthApi.Helper
     public class JwTokenHelper
     {
 
-        private static readonly TimeSpan TokenLifetime = TimeSpan.FromDays(15);
         public static async Task<string> GenerateJwtToken(User user, JwtSettings jwtSettings)
         {
+            var TokenLifetime = TimeSpan.FromDays( jwtSettings.LifeTimeDays);
+
             //Generate token that is valid for 7 days
             var tokenHandler = new JwtSecurityTokenHandler();
             var token = await Task.Run(() =>
