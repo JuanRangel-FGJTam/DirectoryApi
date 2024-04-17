@@ -408,12 +408,17 @@ namespace AuthApi.Controllers
 
         }
 
-
+        /// <summary>
+        /// Retrieve the addresses of the person
+        /// </summary>
+        /// <param name="personID"></param>
+        /// <response code="200">Return the addresses stored</response>
+        /// <response code="400">The request is not valid</response>
         [HttpGet]
         [Route("{personID}/addresses" )]
         public ActionResult<IEnumerable<AddressResponse>?> GetAllPersonAddresses( string personID )
         {
-            
+            // Validate person id
             if( !Guid.TryParse( personID, out Guid _personID)){
                 return BadRequest( new {
                     Message = $"Person id format not valid"
@@ -426,7 +431,7 @@ namespace AuthApi.Controllers
                     ?? throw new Exception("Not address data found for person id " + _personID.ToString());
                 return Ok( addressesDataRaw.Select( item => AddressResponse.FromEntity(item) ).ToArray() );
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 this._logger.LogError( ex, "Error at retrieving the addresses of the person {personId}", _personID.ToString() );
                 return BadRequest( new {
@@ -434,9 +439,14 @@ namespace AuthApi.Controllers
                     Message = ex.Message
                 } );
             }
-            
         }
-
+        
+        /// <summary>
+        /// Retrieve the contact information of the person
+        /// </summary>
+        /// <param name="personID"></param>
+        /// <response code="200">Return the contact information of the person</response>
+        /// <response code="400">The request is not valid</response>
         [HttpGet]
         [Route("{personID}/contactInformation" )]
         public ActionResult<IEnumerable<ContactResponse>?> GetAllContactInformation(string personID)
