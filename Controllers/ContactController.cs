@@ -33,7 +33,7 @@ namespace AuthApi.Controllers
         /// <response code="401">Auth token is not valid or is not present</response>
         [HttpGet]
         [Route("{contactID}")]
-        public ActionResult<Address> GetContact( [FromRoute] Guid contactID )
+        public ActionResult<ContactInformation> GetContact( [FromRoute] Guid contactID )
         {
             
             ContactInformation? contact = this.dbContext.ContactInformations
