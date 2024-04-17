@@ -46,7 +46,7 @@ namespace AuthApi.Models
 
         public string? Password {get;set;}
 
-        public string? ConfirmedPassword {get;set;}
+        public string? ConfirmPassword {get;set;}
 
     }
 }

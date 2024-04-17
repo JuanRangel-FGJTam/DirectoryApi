@@ -107,7 +107,7 @@ namespace AuthApi.Services
             }
 
             if( !string.IsNullOrEmpty(personRequest.Password) ){
-                if( !personRequest.Password.Equals( personRequest.ConfirmedPassword, StringComparison.CurrentCultureIgnoreCase )){
+                if( !personRequest.Password.Equals( personRequest.ConfirmPassword, StringComparison.CurrentCultureIgnoreCase )){
                     errorsRelations.Add( "ConfirmedPassword", "The password are not equals." );
                 }else{
                     _person.Password = cryptographyService.HashData( personRequest.Password );

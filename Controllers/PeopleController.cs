@@ -83,7 +83,7 @@ namespace AuthApi.Controllers
         ///        "MaritalStatusID": 1,
         ///        "appName": "appname.fgjtam.gob.mx",
         ///        "password": "password123$",
-        ///        "confirmedPassword": "password123$"
+        ///        "confirmPassword": "password123$"
         ///     }
         /// </remarks>
         /// <param name="personRequest"></param>
