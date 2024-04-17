@@ -15,6 +15,8 @@ using System.Runtime.Serialization;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.IdentityModel.Tokens;
+using System.Net.NetworkInformation;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace AuthApi.Controllers
 {
@@ -404,6 +406,61 @@ namespace AuthApi.Controllers
                 Email = person.Email
             });
 
+        }
+
+
+        [HttpGet]
+        [Route("{personID}/addresses" )]
+        public ActionResult<IEnumerable<AddressResponse>?> GetAllPersonAddresses( string personID )
+        {
+            
+            if( !Guid.TryParse( personID, out Guid _personID)){
+                return BadRequest( new {
+                    Message = $"Person id format not valid"
+                });
+            }
+            
+            // Get the data
+            try {   
+                var addressesDataRaw = this.personService.GetPersonAddress(_personID)
+                    ?? throw new Exception("Not address data found for person id " + _personID.ToString());
+                return Ok( addressesDataRaw.Select( item => AddressResponse.FromEntity(item) ).ToArray() );
+            }
+            catch (System.Exception ex)
+            {
+                this._logger.LogError( ex, "Error at retrieving the addresses of the person {personId}", _personID.ToString() );
+                return BadRequest( new {
+                    Title = "Error al obtener las direcciones de la persona",
+                    Message = ex.Message
+                } );
+            }
+            
+        }
+
+        [HttpGet]
+        [Route("{personID}/contactInformation" )]
+        public ActionResult<IEnumerable<ContactResponse>?> GetAllContactInformation(string personID)
+        {
+            // Validate person id
+            if( !Guid.TryParse( personID, out Guid _personId)){
+                return BadRequest( new {
+                    Message = "Person id format not valid"
+                });
+            }
+
+            // Get contact information
+            try {
+                var contactInformationDataRaw = this.personService.GetAllContactInformation( _personId)
+                    ?? throw new Exception("No contact information found for person id " + _personId.ToString() );
+
+                return Ok(  contactInformationDataRaw.Select( item => ContactResponse.FromEntity(item)) );
+            }catch(Exception ex){
+                this._logger.LogError(ex, "Error at retrieving the contact information of person id {personId}", _personId.ToString() );
+                return BadRequest( new {
+                    Title = $"Error al obtener la informacion de contacto de la persona {_personId.ToString()}",
+                    Message = ex.Message
+                });
+            }
         }
 
     }

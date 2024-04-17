@@ -9,15 +9,15 @@ using AuthApi.Entities;
 using AuthApi.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.VisualBasic;
 
 namespace AuthApi.Services
 {
-    public class PersonService(DirectoryDBContext dbContext, ICryptographyService cryptographyService)
+    public class PersonService(DirectoryDBContext dbContext, ICryptographyService cryptographyService, ILogger<PersonService> logger)
     {
         
         private readonly DirectoryDBContext dbContext = dbContext;
         private readonly ICryptographyService cryptographyService = cryptographyService;
+        private readonly ILogger<PersonService> logger = logger;
 
         public enum SearchMode {
             Like = 1,
@@ -182,6 +182,14 @@ namespace AuthApi.Services
         {
             var hashedPassword = this.cryptographyService.HashData(password);
             return this.dbContext.People.Where( p => p.Email == email && p.Password == hashedPassword).FirstOrDefault();
+        }
+        
+        public IEnumerable<Address>? GetPersonAddress(Guid personId){
+            return this.dbContext.Addresses.Where( item => item.Person.Id == personId).ToArray();
+        }
+
+        public IEnumerable<ContactInformation>? GetAllContactInformation( Guid personId){
+            return this.dbContext.ContactInformations.Where( item => item.Person.Id == personId).ToArray();
         }
 
     }
