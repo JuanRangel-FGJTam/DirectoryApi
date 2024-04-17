@@ -240,6 +240,17 @@ namespace AuthApi.Controllers
             this.dbContext.Update( person );
             this.dbContext.SaveChanges();
 
+            // Update password
+            if( !string.IsNullOrEmpty(personRequest.Password) && personRequest.Password == personRequest.ConfirmPassword ){
+                try {
+                    this.personService.SetPassword( person.Id, personRequest.Password);
+                }
+                catch (System.Exception) {
+                    // TODO: Log exception
+                }
+            }
+
+
             return Ok( new {
                 message = $"Person {personID} updated"
             });
