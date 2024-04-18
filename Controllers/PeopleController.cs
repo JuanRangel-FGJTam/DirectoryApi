@@ -440,13 +440,49 @@ namespace AuthApi.Controllers
         }
         
         /// <summary>
+        /// Retrieve the last address stored of the person
+        /// </summary>
+        /// <param name="personID"></param>
+        /// <response code="200">Return the addresses stored</response>
+        /// <response code="400">The request is not valid</response>
+        [HttpGet]
+        [Route("{personID}/address" )]
+        public ActionResult<AddressResponse?> GetLastPersonAddress( string personID )
+        {
+            // Validate person id
+            if( !Guid.TryParse( personID, out Guid _personID)){
+                return BadRequest( new {
+                    Message = $"Person id format not valid"
+                });
+            }
+            
+            // Get the data
+            try {   
+                var addressesDataRaw = this.personService.GetPersonAddress(_personID)
+                    ?? throw new Exception("Not address data found for person id " + _personID.ToString());
+
+                var lastAddressRaw = addressesDataRaw.OrderByDescending( a => a.CreatedAt).First();
+
+                return Ok( AddressResponse.FromEntity(lastAddressRaw) );
+            }
+            catch (Exception ex)
+            {
+                this._logger.LogError( ex, "Error at retrieving the addresses of the person {personId}", _personID.ToString() );
+                return BadRequest( new {
+                    Title = "Error al obtener las direcciones de la persona",
+                    Message = ex.Message
+                } );
+            }
+        }
+        
+        /// <summary>
         /// Retrieve the contact information of the person
         /// </summary>
         /// <param name="personID"></param>
         /// <response code="200">Return the contact information of the person</response>
         /// <response code="400">The request is not valid</response>
         [HttpGet]
-        [Route("{personID}/contactInformation" )]
+        [Route("{personID}/contactInformations" )]
         public ActionResult<IEnumerable<ContactResponse>?> GetAllContactInformation(string personID)
         {
             // Validate person id
@@ -462,6 +498,49 @@ namespace AuthApi.Controllers
                     ?? throw new Exception("No contact information found for person id " + _personId.ToString() );
 
                 return Ok(  contactInformationDataRaw.Select( item => ContactResponse.FromEntity(item)) );
+            }catch(Exception ex){
+                this._logger.LogError(ex, "Error at retrieving the contact information of person id {personId}", _personId.ToString() );
+                return BadRequest( new {
+                    Title = $"Error al obtener la informacion de contacto de la persona {_personId.ToString()}",
+                    Message = ex.Message
+                });
+            }
+        }
+
+        /// <summary>
+        /// Retrieve the contact information of the person
+        /// </summary>
+        /// <param name="personID"></param>
+        /// <param name="typeId"></param>
+        /// <response code="200">Return the contact information of the person</response>
+        /// <response code="400">The request is not valid</response>
+        [HttpGet]
+        [Route("{personID}/contactInformation" )]
+        public ActionResult<ContactResponse?> GetLastContactInformation(string personID, [FromQuery] int? typeId = 0)
+        {
+            // Validate person id
+            if( !Guid.TryParse( personID, out Guid _personId)){
+                return BadRequest( new {
+                    Message = "Person id format not valid"
+                });
+            }
+
+            // Get contact information
+            try {
+                var contactInformationDataRaw = this.personService.GetAllContactInformation( _personId, typeId??0 )
+                    ?? throw new Exception("No contact information found for person id " + _personId.ToString() );
+
+                var lastContactInformation = contactInformationDataRaw.OrderByDescending( p => p.CreatedAt).FirstOrDefault();
+                
+                if( lastContactInformation != null ){
+                    return Ok(  ContactResponse.FromEntity( lastContactInformation ) );
+                }
+
+                return BadRequest( new {
+                    Message = "No contact information found for person id" + _personId.ToString()
+                });
+                
+                
             }catch(Exception ex){
                 this._logger.LogError(ex, "Error at retrieving the contact information of person id {personId}", _personId.ToString() );
                 return BadRequest( new {

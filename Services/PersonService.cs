@@ -188,8 +188,15 @@ namespace AuthApi.Services
             return this.dbContext.Addresses.Where( item => item.Person.Id == personId).ToArray();
         }
 
-        public IEnumerable<ContactInformation>? GetAllContactInformation( Guid personId){
-            return this.dbContext.ContactInformations.Where( item => item.Person.Id == personId).ToArray();
+        public IEnumerable<ContactInformation>? GetAllContactInformation( Guid personId, int contactTypeId = 0){
+            var _query = this.dbContext.ContactInformations
+                .Where( item => item.Person.Id == personId)
+                .AsQueryable();
+                
+            if(contactTypeId > 0){
+                _query = _query.Where( c => c.ContactType.Id == contactTypeId);
+            }
+            return _query.ToList();
         }
 
     }
