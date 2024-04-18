@@ -37,7 +37,7 @@ namespace AuthApi.Controllers
         /// <remarks> This endpoint returns all people stored.</remarks>
         /// <response code="200">Returns the person created</response>
         [HttpGet]
-        public ActionResult<Person> GetAllPeople( [FromQuery] int chunk = 100, [FromQuery] int skip = 0 )
+        public ActionResult<IEnumerable<PersonResponse>?> GetAllPeople( [FromQuery] int chunk = 100, [FromQuery] int skip = 0 )
         {
             var peopleQuery = this.personService.GetPeople();
 
@@ -47,7 +47,7 @@ namespace AuthApi.Controllers
                 .ToArray();
 
             // * Return response
-            return Ok( dataPeople );
+            return Ok( dataPeople.Select( p => PersonResponse.FromEntity(p)).ToArray<PersonResponse>() );
         }
 
 
@@ -324,7 +324,7 @@ namespace AuthApi.Controllers
         /// <response code="401">Auth token is not valid or is not present</response>
         [HttpGet]
         [Route ("{personID}")]
-        public ActionResult<Person> GetPerson( string personID )
+        public ActionResult<PersonResponse> GetPerson( string personID )
         {
             // Validate ID
             Guid _personID = Guid.Empty;
@@ -346,7 +346,7 @@ namespace AuthApi.Controllers
                 return NotFound();
             }
             
-            return Ok( person );
+            return Ok( PersonResponse.FromEntity(person) );
         }
         
         /// <summary>
