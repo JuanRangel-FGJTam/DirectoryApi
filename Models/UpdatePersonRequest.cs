@@ -33,7 +33,7 @@ namespace AuthApi.Models
         [Range(1, 999)]
         public int? NationalityId {get;set;}
         
-        [Range(1, 99)]
+        [Range(1, 999)]
         public int? OccupationId {get;set;}
 
         public string? AppName {get;set;}
