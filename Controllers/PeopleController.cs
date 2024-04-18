@@ -143,7 +143,7 @@ namespace AuthApi.Controllers
         /// <response code="401">Auth token is not valid or is not present</response>
         [HttpPatch]
         [Route ("{personID}")]
-        public IActionResult UpdatePerson( string personID, [FromBody] PersonRequest personRequest  )
+        public IActionResult UpdatePerson( string personID, [FromBody] UpdatePersonRequest personRequest  )
         {
             // Validate ID
             Guid _personID = Guid.Empty;
@@ -157,7 +157,6 @@ namespace AuthApi.Controllers
 
             // * Get relations and validate
             var errorsRelations = new Dictionary<string, object>();
-
 
             // validate person id
             Person? person = this.dbContext.People.Find( _personID );
@@ -225,6 +224,7 @@ namespace AuthApi.Controllers
                 var _maritalStatus = this.dbContext.MaritalStatus.Find( personRequest.MaritalStatusId );
                 person.MaritalStatus = _maritalStatus;
             }
+            
             if(personRequest.NationalityId > 0 )
             {
                 var _nationality = this.dbContext.Nationality.Find( personRequest.NationalityId );
@@ -236,7 +236,6 @@ namespace AuthApi.Controllers
                 var _occupation = this.dbContext.Occupation.Find( personRequest.OccupationId );
                 person.Occupation = _occupation;
             }
-
 
             // Aply changes
             this.dbContext.Update( person );
@@ -251,7 +250,6 @@ namespace AuthApi.Controllers
                     // TODO: Log exception
                 }
             }
-
 
             return Ok( new {
                 message = $"Person {personID} updated"
