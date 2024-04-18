@@ -13,6 +13,8 @@ namespace AuthApi.Entities
         public string? Mail {get;set;} 
         public string? Phone {get;set;} 
         public string? Password {get;set;}
-        public DateTime Date {get;set;} = DateTime.Now;
+        public DateTime CreatedAt {get;set;} = DateTime.Now;
+        public DateTime ValidTo {get;set;} = DateTime.Now.AddDays(2);
+        
     }
 }

@@ -96,6 +96,13 @@ namespace AuthApi.Data
                 .ValueGeneratedOnAddOrUpdate();
             contactInformation.Navigation( n => n.ContactType ).AutoInclude();
 
+            // * Pre-Registration enityt
+            var preRegister = modelBuilder.Entity<Preregistration>();
+            preRegister.Property( p => p.Password).HasConversion(
+                v => cryptographyService.EncryptData(v??""),
+                v => cryptographyService.DecryptData(v)
+            );
+
             // * Seed DB
             modelBuilder.Entity<User>().HasData(
                 new User
