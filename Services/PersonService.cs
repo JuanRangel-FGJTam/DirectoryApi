@@ -185,12 +185,14 @@ namespace AuthApi.Services
         }
         
         public IEnumerable<Address>? GetPersonAddress(Guid personId){
-            return this.dbContext.Addresses.Where( item => item.Person.Id == personId).ToArray();
+            return this.dbContext.Addresses
+                .Where( item => item.Person.Id == personId &&  item.DeletedAt == null )
+                .ToArray();
         }
 
         public IEnumerable<ContactInformation>? GetAllContactInformation( Guid personId, int contactTypeId = 0){
             var _query = this.dbContext.ContactInformations
-                .Where( item => item.Person.Id == personId)
+                .Where( item => item.Person.Id == personId && item.DeletedAt == null)
                 .AsQueryable();
                 
             if(contactTypeId > 0){
