@@ -10,6 +10,7 @@ using AuthApi.Helper;
 using Microsoft.AspNetCore.Authorization;
 using AuthApi.Services;
 using AuthApi.Data.Exceptions;
+using System.ComponentModel.DataAnnotations;
 
 namespace AuthApi.Controllers
 {
@@ -60,6 +61,47 @@ namespace AuthApi.Controllers
         public ActionResult<IEnumerable<Preregistration>?> GetAllPreregisters()
         {
             return Ok( dbContext.Preregistrations.ToArray() );
+        }
+
+        
+        [Route("{preregisterID}")]
+        [HttpPost]
+        public IActionResult ValidateRegister(Guid preregisterID, [FromBody] ValidateRegisterRequest request){
+            try {
+
+                // Retrive validation enity
+                var preregister = this.dbContext.Preregistrations.Find(preregisterID);
+                if( preregister == null){
+                    return BadRequest(new {
+                        message = "Preregister record was not found on the database"
+                    });
+                }
+
+                var newPerson = this.preregisterService.ValidateRegister( preregister.Id, request );    
+                if( newPerson != null){
+                    return Ok( new {
+                        personId = newPerson.Id.ToString(),
+                        fullName = newPerson.FullName
+                    });
+                }
+
+                return BadRequest( new {
+                    message = "Cant register the person"
+                });
+            }
+            catch( ValidationException ve){
+                var errorsData = (Dictionary<string, object>) ve.Value!;
+                return UnprocessableEntity(new {
+                    Title = "One or more field had errors",
+                    Errors = errorsData
+                });
+            }
+            catch (System.Exception err) {
+                return BadRequest( new {
+                    message = err.Message
+                });
+            }
+
         }
 
     }
