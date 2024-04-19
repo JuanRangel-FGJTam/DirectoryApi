@@ -39,10 +39,6 @@ namespace AuthApi.Models
 
         public string? AppName {get;set;}
 
-        public IEnumerable<AddressResponse> Addresses {get;set;}
-        public IEnumerable<ContactResponse> ContactInformation {get;set;}
-
-
         public string FullName {
             get {
                 return string.Join(' ', new string[]{Name??"", FirstName??"", LastName??""});
@@ -64,14 +60,10 @@ namespace AuthApi.Models
 
         public PersonResponse( Guid personId ){
             this.PersonId = personId.ToString();
-            this.ContactInformation =  Array.Empty<ContactResponse>();
-            this.Addresses =  Array.Empty<AddressResponse>();
         }
 
         public PersonResponse( string personId ){
             this.PersonId = personId;
-            this.ContactInformation =  Array.Empty<ContactResponse>();
-            this.Addresses =  Array.Empty<AddressResponse>();
         }
 
 
@@ -106,14 +98,6 @@ namespace AuthApi.Models
             if(person.Occupation != null){
                 _person.OccupationId = person.Occupation.Id;
                 _person.OccupationName = person.Occupation.Name;
-            }
-
-            if( person.Addresses != null){
-                _person.Addresses = person.Addresses.Select( a => AddressResponse.FromEntity(a)).ToArray();
-            }
-
-            if( person.ContactInformations != null){
-                _person.ContactInformation = person.ContactInformations.Select( c => ContactResponse.FromEntity(c)).ToArray();
             }
 
             return _person;
