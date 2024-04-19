@@ -72,8 +72,9 @@ namespace AuthApi.Services
         /// Stored new person
         /// </summary>
         /// <param name="personRequest"></param>
+        /// <param name="personId">Set the person id (optional)</param>
         /// <exception cref="ValidationException"></exception>
-        public Person? StorePerson( PersonRequest personRequest)
+        public Person? StorePerson( PersonRequest personRequest, Guid? personId = null)
         {
 
             // * Create person entity
@@ -87,6 +88,10 @@ namespace AuthApi.Services
                 Birthdate = personRequest.Birthdate!.Value,
                 AppOwner = personRequest.AppName
             };
+
+            if( personId != null){
+                _person.Id = personId.Value;
+            }
 
             var errorsRelations = new Dictionary<string, object>();
 

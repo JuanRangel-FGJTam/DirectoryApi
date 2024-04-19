@@ -13,7 +13,7 @@ namespace AuthApi.Entities
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public Guid Id {get;set;}
         
-        public string Rfc {get;set;} = "";
+        public string? Rfc {get;set;}
         
         public string Curp {get;set;} = "";
         
@@ -41,6 +41,7 @@ namespace AuthApi.Entities
         public DateTime UpdatedAt {get;set;}
 
         public DateTime? DeletedAt {get;set;}
+        public DateTime? ValidatedAt {get;set;}
 
         public virtual IEnumerable<Address>? Addresses {get;set;}
         public virtual IEnumerable<ContactInformation>? ContactInformations {get;set;}
