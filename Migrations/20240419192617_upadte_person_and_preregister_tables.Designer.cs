@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AuthApi.Migrations
 {
     [DbContext(typeof(DirectoryDBContext))]
-    [Migration("20240408163130_add_columns_validated_at")]
-    partial class add_columns_validated_at
+    [Migration("20240419192617_upadte_person_and_preregister_tables")]
+    partial class upadte_person_and_preregister_tables
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -391,7 +391,6 @@ namespace AuthApi.Migrations
                         .HasColumnName("password");
 
                     b.Property<string>("Rfc")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("rfc");
 
@@ -400,6 +399,10 @@ namespace AuthApi.Migrations
                         .HasColumnType("datetime")
                         .HasColumnName("updatedAt")
                         .HasDefaultValueSql("getDate()");
+
+                    b.Property<DateTime?>("ValidatedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("validatedAt");
 
                     b.HasKey("Id");
 
@@ -421,9 +424,9 @@ namespace AuthApi.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("id");
 
-                    b.Property<DateTime>("Date")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2")
-                        .HasColumnName("date");
+                        .HasColumnName("createdAt");
 
                     b.Property<string>("Mail")
                         .HasColumnType("nvarchar(max)")
@@ -436,6 +439,10 @@ namespace AuthApi.Migrations
                     b.Property<string>("Phone")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("phone");
+
+                    b.Property<DateTime>("ValidTo")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("validTo");
 
                     b.HasKey("Id");
 

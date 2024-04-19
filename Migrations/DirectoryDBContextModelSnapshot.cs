@@ -397,9 +397,9 @@ namespace AuthApi.Migrations
                         .HasColumnName("updatedAt")
                         .HasDefaultValueSql("getDate()");
 
-                    b.Property<DateTime?>("ValidateAt")
+                    b.Property<DateTime?>("ValidatedAt")
                         .HasColumnType("datetime2")
-                        .HasColumnName("validateAt");
+                        .HasColumnName("validatedAt");
 
                     b.HasKey("Id");
 

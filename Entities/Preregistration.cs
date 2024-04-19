@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AuthApi.Entities
 {
-    
+    [Table("Preregistrations")]
     public class Preregistration {
 
         [Key]
