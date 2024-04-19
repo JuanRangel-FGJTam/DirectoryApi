@@ -41,7 +41,7 @@ namespace AuthApi.Entities
         public DateTime UpdatedAt {get;set;}
 
         public DateTime? DeletedAt {get;set;}
-        public DateTime? ValidateAt {get;set;}
+        public DateTime? ValidatedAt {get;set;}
 
         public virtual IEnumerable<Address>? Addresses {get;set;}
         public virtual IEnumerable<ContactInformation>? ContactInformations {get;set;}
