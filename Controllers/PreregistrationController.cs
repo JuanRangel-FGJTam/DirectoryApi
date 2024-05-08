@@ -75,11 +75,13 @@ namespace AuthApi.Controllers
         /// 
         ///     POST api/people
         ///     {
+        ///       "token": string,
         ///       "curp": "RAAE190394MTSNLL02",
         ///       "name": "Juan Salvador",
         ///       "firstName": "Rangel",
         ///       "lastName": "Almaguer",
-        ///       "birthdate": "1993-12-17"
+        ///       "birthdate": "1993-12-17",
+        ///       "appName" : string
         ///     }
         /// 
         /// </remarks>
@@ -87,32 +89,36 @@ namespace AuthApi.Controllers
         /// <param name="request"></param>
         /// <response code="201">Succsessfull stored the person</response>
         /// <response code="400">The request is not valid or are parameters missing</response>
-        /// <response code="404">The preregister record was not found</response>
+        /// <response code="404">The preregister record was not found by matching the token passed by the request</response>
         /// <response code="422">Some request params are not valid</response>
         [Route("{preregisterID}")]
         [HttpPost]
-        public IActionResult ValidateRegister(Guid preregisterID, [FromBody] ValidateRegisterRequest request){
+        public IActionResult ValidateRegister([FromBody] ValidateRegisterRequest request){
             try {
 
-                // Retrive validation enity
-                var preregister = this.dbContext.Preregistrations.Find(preregisterID);
+                // * Validate token 
+                var preregister =  this.preregisterService.GetPreregistrationByToken(request.Token!);
                 if( preregister == null){
-                    return NotFound(new {
-                        message = "Preregister record was not found on the database"
+                    return NotFound( new {
+                        Title = "The preregister record was not found",
+                        Message = $"The preregister record was not found with the token {request.Token!}"
                     });
                 }
 
+                // * Store the person data 
                 var newPerson = this.preregisterService.ValidateRegister( preregister.Id, request );    
-                if( newPerson != null){
-                    return Created("", new {
-                        personId = newPerson.Id.ToString(),
-                        fullName = newPerson.FullName
+                if( newPerson == null){
+                    return BadRequest( new {
+                        Title = "Cant register the person",
+                        Message = "Errot at create the person, the response was null"
                     });
                 }
 
-                return BadRequest( new {
-                    message = "Cant register the person"
+                return Created("", new {
+                    personId = newPerson.Id.ToString(),
+                    fullName = newPerson.FullName
                 });
+
             }
             catch( ValidationException ve){
                 var errorsData = (Dictionary<string, object>) ve.Value!;
@@ -123,7 +129,8 @@ namespace AuthApi.Controllers
             }
             catch (System.Exception err) {
                 return BadRequest( new {
-                    message = err.Message
+                    Title = "Unhandle exception",
+                    Message = err.Message
                 });
             }
 

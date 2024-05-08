@@ -39,6 +39,9 @@ namespace AuthApi.Models
         public int? OccupationId {get;set;}
 
         public string? AppName {get;set;}
+        
+        [Required]
+        public string? Token {get;set;}
 
     }
 }

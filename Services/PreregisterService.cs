@@ -87,11 +87,9 @@ namespace AuthApi.Services
         public Person? ValidateRegister( Guid preregisterId, ValidateRegisterRequest request){
             
             // Retrive validation enity
-            var preregister = this.dbContext.Preregistrations.Find(preregisterId);
-            if( preregister == null){
-                //TODO: Handle entity not found
-                return null;
-            }
+            var preregister = this.dbContext.Preregistrations.Find(preregisterId)
+                ?? throw new Exception($"Can't find a Preregistration record with ID:{preregisterId}");
+            
 
             // Generate new person request
             var newPersonRequest = new PersonRequest(){
@@ -124,7 +122,12 @@ namespace AuthApi.Services
             }
 
             return newPerson;
+        }
 
+        public Preregistration? GetPreregistrationByToken(string token){
+            return this.dbContext.Preregistrations
+             .Where(item => item.Token == token)
+             .FirstOrDefault();
         }
         
 
