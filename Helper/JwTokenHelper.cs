@@ -47,5 +47,35 @@ namespace AuthApi.Helper
 
             return tokenHandler.WriteToken(token);
         }
+
+        public static async Task<string> GenerateJwtToken(IDictionary<string,string> claims, JwtSettings jwtSettings, TimeSpan? customLifeTime = null)
+        {
+            var TokenLifetime = TimeSpan.FromDays( jwtSettings.LifeTimeDays);
+
+            //Generate token that is valid for 7 days
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var token = await Task.Run(() =>
+            {
+
+                var tokenKey = Encoding.ASCII.GetBytes( jwtSettings.Key );
+
+                IEnumerable<Claim> _claims = claims.Select(item => new Claim(item.Key, item.Value)).ToList<Claim>();
+
+                var tokenDescriptor = new SecurityTokenDescriptor{
+                    Subject = new ClaimsIdentity(_claims),
+                    Expires = DateTime.UtcNow.Add( customLifeTime ?? TokenLifetime),
+                    Issuer = jwtSettings.Issuer,
+                    Audience = jwtSettings.Audience,
+                    SigningCredentials = new SigningCredentials(
+                        new SymmetricSecurityKey(tokenKey),
+                        SecurityAlgorithms.HmacSha256Signature
+                    )
+                };
+
+                return tokenHandler.CreateToken( tokenDescriptor);
+            });
+
+            return tokenHandler.WriteToken(token);
+        }
     }
 }

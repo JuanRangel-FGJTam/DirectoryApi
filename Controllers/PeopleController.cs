@@ -17,6 +17,8 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.IdentityModel.Tokens;
 using System.Net.NetworkInformation;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Components.Web;
+using Microsoft.Extensions.Options;
 
 namespace AuthApi.Controllers
 {
@@ -24,11 +26,14 @@ namespace AuthApi.Controllers
     [Authorize]
     [ApiController]
     [Route("api/people")]
-    public class PeopleController(ILogger<PeopleController> logger, DirectoryDBContext context, PersonService personService) : ControllerBase
+    public class PeopleController(ILogger<PeopleController> logger, DirectoryDBContext context, PersonService personService, IEmailProvider emailProvider, IOptions<JwtSettings> optionsJwtSettings, IOptions<ResetPasswordSettings> optionsResetPasswordSettings ) : ControllerBase
     {
         private readonly ILogger<PeopleController> _logger = logger;
         private readonly DirectoryDBContext dbContext = context;
         private readonly PersonService personService = personService;
+        private readonly IEmailProvider emailProvider = emailProvider;
+        private readonly JwtSettings jwtSettings = optionsJwtSettings.Value;
+        private readonly ResetPasswordSettings resetPasswordSettings = optionsResetPasswordSettings.Value;
         
         
         /// <summary>
@@ -548,6 +553,68 @@ namespace AuthApi.Controllers
                     Message = ex.Message
                 });
             }
+        }
+
+
+
+        /// <summary>
+        /// Send email for reset the password
+        /// </summary>
+        /// <response code="200">Email sended successfully</response>
+        /// <response code="404">The email was not found on the database</response>
+        /// <response code="422">Error at sending the email</response>
+        [HttpPost]
+        [Route("email/resetPassword" )]
+        public async Task<ActionResult<ContactResponse?>> ResetPasswordEmail( [FromBody]  string? email )
+        {
+            // * Retrive person by the email
+            var person = this.personService.Search( email!, null, null ).FirstOrDefault();
+            if( person == null){
+                return NotFound( new {
+                    Title="Email not found",
+                    Message = $"The email {email} was not found on the database"
+                });
+            }
+
+            // * Send email
+            try{
+                var emailID = await SendResetPasswordEmail(person)
+                    ?? throw new Exception($"Error at sending the email to {person.Email!}, the response was null");
+
+                _logger.LogInformation("Email sended for reset the password of the user ID:'{person_id}' to the email '{email}'", person.Id.ToString(), person.Email! );
+                return Ok( new {
+                    Title = $"Email sended",
+                    Message = $"Email for reset the password was sended to '{person.Email!}', response id:'{emailID}'"
+                });
+            }
+            catch(Exception err){
+                _logger.LogError(err, "Error at attempting to send the email for reset the password of the user ID:'{person_Id}' to the email '{email}'", person.Id.ToString(), person.Email! );
+                return UnprocessableEntity( new {
+                    Title = "Unhandle exception attempting to send the email",
+                    err.Message
+                });
+            }
+
+        }
+
+        private async Task<string> SendResetPasswordEmail(Person person){
+            
+            // Token life time 1 hour
+            var tokenLifeTime = TimeSpan.FromSeconds( resetPasswordSettings.TokenLifeTimeSeconds );
+
+            // * Generate the token
+            var claims = new Dictionary<string,string>(){
+                {"id", person.Id.ToString()},
+                {"email", person.Email!}
+            };
+            var token = await JwTokenHelper.GenerateJwtToken(claims, jwtSettings, tokenLifeTime);
+
+            // TODO: Generate html
+            var htmlBody = $" <a href='{resetPasswordSettings.DestinationUrl}'></a>{token}";
+
+            // TODO: Send email
+            return await this.emailProvider.SendEmail( [person.Email!], "Actualizacion the contraseña", htmlBody );
+            
         }
 
     }
