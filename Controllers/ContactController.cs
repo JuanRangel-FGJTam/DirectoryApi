@@ -60,6 +60,7 @@ namespace AuthApi.Controllers
         /// <response code="201">The contact is stored</response>
         /// <response code="400">The request is not valid</response>
         /// <response code="401">Auth token is not valid or is not present</response>
+        /// <response code="422">The contact information is already stored</response>
         [HttpPost]
         [Route("")]
         public IActionResult StoreContact( ContactRequest contactRequest )
@@ -104,6 +105,14 @@ namespace AuthApi.Controllers
                 {
                     Title = "One or more relations are not found",
                     Errors = errorsRelations
+                });
+            }
+
+            // Validate and prevent if the value is already stored
+            if( dbContext.ContactInformations.Where(item => item.Value == contactRequest.Value).Any() )
+            {  
+                return StatusCode( StatusCodes.Status422UnprocessableEntity, new {
+                    Title = "El telefono o correo ya se encuentra registrado"
                 });
             }
 
