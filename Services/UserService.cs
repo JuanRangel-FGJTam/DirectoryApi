@@ -78,7 +78,6 @@ namespace AuthApi.Services
             var _user = await db.Users.FirstOrDefaultAsync( u => u.Id == userId);
             if( _user == null){
                 errorMessages.Add( new KeyValuePair<string, string>("userId", "User not found"));
-                
             }
 
             // Validate email unique
@@ -102,9 +101,9 @@ namespace AuthApi.Services
 
 
             // Set new values
-            _user.FirstName = userUpdateRequest.FirstName != null ? userUpdateRequest.FirstName : _user.FirstName;
-            _user.LastName = userUpdateRequest.LastName !=null ?userUpdateRequest.LastName :_user.LastName;
-            _user.Email = userUpdateRequest.Email != null ?userUpdateRequest.Email : _user.Email;
+            _user!.FirstName = userUpdateRequest.FirstName ?? _user.FirstName;
+            _user.LastName = userUpdateRequest.LastName ?? _user.LastName;
+            _user.Email = userUpdateRequest.Email ?? _user.Email;
             if( userUpdateRequest.Password != null){
                 if( !ValidatePassword(userUpdateRequest.Password, userUpdateRequest.ConfirmPassword, out KeyValuePair<string,string>? validationResult )){
                     errorMessages.Add( validationResult!.Value  );

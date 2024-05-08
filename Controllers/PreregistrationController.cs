@@ -85,13 +85,12 @@ namespace AuthApi.Controllers
         ///     }
         /// 
         /// </remarks>
-        /// <param name="preregisterID"></param>
         /// <param name="request"></param>
         /// <response code="201">Succsessfull stored the person</response>
         /// <response code="400">The request is not valid or are parameters missing</response>
         /// <response code="404">The preregister record was not found by matching the token passed by the request</response>
         /// <response code="422">Some request params are not valid</response>
-        [Route("{preregisterID}")]
+        [Route("validate")]
         [HttpPost]
         public IActionResult ValidateRegister([FromBody] ValidateRegisterRequest request){
             try {

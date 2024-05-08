@@ -624,12 +624,9 @@ namespace AuthApi.Controllers
         /// <summary>
         /// Udate the person by token
         /// </summary>
-        /// <remarks>
-        /// You can pass only the fields you want to update
-        /// </remarks>
         /// <param name="resetPasswordRequest"></param>
         /// <returns></returns>
-        /// <response code="200"> The password was updated</response>
+        /// <response code="200">The password was updated</response>
         /// <response code="400">The request is not valid</response>
         /// <response code="401">Auth token is not valid or is not present</response>
         [HttpPatch]
