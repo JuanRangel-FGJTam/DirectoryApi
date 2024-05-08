@@ -18,7 +18,7 @@ namespace AuthApi.Entities
         public DateTime CreatedAt {get;set;} = DateTime.Now;
         public DateTime UpdatedAt {get;set;} = DateTime.Now;
         public DateTime ValidTo {get;set;} = DateTime.Now.AddDays(2);
-        public string Token {get;set;} = null!;
+        public string Token {get;set;} = "";
         
     }
 }

@@ -8,7 +8,7 @@ namespace AuthApi.Data
     public interface IEmailProvider
     {
 
-        public Task<string> SendEmail( IEnumerable<string> to, string subject, object data);
+        public Task<string> SendEmail( string emailDestination, string subject, object data);
         
     }
 }

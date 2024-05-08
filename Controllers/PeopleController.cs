@@ -612,10 +612,10 @@ namespace AuthApi.Controllers
             var token = await JwTokenHelper.GenerateJwtToken(claims, jwtSettings, tokenLifeTime);
 
             // TODO: Generate html
-            var htmlBody = $" <a href='{resetPasswordSettings.DestinationUrl}'></a>{token}";
+            var htmlBody = $" <a href='{resetPasswordSettings.DestinationUrl}'>Reiniciar contraseña</a>{token}";
 
             // TODO: Send email
-            return await this.emailProvider.SendEmail( [person.Email!], "Actualizacion the contraseña", htmlBody );
+            return await this.emailProvider.SendEmail( person.Email!, "Actualizacion the contraseña", htmlBody );
             
         }
 

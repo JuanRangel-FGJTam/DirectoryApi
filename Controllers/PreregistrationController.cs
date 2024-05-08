@@ -32,9 +32,8 @@ namespace AuthApi.Controllers
         /// <response code="400">The request is not valid ore some error are present</response>
         /// <response code="422">Some request params are not valid</response>
         [HttpPost]
-        public IActionResult RegisterUser( PreregistrationRequest request )
+        public async Task<IActionResult> RegisterUser( PreregistrationRequest request )
         {
-
             // Validate request
             if (!ModelState.IsValid)
             {
@@ -43,7 +42,7 @@ namespace AuthApi.Controllers
     
             // Create the pre-register record
             try{
-                var _preRegisterId = this.preregisterService.CreatePreregister(request);
+                var _preRegisterId = await this.preregisterService.CreatePreregister(request);
                 return Created("", new {
                     Id = _preRegisterId
                 });

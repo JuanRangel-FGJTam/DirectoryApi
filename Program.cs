@@ -8,6 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.Configure<JwtSettings>( builder.Configuration.GetSection("JwtSettings"));
 builder.Services.Configure<ResetPasswordSettings>( builder.Configuration.GetSection("ResetPasswordSettings"));
+builder.Services.Configure<EmailSettings>( builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddJwtAuthentication( builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>()! );
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -23,6 +24,7 @@ builder.Services.AddScoped<ICryptographyService>( o =>
 );
 builder.Services.AddScoped<PersonService>();
 builder.Services.AddScoped<PreregisterService>();
+builder.Services.AddScoped<IEmailProvider, FGJEmailProvider>();
 builder.Services.AddMySwaggerConfig();
 builder.Services.ConfigureHttpJsonOptions( o => {
     o.SerializerOptions.AllowTrailingCommas = true;
