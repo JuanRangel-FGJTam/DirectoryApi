@@ -19,6 +19,8 @@ using System.Net.NetworkInformation;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Options;
+using System.Diagnostics;
+using System.Security.Claims;
 
 namespace AuthApi.Controllers
 {
@@ -564,7 +566,7 @@ namespace AuthApi.Controllers
         /// <response code="404">The email was not found on the database</response>
         /// <response code="422">Error at sending the email</response>
         [HttpPost]
-        [Route("email/resetPassword" )]
+        [Route("password/reset" )]
         public async Task<ActionResult<ContactResponse?>> ResetPasswordEmail( [FromBody]  string? email )
         {
             // * Retrive person by the email
@@ -615,6 +617,63 @@ namespace AuthApi.Controllers
             // TODO: Send email
             return await this.emailProvider.SendEmail( [person.Email!], "Actualizacion the contraseña", htmlBody );
             
+        }
+
+        
+
+        /// <summary>
+        /// Udate the person by token
+        /// </summary>
+        /// <remarks>
+        /// You can pass only the fields you want to update
+        /// </remarks>
+        /// <param name="resetPasswordRequest"></param>
+        /// <returns></returns>
+        /// <response code="200"> The password was updated</response>
+        /// <response code="400">The request is not valid</response>
+        /// <response code="401">Auth token is not valid or is not present</response>
+        [HttpPatch]
+        [Route ("password/reset")]
+        public IActionResult ResetPassword( [FromBody] ResetPasswordRequest resetPasswordRequest )
+        {
+
+            // Validate request
+            if(!ModelState.IsValid){
+                return BadRequest(ModelState);
+            }
+            
+            try{
+
+                // * Validate reset password token and retrive person_id claim
+                ClaimsPrincipal claimsPrincipal = JwTokenHelper.ValidateToken( resetPasswordRequest.Token, jwtSettings);
+                var claimId = claimsPrincipal.Claims.Where( claim => claim.Type == "id").FirstOrDefault()
+                    ?? throw new Exception("The reset password token was not valid, missing claim");
+                Guid personID = Guid.Parse(claimId!.Value);
+                
+                // * Get relations and validate
+                var errorsRelations = new Dictionary<string, object>();
+
+                // * Retrive the person data
+                Person person = this.dbContext.People.Find(personID)
+                    ?? throw new Exception($"Person id {personID} not found");
+
+                // * Update the password
+                this.personService.SetPassword( person.Id, resetPasswordRequest.Password);
+                
+                // Return response
+                return Ok( new {
+                    Title = "Password updated",
+                    Message = $"The password of the person email '{person.Email!}' was updated"
+                });
+
+            }catch(Exception err){
+                this._logger.LogError( err, "Error at attempting to reset the password of the token [{token}]", resetPasswordRequest.Token );
+                return UnprocessableEntity( new {
+                    Title = "Unhandle exception",
+                    err.Message
+                });
+            }
+
         }
 
     }
