@@ -19,5 +19,7 @@ namespace AuthApi.Models
         [Required]
         [Compare( nameof(Password), ErrorMessage = "Las contraseñas no coinciden")]
         public string ConfirmPassword {get;set;} = null!;
+
+        public string? Url {get;set;} = null;
     }
 }
