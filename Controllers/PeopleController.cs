@@ -607,12 +607,11 @@ namespace AuthApi.Controllers
         /// <response code="200">The password was updated</response>
         /// <response code="400">The request is not valid</response>
         /// <response code="401">Auth token is not valid or is not present</response>
-        /// <response code="422">Auth token is not valid or is not present</response>
+        /// <response code="422">Unhandle exception</response>
         [HttpPatch]
         [Route ("password/reset")]
         public IActionResult ResetPassword( [FromBody] ResetPasswordRequest resetPasswordRequest )
         {
-
             // Validate request
             if(!ModelState.IsValid){
                 return BadRequest(ModelState);
@@ -622,8 +621,13 @@ namespace AuthApi.Controllers
 
                 // * Validate reset password token and retrive person_id claim
                 ClaimsPrincipal claimsPrincipal = JwTokenHelper.ValidateToken( resetPasswordRequest.Token, jwtSettings);
-                var claimId = claimsPrincipal.Claims.Where( claim => claim.Type == "id").FirstOrDefault()
-                    ?? throw new Exception("The reset password token was not valid, missing claim");
+                var claimId = claimsPrincipal.Claims.Where( claim => claim.Type == "id").FirstOrDefault();
+                if( claimId == null){
+                    return BadRequest(new {
+                        Title = "The reset password token is not valid",
+                        Message = "The reset password token was not valid, missing claim"
+                    });
+                }
                 Guid personID = Guid.Parse(claimId!.Value);
                 
                 // * Get relations and validate
@@ -631,7 +635,7 @@ namespace AuthApi.Controllers
 
                 // * Retrive the person data
                 Person person = this.dbContext.People.Find(personID)
-                    ?? throw new Exception($"Person id {personID} not found");
+                    ?? throw new KeyNotFoundException($"Person id {personID} not found");
 
                 // * Update the password
                 this.personService.SetPassword( person.Id, resetPasswordRequest.Password);
@@ -642,6 +646,11 @@ namespace AuthApi.Controllers
                     Message = $"The password of the person email '{person.Email!}' was updated"
                 });
 
+            }catch(KeyNotFoundException  knfe){
+                return BadRequest( new {
+                    Title = "Element not found",
+                    knfe.Message
+                });
             }catch(Exception err){
                 this._logger.LogError( err, "Error at attempting to reset the password of the token [{token}]", resetPasswordRequest.Token );
                 return UnprocessableEntity( new {

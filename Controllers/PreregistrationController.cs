@@ -27,6 +27,7 @@ namespace AuthApi.Controllers
 
 
         /// <summary>
+        /// Pre register the user and send a email to verify his information
         /// </summary>
         /// <response code="201">Succsessfull create the pre-register record</response>
         /// <response code="400">The request is not valid ore some error are present</response>

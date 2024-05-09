@@ -29,6 +29,7 @@ namespace AuthApi.Services
         /// <returns> People pre-registration id </returns>
         /// <exception cref="InvalidOperationException"></exception>
         /// <exception cref="SimpleValidationException"></exception>
+        /// <exception cref="Exception"></exception>
         public async Task<string?> CreatePreregister(PreregistrationRequest request){
 
             // * Prevenet email diplicated
@@ -75,10 +76,10 @@ namespace AuthApi.Services
 
 
             // * Sende the email with the token
-            // TODO: make a thread 
-            await Task.Run( async ()=>{
-                await SendEmail( preRegister, request.Url );
-            });
+            var response = await SendEmail( preRegister, request.Url )
+                ?? throw new Exception("Error at sending email of validation, response is null");
+            logger.LogError("Error at sending email to validate the user: response {response}", response );
+            
 
             // * Return the id generated
             return preRegister.Id.ToString();
@@ -132,16 +133,16 @@ namespace AuthApi.Services
         }
         
 
-        private async Task SendEmail( Preregistration preregistration, string? url = null){
+        private async Task<string?> SendEmail( Preregistration preregistration, string? url = null){
             
-            // TODO: Make url destination
+            // TODO: Set a base url endpoint 
             var _ref = string.Format("{0}?t={1}",
                 url ?? "http://auth.fgjtam.gob.mx/person/validate/email",
                 preregistration.Token
             );
 
             // * Make html body
-            var _htmlBody = ValidationEmailTemplate().Replace("{{urlRef}}", _ref);
+            var _htmlBody = EmailTemplates.ValidationEmail(_ref);
 
             // * Send email
             try{
@@ -149,13 +150,11 @@ namespace AuthApi.Services
                     return await this.emailProvider.SendEmail( preregistration.Mail!, "Validacion de correo", _htmlBody );
                 });
                 logger.LogInformation( "Email ID:{emailID} sending", emailID);
+                return emailID;
             }catch(Exception err){
                 logger.LogError( err, "Error at attempting to send Email for validation to email {mail}; {message}", preregistration.Mail!, err.Message);
+                return null;
             }
-        }
-
-        private static string ValidationEmailTemplate(){
-            return "<body><table width='100%' border='0' cellspacing='0' cellpadding='0'><tr><td align='center' style='padding: 20px;'><table class='content' width='600' border='0' cellspacing='0' cellpadding='0' style='border-collapse: collapse;'><tr><td class='body' style='padding: 40px; text-align: left; font-size: 16px; line-height: 1.6;'>Hello, All! <br>Lorem odio soluta quae dolores sapiente voluptatibus recusandae aliquam fugit ipsam.</td></tr><tr><td style='padding: 0px 40px 0px 40px; text-align: center;'><table cellspacing='0' cellpadding='0' style='margin: auto;'><tr><td align='center' style='background-color: #345C72; padding: 10px 20px; border-radius: 5px;'><a href='{{urlRef}}' target='_blank' style='color: #ffffff; text-decoration: none; font-weight: bold;'>Validar Correo</a></td></tr></table></td></tr><tr><td class='body' style='padding: 40px; text-align: left; font-size: 16px; line-height: 1.6;'>Lorem ipsum dolor sit amet consectetur adipisicing elit. Veniam corporis sint eum nemo animi velit exercitationem impedit. </td></tr></table></td></tr></table></body>";
         }
 
     }
