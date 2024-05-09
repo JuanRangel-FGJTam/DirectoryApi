@@ -567,14 +567,14 @@ namespace AuthApi.Controllers
         /// <response code="422">Error at sending the email</response>
         [HttpPost]
         [Route("password/reset" )]
-        public async Task<ActionResult<ContactResponse?>> ResetPasswordEmail( [FromBody]  string? email )
+        public async Task<ActionResult<ContactResponse?>> ResetPasswordEmail( [FromBody]  ResetPasswordEmailRequest resetPasswordEmailRequest )
         {
             // * Retrive person by the email
-            var person = this.personService.Search( email!, null, null ).FirstOrDefault();
+            var person = this.personService.Search( resetPasswordEmailRequest.Email!, null, null ).FirstOrDefault();
             if( person == null){
                 return NotFound( new {
                     Title="Email not found",
-                    Message = $"The email {email} was not found on the database"
+                    Message = $"The email {resetPasswordEmailRequest.Email} was not found on the database"
                 });
             }
 
@@ -583,10 +583,10 @@ namespace AuthApi.Controllers
                 var emailID = await SendResetPasswordEmail(person)
                     ?? throw new Exception($"Error at sending the email to {person.Email!}, the response was null");
 
-                _logger.LogInformation("Email sended for reset the password of the user ID:'{person_id}' to the email '{email}'", person.Id.ToString(), person.Email! );
+                _logger.LogInformation("Email sended for reset the password of the user ID:'{person_id}' to the email '{email}' : response:{response}", person.Id.ToString(), person.Email!, emailID );
                 return Ok( new {
                     Title = $"Email sended",
-                    Message = $"Email for reset the password was sended to '{person.Email!}', response id:'{emailID}'"
+                    Message = $"Email for reset the password was sended to '{person.Email!}'"
                 });
             }
             catch(Exception err){
@@ -596,30 +596,8 @@ namespace AuthApi.Controllers
                     err.Message
                 });
             }
-
         }
 
-        private async Task<string> SendResetPasswordEmail(Person person){
-            
-            // Token life time 1 hour
-            var tokenLifeTime = TimeSpan.FromSeconds( resetPasswordSettings.TokenLifeTimeSeconds );
-
-            // * Generate the token
-            var claims = new Dictionary<string,string>(){
-                {"id", person.Id.ToString()},
-                {"email", person.Email!}
-            };
-            var token = await JwTokenHelper.GenerateJwtToken(claims, jwtSettings, tokenLifeTime);
-
-            // TODO: Generate html
-            var htmlBody = $" <a href='{resetPasswordSettings.DestinationUrl}'>Reiniciar contraseña</a>{token}";
-
-            // TODO: Send email
-            return await this.emailProvider.SendEmail( person.Email!, "Actualizacion the contraseña", htmlBody );
-            
-        }
-
-        
 
         /// <summary>
         /// Udate the person by token
@@ -629,6 +607,7 @@ namespace AuthApi.Controllers
         /// <response code="200">The password was updated</response>
         /// <response code="400">The request is not valid</response>
         /// <response code="401">Auth token is not valid or is not present</response>
+        /// <response code="422">Auth token is not valid or is not present</response>
         [HttpPatch]
         [Route ("password/reset")]
         public IActionResult ResetPassword( [FromBody] ResetPasswordRequest resetPasswordRequest )
@@ -673,5 +652,23 @@ namespace AuthApi.Controllers
 
         }
 
+
+        private async Task<string> SendResetPasswordEmail(Person person){
+            // * Set token life time for 1 hour
+            var tokenLifeTime = TimeSpan.FromSeconds( resetPasswordSettings.TokenLifeTimeSeconds );
+
+            // * Generate the token
+            var claims = new Dictionary<string,string>(){
+                {"id", person.Id.ToString()},
+                {"email", person.Email!}
+            };
+            var token = await JwTokenHelper.GenerateJwtToken(claims, jwtSettings, tokenLifeTime);
+
+            // * Generate html
+            var htmlBody = EmailTemplates.ResetPassword( resetPasswordSettings.DestinationUrl + $"?t={token}" );
+
+            // * Send email
+            return await emailProvider.SendEmail( person.Email!, "Restablecer contraseña", htmlBody );
+        }
     }
 }
