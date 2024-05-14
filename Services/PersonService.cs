@@ -74,7 +74,7 @@ namespace AuthApi.Services
         /// <param name="personRequest"></param>
         /// <param name="personId">Set the person id (optional)</param>
         /// <exception cref="ValidationException"></exception>
-        public Person? StorePerson( PersonRequest personRequest, Guid? personId = null)
+        public Person? StorePerson( PersonRequest personRequest, Guid? personId = null, DateTime? validateAt = null)
         {
 
             // * Create person entity
@@ -160,6 +160,9 @@ namespace AuthApi.Services
                 throw new ValidationException("Some errors at store the person", null, errorsRelations );
             }
 
+            if( validateAt != null){
+                _person.ValidatedAt = validateAt.Value;
+            }
 
             // * Register person
             this.dbContext.People.Add( _person );

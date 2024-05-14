@@ -113,7 +113,7 @@ namespace AuthApi.Services
 
 
             // Create person record
-            var newPerson = personService.StorePerson(newPersonRequest, preregister.Id) ?? throw new Exception("Can't store the new person, null data was returned");
+            var newPerson = personService.StorePerson(newPersonRequest, preregister.Id, DateTime.Now) ?? throw new Exception("Can't store the new person, null data was returned");
 
             // Delete the pre-register record
             try{
