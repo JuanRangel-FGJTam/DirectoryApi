@@ -24,7 +24,8 @@ namespace AuthApi.Entities
         public string? LastName {get;set;}
         
         public string? Email {get;set;}
-
+        
+        [Column(TypeName="Date")]
         public DateTime Birthdate {get;set;}
         
         public DateTime CreatedAt {get;set;}
