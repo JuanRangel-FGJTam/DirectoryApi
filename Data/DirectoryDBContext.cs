@@ -21,6 +21,7 @@ namespace AuthApi.Data
         public DbSet<Address> Addresses { get; set; }
         public DbSet<ContactInformation> ContactInformations { get; set; }
         public DbSet<User> Users {get;set;}
+        public DbSet<Session> Sessions {get;set;}
 
         private readonly ICryptographyService cryptographyService;
 
@@ -96,12 +97,19 @@ namespace AuthApi.Data
                 .ValueGeneratedOnAddOrUpdate();
             contactInformation.Navigation( n => n.ContactType ).AutoInclude();
 
-            // * Pre-Registration enityt
+            // * Pre-Registration entity
             var preRegister = modelBuilder.Entity<Preregistration>();
             preRegister.Property( p => p.Password).HasConversion(
                 v => cryptographyService.EncryptData(v??""),
                 v => cryptographyService.DecryptData(v)
             );
+
+            // * Session entity
+            var sessionEntity =  modelBuilder.Entity<Session>();
+            sessionEntity.Property( b => b.BegginAt)
+                .HasDefaultValueSql("getDate()")
+                .ValueGeneratedOnAdd();
+            sessionEntity.Navigation(n => n.Person).AutoInclude();
 
             // * Seed DB
             modelBuilder.Entity<User>().HasData(
@@ -117,7 +125,6 @@ namespace AuthApi.Data
             base.OnModelCreating(modelBuilder);
             
         }
-
 
     }
 }
