@@ -30,6 +30,24 @@ namespace AuthApi.Controllers
         private readonly SessionService sessionService = sessionService;
         
 
+        /// <summary>
+        /// Store the new person using the pre-register record for retriving the email and password
+        /// </summary>
+        /// <remarks>
+        /// Sample response:
+        /// 
+        ///     {
+        ///         Id: int,
+        ///         Name: string,
+        ///         SessionToken: string
+        ///     }
+        /// 
+        /// </remarks>
+        /// <param name="authenticateRequest"></param>
+        /// <response code="200">Succsessfull stored the person</response>
+        /// <response code="400">The request is not valid or are parameters missing</response>
+        /// <response code="401">Credentials are not valid</response>
+        /// <response code="409">Unhandle exception at created the session record</response>
         [HttpPost]
         [Route("auth")]
         public IActionResult AuthenticateTest([FromBody] AuthenticateRequest authenticateRequest)
@@ -39,12 +57,8 @@ namespace AuthApi.Controllers
             if( !ModelState.IsValid){
                 return BadRequest(ModelState);
             }
-            var _persons = this.personService.Search( authenticateRequest.Email!, null, null );
-            if( _persons.IsNullOrEmpty()){
-                return NotFound(new {
-                    Message = "El correo no se encuentra registrado en la base de datos"
-                });
-            }
+
+            // * Validate credentials
             var person = this.personService.AuthPerson( authenticateRequest.Email!, authenticateRequest.Password!);
             if( person == null){
                 return Unauthorized(new {
@@ -58,7 +72,7 @@ namespace AuthApi.Controllers
                 string userAgent = Request.Headers["User-Agent"].ToString();
                 var SessionToken = sessionService.StartPersonSession( person, ipAddress, userAgent);
 
-                // Set the cookie
+                // * Set the cookie for the response
                 Response.Cookies.Append("FGJTamSession", SessionToken, new CookieOptions
                 {
                     Path = "/",
@@ -86,9 +100,18 @@ namespace AuthApi.Controllers
         }
 
 
+        /// <summary>
+        /// Retrive the person data by the cookie
+        /// </summary>
+        /// <remarks>
+        /// </remarks>
+        /// <response code="200">Succsessfull stored the person</response>
+        /// <response code="400">The session cookie was not found</response>
+        /// <response code="403">The session token is not valid or expired</response>
+        /// <response code="409">Unhandle exception</response>
         [HttpGet]
         [Route("me")]
-        public IActionResult GetSessionPerson()
+        public ActionResult<Person?> GetSessionPerson()
         {
             // Retrieve the cookie value by name
             var cookieValue = Request.Cookies["FGJTamSession"];
@@ -104,9 +127,7 @@ namespace AuthApi.Controllers
 
             try{
                 var person = this.sessionService.GetPersonSession( cookieValue);
-                return Ok(new {
-                    person
-                });
+                return Ok( person );
             }catch(SessionNotValid sbv){
                 _logger.LogError(sbv, "Session token not valid");
                 return StatusCode( 403, new { sbv.Message });
@@ -115,8 +136,7 @@ namespace AuthApi.Controllers
                 return Conflict( new {
                     Message = "Error no controlado al obtener los datos de la sesion"
                 });
-            }
-            
+            } 
         }
 
     }
