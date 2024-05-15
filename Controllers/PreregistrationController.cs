@@ -19,10 +19,11 @@ namespace AuthApi.Controllers
     [Authorize]
     [ApiController]
     [Route("api/pre-registration")]
-    public class PreregistrationController(DirectoryDBContext context, PreregisterService preregisterService, ILogger<PreregistrationController> logger) : ControllerBase
+    public class PreregistrationController(DirectoryDBContext context, PreregisterService preregisterService, ILogger<PreregistrationController> logger, SessionService sessionService ) : ControllerBase
     {
         private readonly DirectoryDBContext dbContext = context;
         private readonly PreregisterService preregisterService = preregisterService;
+        private readonly SessionService sessionService = sessionService;
         private readonly ILogger<PreregistrationController> logger = logger;
 
 
@@ -48,7 +49,9 @@ namespace AuthApi.Controllers
                     Id = _preRegisterId
                 });
             }catch(SimpleValidationException ve){
-                return UnprocessableEntity( ve.ValidationErrors );
+                return UnprocessableEntity( new {
+                    errors = ve.ValidationErrors.ToDictionary()
+                } );
             }catch(Exception err){
                 logger.LogError(err, "Error at trying to generate a new preregistration record; {message}", err.Message );
                 return BadRequest( new {
@@ -84,6 +87,14 @@ namespace AuthApi.Controllers
         ///       "appName" : string
         ///     }
         /// 
+        /// Sample response:
+        /// 
+        ///     {
+        ///       "personId": string,
+        ///       "fullName": string
+        ///       "sessionToken": string
+        ///     }
+        /// 
         /// </remarks>
         /// <param name="request"></param>
         /// <response code="201">Succsessfull stored the person</response>
@@ -113,23 +124,30 @@ namespace AuthApi.Controllers
                     });
                 }
 
+                // * Create a session 
+                string ipAddress = HttpContext.Connection.RemoteIpAddress!.ToString();
+                string userAgent = Request.Headers["User-Agent"].ToString();
+                var sessionToken = sessionService.StartPersonSession( newPerson, ipAddress, userAgent );
+
+                // * Return the data
                 return Created("", new {
                     personId = newPerson.Id.ToString(),
-                    fullName = newPerson.FullName
+                    fullName = newPerson.FullName,
+                    sessionToken
                 });
 
             }
             catch( ValidationException ve){
                 var errorsData = (Dictionary<string, object>) ve.Value!;
                 return UnprocessableEntity(new {
-                    Title = "One or more field had errors",
+                    Title = "Uno o mas campos tienen error",
                     Errors = errorsData
                 });
             }
             catch (System.Exception err) {
                 return BadRequest( new {
                     Title = "Unhandle exception",
-                    Message = err.Message
+                    err.Message
                 });
             }
 

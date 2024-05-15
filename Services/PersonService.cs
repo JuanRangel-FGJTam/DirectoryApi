@@ -98,22 +98,22 @@ namespace AuthApi.Services
             // Validate unique parameters
             var rfcStored =  dbContext.People.Where( p => p.DeletedAt == null && p.Rfc == personRequest.Rfc ).Count();
             if(rfcStored > 0){
-                errorsRelations.Add( "rfc", new string[]{ $"The RFC is already stored"} );
+                errorsRelations.Add( "rfc", new string[]{ $"El RFC ya se encuentra en la base de datos"} );
             }
 
             var curpStored =  dbContext.People.Where( p => p.DeletedAt == null && p.Curp == personRequest.Curp ).Count();
             if(curpStored > 0){
-                errorsRelations.Add( "curp", new string[]{ $"The CURP is already stored"} );
+                errorsRelations.Add( "curp", new string[]{ $"El CURP ya se encuentra en la base de datos"} );
             }
 
             var emailStored =  dbContext.People.Where( p => p.DeletedAt == null && p.Email == personRequest.Email ).Count();
             if(emailStored > 0){
-                errorsRelations.Add( "email", new string[]{ $"The Email is already stored"} );
+                errorsRelations.Add( "email", new string[]{ $"El correo electronico ya se encuentra en la base de datos"} );
             }
 
             if( !string.IsNullOrEmpty(personRequest.Password) ){
                 if( !personRequest.Password.Equals( personRequest.ConfirmPassword, StringComparison.CurrentCultureIgnoreCase )){
-                    errorsRelations.Add( "ConfirmedPassword", "The password are not equals." );
+                    errorsRelations.Add( "ConfirmedPassword", "Las contraseñas no coinciden." );
                 }else{
                     _person.Password = cryptographyService.HashData( personRequest.Password );
                 }
@@ -122,7 +122,7 @@ namespace AuthApi.Services
             // Validate relations
             if( personRequest.GenderId != null){
                 try{
-                    _person.Gender = dbContext.Gender.Find(personRequest.GenderId) ?? throw new Exception("Gender id not found");
+                    _person.Gender = dbContext.Gender.Find(personRequest.GenderId) ?? throw new Exception("Genero no encontrado");
                 }catch(Exception err)
                 {
                     errorsRelations.Add("GenderID", err.Message);
@@ -131,7 +131,7 @@ namespace AuthApi.Services
 
             if( personRequest.MaritalStatusId != null){
                 try{
-                    _person.MaritalStatus = dbContext.MaritalStatus.Find(personRequest.MaritalStatusId) ?? throw new Exception("Marital status id not found");
+                    _person.MaritalStatus = dbContext.MaritalStatus.Find(personRequest.MaritalStatusId) ?? throw new Exception("Estado civil no encontrado");
                 }catch(Exception err)
                 {
                     errorsRelations.Add("MaritalStatusId", err.Message);
@@ -140,7 +140,7 @@ namespace AuthApi.Services
 
             if( personRequest.NationalityId != null){
                 try{
-                    _person.Nationality = dbContext.Nationality.Find(personRequest.NationalityId) ?? throw new Exception("Nationality id not found");
+                    _person.Nationality = dbContext.Nationality.Find(personRequest.NationalityId) ?? throw new Exception("Nacionalidad no encontrado");
                 }catch(Exception err)
                 {
                     errorsRelations.Add("NationalityId", err.Message);
@@ -149,7 +149,7 @@ namespace AuthApi.Services
 
             if( personRequest.OccupationId != null){
                 try{
-                    _person.Occupation = dbContext.Occupation.Find(personRequest.OccupationId) ?? throw new Exception("Occupation id not found");
+                    _person.Occupation = dbContext.Occupation.Find(personRequest.OccupationId) ?? throw new Exception("Ocupacion no encontrado");
                 }catch(Exception err)
                 {
                     errorsRelations.Add("OccupationId", err.Message);

@@ -11,19 +11,19 @@ namespace AuthApi.Models
 
         public string? Rfc {get;set;}
         
-        [Required]
+        [Required(ErrorMessage = "El curp es requerido")]
         public string? Curp {get;set;}
         
-        [Required]
+        [Required(ErrorMessage = "El nombre es requerido")]
         public string? Name {get;set;}
         
-        [Required]
+        [Required(ErrorMessage = "El apellido paterno es requerido")]
         public string? FirstName {get;set;}
        
-        [Required]
+        [Required(ErrorMessage = "El apellido materno es requerido")]
         public string? LastName {get;set;}
         
-        [Required]
+        [Required(ErrorMessage = "La fecha de nacimiento es requerido")]
         public DateTime? Birthdate {get;set;}
 
         [Range(1, 99)]
@@ -40,7 +40,7 @@ namespace AuthApi.Models
 
         public string? AppName {get;set;}
         
-        [Required]
+        [Required (ErrorMessage = "El token de pre-registro es requerido")]
         public string? Token {get;set;}
 
     }

@@ -90,7 +90,7 @@ namespace AuthApi.Services
             
             // Retrive validation enity
             var preregister = this.dbContext.Preregistrations.Find(preregisterId)
-                ?? throw new Exception($"Can't find a Preregistration record with ID:{preregisterId}");
+                ?? throw new Exception($"No se encontro el preregistro ID:{preregisterId}");
             
 
             // Generate new person request
@@ -113,7 +113,8 @@ namespace AuthApi.Services
 
 
             // Create person record
-            var newPerson = personService.StorePerson(newPersonRequest, preregister.Id, DateTime.Now) ?? throw new Exception("Can't store the new person, null data was returned");
+            var newPerson = personService.StorePerson(newPersonRequest, preregister.Id, DateTime.Now) 
+              ?? throw new Exception("Excepcion no controlada, la respuesta al registrar la persona es nula");
 
             // Delete the pre-register record
             try{
