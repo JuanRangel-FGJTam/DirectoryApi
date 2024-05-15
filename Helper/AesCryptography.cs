@@ -13,7 +13,7 @@ namespace AuthApi.Helper
     {
 
         private byte[] aesKey = System.Text.Encoding.UTF8.GetBytes(key);
-
+        
         public string EncryptData( string data )
         {
             using (Aes aesAlg = Aes.Create())
@@ -47,8 +47,8 @@ namespace AuthApi.Helper
                 password: data,
                 salt: salt,
                 prf: KeyDerivationPrf.HMACSHA256,
-                iterationCount: 100000,
-                numBytesRequested: 256 / 8)
+                iterationCount: AuthApi.Data.Utils.HashData.hash_iterationCount,
+                numBytesRequested: AuthApi.Data.Utils.HashData.hash_bytesLength )
             );
            return hashed;
         }
@@ -65,8 +65,8 @@ namespace AuthApi.Helper
                 password: data,
                 salt: aesKey,
                 prf: KeyDerivationPrf.HMACSHA256,
-                iterationCount: 100000,
-                numBytesRequested: 256 / 8)
+                iterationCount: AuthApi.Data.Utils.HashData.hash_iterationCount,
+                numBytesRequested: AuthApi.Data.Utils.HashData.hash_bytesLength )
             );
            return hashed;
         }

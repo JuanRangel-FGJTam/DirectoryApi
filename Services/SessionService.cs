@@ -4,20 +4,22 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using AuthApi.Data;
+using AuthApi.Data.Utils;
 using AuthApi.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace AuthApi.Services
 {
-    public class SessionService(ILogger<SessionService> logger, DirectoryDBContext directoryDBContext, ICryptographyService cryptographyService)
+    public class SessionService(ILogger<SessionService> logger, DirectoryDBContext directoryDBContext, IConfiguration configuration)
     {
 
         private readonly ILogger<SessionService> logger = logger;
-        private readonly ICryptographyService cryptographyService = cryptographyService;
         private readonly DirectoryDBContext directoryDBContext = directoryDBContext;
-
+        private readonly IConfiguration configuration = configuration;
         private readonly TimeSpan sessionLifeTime = TimeSpan.FromHours(6);
+        private readonly int tokenLength = 64;
 
 
         /// <summary>
@@ -30,7 +32,15 @@ namespace AuthApi.Services
         public string StartPersonSession(Person person, string ipAddress, string userAgent ){
             
             var _now = DateTime.Now;
+            
+            // Generate token
             var _tokenPayload = $"{person.Id}{ipAddress}{userAgent}{_now.ToString("yyyyMMddHHmmss")}";
+            var token = HashData.GetHash(
+                _tokenPayload,
+                configuration["Secret"]!,
+                mode: HashData.ConvertMode.Hex,
+                length: tokenLength
+            );
             
             // Create a session record
             var _record = new Session(){
@@ -39,7 +49,7 @@ namespace AuthApi.Services
                 UserAgent = userAgent,
                 BegginAt = DateTime.Now,
                 EndAt = _now.Add(sessionLifeTime),
-                Token = cryptographyService.HashData(_tokenPayload)
+                Token = token
             };
             directoryDBContext.Add(_record);
             directoryDBContext.SaveChanges();
@@ -70,7 +80,7 @@ namespace AuthApi.Services
                 return null;
             }
 
-            if( session.EndAt > DateTime.Now){
+            if( session.EndAt < DateTime.Now){
                 message = "La sesion a expirado";
                 return null;
             }
