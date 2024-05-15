@@ -58,6 +58,15 @@ namespace AuthApi.Controllers
                 string userAgent = Request.Headers["User-Agent"].ToString();
                 var SessionToken = sessionService.StartPersonSession( person, ipAddress, userAgent);
 
+                // Set the cookie
+                Response.Cookies.Append("FGJTamSession", SessionToken, new CookieOptions
+                {
+                    Path = "/",
+                    HttpOnly = true,
+                    Secure = false,
+                    SameSite = SameSiteMode.Strict
+                });
+
                 // * Return all data
                 return Ok(new{
                     Id = person.Id,
@@ -74,6 +83,40 @@ namespace AuthApi.Controllers
                     }
                 );
             }
+        }
+
+
+        [HttpGet]
+        [Route("me")]
+        public IActionResult GetSessionPerson()
+        {
+            // Retrieve the cookie value by name
+            var cookieValue = Request.Cookies["FGJTamSession"];
+
+            // Check if the cookie value is null
+            if (cookieValue == null)
+            {
+                // If the cookie value is null, return a BadRequest response
+                return BadRequest( new {
+                    Message = "Sesion cookie no encontrado."
+                });
+            }
+
+            try{
+                var person = this.sessionService.GetPersonSession( cookieValue);
+                return Ok(new {
+                    person
+                });
+            }catch(SessionNotValid sbv){
+                _logger.LogError(sbv, "Session token not valid");
+                return StatusCode( 403, new { sbv.Message });
+            }catch(Exception err){
+                _logger.LogError(err, "Error no controlado al obtener los datos de la sesion");
+                return Conflict( new {
+                    Message = "Error no controlado al obtener los datos de la sesion"
+                });
+            }
+            
         }
 
     }
