@@ -31,15 +31,15 @@ namespace AuthApi.Controllers
         
 
         /// <summary>
-        /// Store the new person using the pre-register record for retriving the email and password
+        /// Authenticate the person and init a session
         /// </summary>
         /// <remarks>
         /// Sample response:
         /// 
         ///     {
-        ///         Id: int,
-        ///         Name: string,
-        ///         SessionToken: string
+        ///       Id: int,
+        ///       Name: string,
+        ///       SessionToken: string
         ///     }
         /// 
         /// </remarks>
@@ -50,7 +50,7 @@ namespace AuthApi.Controllers
         /// <response code="409">Unhandle exception at created the session record</response>
         [HttpPost]
         [Route("auth")]
-        public IActionResult AuthenticateTest([FromBody] AuthenticateRequest authenticateRequest)
+        public IActionResult AuthenticatePerson([FromBody] AuthenticateRequest authenticateRequest)
         {
             
             //  * Validate request
@@ -101,7 +101,7 @@ namespace AuthApi.Controllers
 
 
         /// <summary>
-        /// Retrive the person data by the cookie
+        /// Attempting to retrive the person data by the session token, loaded first from the query parameter "t" or the cookie named "FGJTamSession"
         /// </summary>
         /// <remarks>
         /// </remarks>
@@ -111,22 +111,22 @@ namespace AuthApi.Controllers
         /// <response code="409">Unhandle exception</response>
         [HttpGet]
         [Route("me")]
-        public ActionResult<Person?> GetSessionPerson()
+        public ActionResult<Person?> GetSessionPerson([FromQuery] string? t)
         {
-            // Retrieve the cookie value by name
-            var cookieValue = Request.Cookies["FGJTamSession"];
+            // Retrieve the sessionToken by the query param or cookie value
+            var tokenValue =  t ?? Request.Cookies["FGJTamSession"];
 
             // Check if the cookie value is null
-            if (cookieValue == null)
+            if (tokenValue == null)
             {
                 // If the cookie value is null, return a BadRequest response
                 return BadRequest( new {
-                    Message = "Sesion cookie no encontrado."
+                    Message = "Sesion token no encontrado."
                 });
             }
 
             try{
-                var person = this.sessionService.GetPersonSession( cookieValue);
+                var person = this.sessionService.GetPersonSession(tokenValue);
                 return Ok( person );
             }catch(SessionNotValid sbv){
                 _logger.LogError(sbv, "Session token not valid");
