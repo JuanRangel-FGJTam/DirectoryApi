@@ -142,5 +142,33 @@ namespace AuthApi.Controllers
             } 
         }
 
+        /// <summary>
+        /// Get all the sessions data
+        /// </summary>
+        /// <response code="200">Get all the session</response>
+        /// <response code="401">No authenticated</response>
+        [HttpGet]
+        [Route("")]
+        public  async Task<IActionResult> GetAllSessions( int take = 10, int skip = 0)
+        {   
+            // * Get data
+            var data = this.directoryDBContext.Sessions
+                .OrderByDescending( item => item.BegginAt)
+                .Take(50)
+                .Skip(0)
+                .ToArray();
+
+            // * Get the total sessions
+            var total = directoryDBContext.Sessions.Count();
+          
+            // * Return the data
+            return Ok( new {
+                take,
+                skip,
+                total,
+                data
+            });
+        }
+
     }
 }
