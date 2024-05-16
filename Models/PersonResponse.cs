@@ -49,7 +49,10 @@ namespace AuthApi.Models
             get{
                 try
                 {
-                    return Birthdate!.Value.ToString("dd MMM yyyy").ToUpper();
+                    return Birthdate!.Value
+                        .ToString("dd/MMM/yyyy")
+                        .Replace(".", "")
+                        .ToUpper();
                 }
                 catch (System.Exception) {
                     return null;

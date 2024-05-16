@@ -20,6 +20,7 @@ using AuthApi.Services;
 namespace AuthApi.Controllers
 {
 
+    [Authorize]
     [ApiController]
     [Route("api/session")]
     public class SessionController(ILogger<SessionController> logger, DirectoryDBContext directoryDBContext, PersonService personService, SessionService sessionService ) : ControllerBase
@@ -111,7 +112,7 @@ namespace AuthApi.Controllers
         /// <response code="409">Unhandle exception</response>
         [HttpGet]
         [Route("me")]
-        public ActionResult<Person?> GetSessionPerson([FromQuery] string? t)
+        public ActionResult<PersonResponse?> GetSessionPerson([FromQuery] string? t)
         {
             // Retrieve the sessionToken by the query param or cookie value
             var tokenValue =  t ?? Request.Cookies["FGJTamSession"];
@@ -126,8 +127,10 @@ namespace AuthApi.Controllers
             }
 
             try{
-                var person = this.sessionService.GetPersonSession(tokenValue);
-                return Ok( person );
+
+                var person = sessionService.GetPersonSession(tokenValue) ?? throw new Exception("La respuesta es nula");
+                return Ok( PersonResponse.FromEntity(person!) );
+
             }catch(SessionNotValid sbv){
                 _logger.LogError(sbv, "Session token not valid");
                 return StatusCode( 403, new { sbv.Message });
