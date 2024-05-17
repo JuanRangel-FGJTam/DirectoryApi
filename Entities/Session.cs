@@ -26,5 +26,11 @@ namespace AuthApi.Entities
         
         [Required]
         public string Token {get;set;} = null!;
+
+        public DateTime? DeletedAt {get;set;}
+        
+        public bool IsDeleted {
+            get => DeletedAt != null;
+        }
     }
 }

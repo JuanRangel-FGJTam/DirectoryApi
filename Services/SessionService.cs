@@ -66,6 +66,7 @@ namespace AuthApi.Services
         public Person? GetPersonSession(string sessionToken){
 
             var session = this.directoryDBContext.Sessions
+                .Where( s => s.DeletedAt == null)
                 .Include( s => s.Person)
                 .Where( s => s.Token == sessionToken)
                 .FirstOrDefault();
@@ -79,6 +80,7 @@ namespace AuthApi.Services
         public Session? ValidateSession( string sessionToken, string ipAddress, string? userAgent, out string message){
 
             var session = this.directoryDBContext.Sessions
+                .Where( s => s.DeletedAt == null)
                 .Where( s => s.Token == sessionToken)
                 .FirstOrDefault();
 
@@ -89,18 +91,27 @@ namespace AuthApi.Services
 
             if( session.IpAddress != ipAddress){
                 message = "Los datos de la sesión no coinciden";
-                //TODO: Soft delete
+                CloseTheSession(session.SessionID);
                 return null;
             }
 
             if( session.EndAt < DateTime.Now){
                 message = "La sesion a expirado";
-                //TODO: Soft delete
+                CloseTheSession(session.SessionID);
                 return null;
             }
 
             message = "";
             return session;
+        }
+
+        public void CloseTheSession(string sessionId){
+            var session = this.directoryDBContext.Sessions.Find(sessionId);
+            if( session != null){
+                session.DeletedAt = DateTime.Now;
+                directoryDBContext.Sessions.Update( session);
+                directoryDBContext.SaveChanges();
+            }
         }
 
     }
