@@ -69,8 +69,13 @@ namespace AuthApi.Controllers
 
             // * Create a session record
             try{
-                string ipAddress = HttpContext.Connection.RemoteIpAddress!.ToString();
+                // * Get the ipAddress and userAgent
+                string ipAddress = Request.Headers.ContainsKey("X-Forwarded-For")
+                ? Request.Headers["X-Forwarded-For"].ToString()
+                : HttpContext.Connection.RemoteIpAddress!.ToString();
                 string userAgent = Request.Headers["User-Agent"].ToString();
+
+                // * Make the session
                 var SessionToken = sessionService.StartPersonSession( person, ipAddress, userAgent);
 
                 // * Set the cookie for the response
@@ -114,21 +119,28 @@ namespace AuthApi.Controllers
         [Route("me")]
         public ActionResult<PersonResponse?> GetSessionPerson([FromQuery] string? t)
         {
-            // Retrieve the sessionToken by the query param or cookie value
-            var tokenValue =  t ?? Request.Cookies["FGJTamSession"];
-
-            // Check if the cookie value is null
-            if (tokenValue == null)
-            {
-                // If the cookie value is null, return a BadRequest response
+            // * Retrieve the sessionToken by the query param or cookie value
+            var sessionToken =  t ?? Request.Cookies["FGJTamSession"];
+            if (sessionToken == null) {
                 return BadRequest( new {
                     Message = "Sesion token no encontrado."
                 });
             }
 
+            // * Validate the token 
+            string ipAddress = Request.Headers.ContainsKey("X-Forwarded-For")
+                ? Request.Headers["X-Forwarded-For"].ToString()
+                : HttpContext.Connection.RemoteIpAddress!.ToString();
+            string userAgent = Request.Headers["User-Agent"].ToString();
+            var session = sessionService.ValidateSession( sessionToken, ipAddress, userAgent, out string message );
+            if( session == null){
+                return StatusCode( 403, new { message });
+            }
+
+            // * Attempt to get the person data
             try{
 
-                var person = sessionService.GetPersonSession(tokenValue) ?? throw new Exception("La respuesta es nula");
+                var person = sessionService.GetPersonSession(sessionToken) ?? throw new Exception("La respuesta es nula");
                 return Ok( PersonResponse.FromEntity(person!) );
 
             }catch(SessionNotValid sbv){
@@ -149,8 +161,8 @@ namespace AuthApi.Controllers
         /// <response code="401">No authenticated</response>
         [HttpGet]
         [Route("")]
-        public  async Task<IActionResult> GetAllSessions( int take = 10, int skip = 0)
-        {   
+        public IActionResult GetAllSessions( int take = 10, int skip = 0)
+        {
             // * Get data
             var data = this.directoryDBContext.Sessions
                 .OrderByDescending( item => item.BegginAt)

@@ -60,18 +60,25 @@ namespace AuthApi.Services
         /// <summary>
         /// Validate the session and retrive the person assigned
         /// </summary>
-        /// <param name="token"></param>
+        /// <param name="sessionToken"></param>
         /// <returns>Person</returns>
         /// <exception cref="SessionNotValid">The session token is not valid or expired</exception>
-        public Person? GetPersonSession(string token){
-            var session = ValidateSession(token, out string message) ?? throw new SessionNotValid( message );
-            return session.Person;
-        }
-
-        public Session? ValidateSession( string sessionToken, out string message){
+        public Person? GetPersonSession(string sessionToken){
 
             var session = this.directoryDBContext.Sessions
                 .Include( s => s.Person)
+                .Where( s => s.Token == sessionToken)
+                .FirstOrDefault();
+            
+            if( session != null){
+                return session.Person;
+            }
+            return null;
+        }
+
+        public Session? ValidateSession( string sessionToken, string ipAddress, string? userAgent, out string message){
+
+            var session = this.directoryDBContext.Sessions
                 .Where( s => s.Token == sessionToken)
                 .FirstOrDefault();
 
@@ -80,8 +87,15 @@ namespace AuthApi.Services
                 return null;
             }
 
+            if( session.IpAddress != ipAddress){
+                message = "Los datos de la sesión no coinciden";
+                //TODO: Soft delete
+                return null;
+            }
+
             if( session.EndAt < DateTime.Now){
                 message = "La sesion a expirado";
+                //TODO: Soft delete
                 return null;
             }
 
