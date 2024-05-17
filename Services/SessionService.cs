@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data.Common;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
@@ -32,6 +33,22 @@ namespace AuthApi.Services
         public string StartPersonSession(Person person, string ipAddress, string userAgent ){
             
             var _now = DateTime.Now;
+
+            // Verify if there is a session already stored with the same data
+            var oldSession = this.directoryDBContext.Sessions
+                .Where( s => s.Person.Id == person.Id )
+                .Where( s => s.IpAddress == ipAddress )
+                .Where( s => s.UserAgent == userAgent )
+                .Where( s => s.DeletedAt == null)
+                .Where( s => s.EndAt > DateTime.Now)
+                .FirstOrDefault();
+
+            if(oldSession != null){
+                oldSession.EndAt = DateTime.Now.Add( this.sessionLifeTime);
+                directoryDBContext.Sessions.Update( oldSession);
+                directoryDBContext.SaveChanges();
+                return oldSession.Token;
+            }
             
             // Generate token
             var _tokenPayload = $"{person.Id}{ipAddress}{userAgent}{_now.ToString("yyyyMMddHHmmss")}";
@@ -89,11 +106,11 @@ namespace AuthApi.Services
                 return null;
             }
 
-            if( session.IpAddress != ipAddress){
-                message = "Los datos de la sesión no coinciden";
-                CloseTheSession(session.SessionID);
-                return null;
-            }
+            // if( session.IpAddress != ipAddress){
+            //     message = "Los datos de la sesión no coinciden";
+            //     CloseTheSession(session.SessionID);
+            //     return null;
+            // }
 
             if( session.EndAt < DateTime.Now){
                 message = "La sesion a expirado";
