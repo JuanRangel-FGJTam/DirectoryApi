@@ -20,9 +20,10 @@ namespace AuthApi.Helper
             {
                 aesAlg.Mode = CipherMode.ECB;
                 aesAlg.Key =  this.aesKey;
+                aesAlg.Padding = PaddingMode.PKCS7;
                 ICryptoTransform encryptor = aesAlg.CreateEncryptor(aesAlg.Key, null);
                 byte[] encryptedBytes = encryptor.TransformFinalBlock(
-                    System.Text.Encoding.UTF8.GetBytes(data), 0, data.Length);
+                    System.Text.Encoding.UTF8.GetBytes(data), 0, System.Text.Encoding.UTF8.GetBytes(data).Length);
                 return Convert.ToHexString(encryptedBytes);
             }
         }
@@ -33,13 +34,14 @@ namespace AuthApi.Helper
             {
                 aesAlg.Mode = CipherMode.ECB;
                 aesAlg.Key = this.aesKey;
+                aesAlg.Padding = PaddingMode.PKCS7;
                 ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, null);
                 byte[] encryptedBytes = Convert.FromHexString(encryptedData);
                 byte[] decryptedBytes = decryptor.TransformFinalBlock(encryptedBytes, 0, encryptedBytes.Length);
                 return System.Text.Encoding.UTF8.GetString(decryptedBytes);
             }
         }
-
+ 
         public static string GetHash( string data, string saltString )
         {
             byte[] salt = Encoding.UTF8.GetBytes( saltString );
