@@ -95,9 +95,13 @@ namespace AuthApi.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("states")]
-        public ActionResult<IEnumerable<State>> GetStates()
+        public ActionResult<IEnumerable<State>> GetStates([FromQuery] int country_id)
         {
-            return Ok( dbContext.States.Include( c => c.Country ).ToList() );
+            return Ok( dbContext.States
+                .Include( c => c.Country )
+                .Where( item => item.Country!.Id == country_id)
+                .ToList()
+            );
         }
 
         /// <summary>
@@ -106,9 +110,13 @@ namespace AuthApi.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("municipalities")]
-        public ActionResult<IEnumerable<Municipality>> GetMunicipalities()
+        public ActionResult<IEnumerable<Municipality>> GetMunicipalities([FromQuery] int state_id)
         {   
-            return Ok( dbContext.Municipalities.Include( c => c.State ).ToArray() );
+            return Ok( dbContext.Municipalities
+                .Include( c => c.State )
+                .Where( c => c.State!.Id == state_id)
+                .ToArray()
+            );
         }
         
         /// <summary>
@@ -117,9 +125,13 @@ namespace AuthApi.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("colonies")]
-        public ActionResult<IEnumerable<Colony>> GetColonies()
+        public ActionResult<IEnumerable<Colony>> GetColonies( [FromQuery] int municipality_id )
         {
-            return Ok( dbContext.Colonies.Include( c =>c.Municipality ).ToArray() );
+            return Ok( dbContext.Colonies
+                .Include( c =>c.Municipality )
+                .Where( item => item.Municipality!.Id == municipality_id)
+                .ToArray()
+            );
         }
 
 
