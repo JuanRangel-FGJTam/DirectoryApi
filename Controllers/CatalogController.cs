@@ -95,7 +95,7 @@ namespace AuthApi.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("states")]
-        public ActionResult<IEnumerable<State>> GetStates([FromQuery] int country_id)
+        public ActionResult<IEnumerable<State>> GetStates([FromQuery] int country_id = 138)
         {
             return Ok( dbContext.States
                 .Include( c => c.Country )
@@ -110,7 +110,7 @@ namespace AuthApi.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("municipalities")]
-        public ActionResult<IEnumerable<Municipality>> GetMunicipalities([FromQuery] int state_id)
+        public ActionResult<IEnumerable<Municipality>> GetMunicipalities([FromQuery] int state_id = 28)
         {   
             return Ok( dbContext.Municipalities
                 .Include( c => c.State )
@@ -125,7 +125,7 @@ namespace AuthApi.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("colonies")]
-        public ActionResult<IEnumerable<Colony>> GetColonies( [FromQuery] int municipality_id )
+        public ActionResult<IEnumerable<Colony>> GetColonies( [FromQuery] int municipality_id = 41 )
         {
             return Ok( dbContext.Colonies
                 .Include( c =>c.Municipality )
