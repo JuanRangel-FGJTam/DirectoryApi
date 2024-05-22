@@ -29,6 +29,8 @@ namespace AuthApi.Controllers
         private readonly DirectoryDBContext directoryDBContext = directoryDBContext;
         private readonly PersonService personService = personService;
         private readonly SessionService sessionService = sessionService;
+        private static readonly string cookieName = "SessionToken";
+        private static readonly string headerSessionName = "SessionToken";
         
 
         /// <summary>
@@ -79,7 +81,7 @@ namespace AuthApi.Controllers
                 var SessionToken = sessionService.StartPersonSession( person, ipAddress, userAgent);
 
                 // * Set the cookie for the response
-                Response.Cookies.Append("FGJTamSession", SessionToken, new CookieOptions
+                Response.Cookies.Append( cookieName, SessionToken, new CookieOptions
                 {
                     Path = "/",
                     HttpOnly = true,
@@ -107,9 +109,10 @@ namespace AuthApi.Controllers
 
 
         /// <summary>
-        /// Attempting to retrive the person data by the session token, loaded first from the query parameter "t" or the cookie named "FGJTamSession"
+        /// Attempting to retrive the person data by the session token"
         /// </summary>
         /// <remarks>
+        ///  Will attempting to get the session token first by header request with the name "SessionToken", then from the query param "t" and by last by the cookie named "SessionToken" 
         /// </remarks>
         /// <response code="200">Succsessfull stored the person</response>
         /// <response code="400">The session cookie was not found</response>
@@ -119,9 +122,15 @@ namespace AuthApi.Controllers
         [Route("me")]
         public ActionResult<PersonResponse?> GetSessionPerson([FromQuery] string? t)
         {
-            // * Retrieve the sessionToken by the query param or cookie value
-            var sessionToken =  t ?? Request.Cookies["FGJTamSession"];
-            if (sessionToken == null) {
+            // * Retrieve the sessionToken by the header, query param or cookie value
+            string sessionToken = string.Empty;
+            if( Request.Headers.ContainsKey(headerSessionName)){
+                sessionToken = Request.Headers[headerSessionName]!;
+            }else{
+                sessionToken = t ?? Request.Cookies[ cookieName ]!;
+            }
+            
+            if( string.IsNullOrEmpty(sessionToken)) { 
                 return BadRequest( new {
                     Message = "Sesion token no encontrado."
                 });
