@@ -119,37 +119,16 @@ namespace AuthApi.Controllers
         /// <response code="400">The session cookie was not found</response>
         /// <response code="403">The session token is not valid or expired</response>
         /// <response code="409">Unhandle exception</response>
+        [PersonSessionKey]
         [HttpGet]
         [Route("me")]
         public ActionResult<PersonResponse?> GetSessionPerson([FromQuery] string? t)
         {
             // * Retrieve the sessionToken by the header, query param or cookie value
-            string sessionToken = string.Empty;
-            if( Request.Headers.ContainsKey(headerSessionName)){
-                sessionToken = Request.Headers[headerSessionName]!;
-            }else{
-                sessionToken = t ?? Request.Cookies[ cookieName ]!;
-            }
-            
-            if( string.IsNullOrEmpty(sessionToken)) { 
-                return BadRequest( new {
-                    Message = "Sesion token no encontrado."
-                });
-            }
-
-            // * Validate the token 
-            string ipAddress = Request.Headers.ContainsKey("X-Forwarded-For")
-                ? Request.Headers["X-Forwarded-For"].ToString()
-                : HttpContext.Connection.RemoteIpAddress!.ToString();
-            string userAgent = Request.Headers["User-Agent"].ToString();
-            var session = sessionService.ValidateSession( sessionToken, ipAddress, userAgent, out string message );
-            if( session == null){
-                return StatusCode( 403, new { message });
-            }
+            string sessionToken = (string) HttpContext.Items["session_token"]!;
 
             // * Attempt to get the person data
             try{
-
                 var person = sessionService.GetPersonSession(sessionToken) ?? throw new Exception("La respuesta es nula");
                 directoryDBContext.Entry(person).Reference( e => e.Gender).Load();
                 directoryDBContext.Entry(person).Reference( e => e.MaritalStatus).Load();
@@ -170,6 +149,7 @@ namespace AuthApi.Controllers
             } 
         }
 
+
         /// <summary>
         /// Retrive the addresses of the person assigned to the session token
         /// </summary>
@@ -180,35 +160,13 @@ namespace AuthApi.Controllers
         /// <response code="400">The session cookie was not found</response>
         /// <response code="403">The session token is not valid or expired</response>
         /// <response code="409">Unhandle exception</response>
+        [PersonSessionKey]
         [HttpGet]
         [Route("me/addresses")]
         public ActionResult<IEnumerable<AddressResponse>?> GetAddressesBySession([FromQuery] string? t)
         {
-            #region Validate Session
             // * Retrieve the sessionToken by the header, query param or cookie value
-            string sessionToken = string.Empty;
-            if( Request.Headers.ContainsKey(headerSessionName)){
-                sessionToken = Request.Headers[headerSessionName]!;
-            }else{
-                sessionToken = t ?? Request.Cookies[ cookieName ]!;
-            }
-            
-            if( string.IsNullOrEmpty(sessionToken)) { 
-                return BadRequest( new {
-                    Message = "Sesion token no encontrado."
-                });
-            }
-
-            // * Validate the token 
-            string ipAddress = Request.Headers.ContainsKey("X-Forwarded-For")
-                ? Request.Headers["X-Forwarded-For"].ToString()
-                : HttpContext.Connection.RemoteIpAddress!.ToString();
-            string userAgent = Request.Headers["User-Agent"].ToString();
-            var session = sessionService.ValidateSession( sessionToken, ipAddress, userAgent, out string message );
-            if( session == null){
-                return StatusCode( 403, new { message });
-            }
-            #endregion
+            string sessionToken = (string) HttpContext.Items["session_token"]!;
 
             // * Attempt to get the person data
             try{
@@ -239,36 +197,14 @@ namespace AuthApi.Controllers
         /// <response code="400">The session cookie was not found</response>
         /// <response code="403">The session token is not valid or expired</response>
         /// <response code="409">Unhandle exception</response>
+        [PersonSessionKey]
         [HttpPatch]
         [Route("me/password")]
         public ActionResult<IEnumerable<AddressResponse>?> UpdateThePassword([FromQuery] string? t, [FromBody] UpdatePasswordRequest updatePasswordRequest)
         {
             
-            #region Validate Session
             // * Retrieve the sessionToken by the header, query param or cookie value
-            string sessionToken = string.Empty;
-            if( Request.Headers.ContainsKey(headerSessionName)){
-                sessionToken = Request.Headers[headerSessionName]!;
-            }else{
-                sessionToken = t ?? Request.Cookies[ cookieName ]!;
-            }
-            
-            if( string.IsNullOrEmpty(sessionToken)) { 
-                return BadRequest( new {
-                    Message = "Sesion token no encontrado."
-                });
-            }
-
-            // * Validate the token 
-            string ipAddress = Request.Headers.ContainsKey("X-Forwarded-For")
-                ? Request.Headers["X-Forwarded-For"].ToString()
-                : HttpContext.Connection.RemoteIpAddress!.ToString();
-            string userAgent = Request.Headers["User-Agent"].ToString();
-            var session = sessionService.ValidateSession( sessionToken, ipAddress, userAgent, out string message );
-            if( session == null){
-                return StatusCode( 403, new { message });
-            }
-            #endregion
+            string sessionToken = (string) HttpContext.Items["session_token"]!;
             
             // * Validate request
             if (!ModelState.IsValid)
@@ -306,7 +242,6 @@ namespace AuthApi.Controllers
         }
 
 
-
         /// <summary>
         /// Retrive the contact information of the person assigned to the session token
         /// </summary>
@@ -317,35 +252,13 @@ namespace AuthApi.Controllers
         /// <response code="400">The session cookie was not found</response>
         /// <response code="403">The session token is not valid or expired</response>
         /// <response code="409">Unhandle exception</response>
+        [PersonSessionKey]
         [HttpGet]
         [Route("me/contactInformations")]
         public ActionResult<IEnumerable<ContactResponse>?> GetContactInformationBySession([FromQuery] string? t)
         {
-            #region Validate Session
             // * Retrieve the sessionToken by the header, query param or cookie value
-            string sessionToken = string.Empty;
-            if( Request.Headers.ContainsKey(headerSessionName)){
-                sessionToken = Request.Headers[headerSessionName]!;
-            }else{
-                sessionToken = t ?? Request.Cookies[ cookieName ]!;
-            }
-            
-            if( string.IsNullOrEmpty(sessionToken)) { 
-                return BadRequest( new {
-                    Message = "Sesion token no encontrado."
-                });
-            }
-
-            // * Validate the token 
-            string ipAddress = Request.Headers.ContainsKey("X-Forwarded-For")
-                ? Request.Headers["X-Forwarded-For"].ToString()
-                : HttpContext.Connection.RemoteIpAddress!.ToString();
-            string userAgent = Request.Headers["User-Agent"].ToString();
-            var session = sessionService.ValidateSession( sessionToken, ipAddress, userAgent, out string message );
-            if( session == null){
-                return StatusCode( 403, new { message });
-            }
-            #endregion
+            string sessionToken = (string) HttpContext.Items["session_token"]!;
 
             // * Attempt to get the person data
             try{
