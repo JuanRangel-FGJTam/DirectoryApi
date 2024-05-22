@@ -209,7 +209,24 @@ namespace AuthApi.Services
             return _query.ToList();
         }
 
-    }
+        /// <summary>
+        /// Update the password
+        /// </summary>
+        /// <param name="personId"></param>
+        /// <param name="oldPassword"></param>
+        /// <param name="newPassword"></param>
+        /// <exception cref="ValidationException"> The old password is not valid</exception>
+        public void UpdateThePassword( Guid personId, string oldPassword, string newPassword){
+            var hashedPassword = this.cryptographyService.HashData(oldPassword);
+            var _person = this.dbContext.People.Where( p => p.Id == personId && p.Password == hashedPassword).FirstOrDefault();
+            if( _person == null){
+                throw new ValidationException("La contraseña no es valida");
+            }
+
+            this.SetPassword( _person.Id, newPassword);
+        }
+
+    }  
 
     
 }

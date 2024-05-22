@@ -16,6 +16,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using AuthApi.Services;
+using System.ComponentModel.DataAnnotations;
 
 namespace AuthApi.Controllers
 {
@@ -229,6 +230,84 @@ namespace AuthApi.Controllers
 
 
         /// <summary>
+        /// Update the password
+        /// </summary>
+        /// <remarks>
+        ///  NOTE: Will attempting to get the session token first by header request with the name "SessionToken", then from the query param "t" and by last by the cookie named "SessionToken" 
+        /// </remarks>
+        /// <response code="200">Return the data</response>
+        /// <response code="400">The session cookie was not found</response>
+        /// <response code="403">The session token is not valid or expired</response>
+        /// <response code="409">Unhandle exception</response>
+        [HttpPatch]
+        [Route("me/password")]
+        public ActionResult<IEnumerable<AddressResponse>?> UpdateThePassword([FromQuery] string? t, [FromBody] UpdatePasswordRequest updatePasswordRequest)
+        {
+            
+            #region Validate Session
+            // * Retrieve the sessionToken by the header, query param or cookie value
+            string sessionToken = string.Empty;
+            if( Request.Headers.ContainsKey(headerSessionName)){
+                sessionToken = Request.Headers[headerSessionName]!;
+            }else{
+                sessionToken = t ?? Request.Cookies[ cookieName ]!;
+            }
+            
+            if( string.IsNullOrEmpty(sessionToken)) { 
+                return BadRequest( new {
+                    Message = "Sesion token no encontrado."
+                });
+            }
+
+            // * Validate the token 
+            string ipAddress = Request.Headers.ContainsKey("X-Forwarded-For")
+                ? Request.Headers["X-Forwarded-For"].ToString()
+                : HttpContext.Connection.RemoteIpAddress!.ToString();
+            string userAgent = Request.Headers["User-Agent"].ToString();
+            var session = sessionService.ValidateSession( sessionToken, ipAddress, userAgent, out string message );
+            if( session == null){
+                return StatusCode( 403, new { message });
+            }
+            #endregion
+            
+            // * Validate request
+            if (!ModelState.IsValid)
+            {
+                return BadRequest( ModelState );
+            }
+
+            // * Attempt to get the person data
+            try {
+                // Get the person
+                var person = sessionService.GetPersonSession(sessionToken) ?? throw new Exception("La respuesta es nula");
+
+                this.personService.UpdateThePassword( person.Id, updatePasswordRequest.OldPassword!, updatePasswordRequest.NewPassword!);
+
+                return Ok( new {
+                    Title = "Contraseña actualizada",
+                    Message = "Contraseña actualizada"
+                });
+
+            }catch(SessionNotValid sbv){
+                _logger.LogError(sbv, "Session token not valid");
+                return StatusCode( 403, new { sbv.Message });
+            }catch(ValidationException ex){
+                _logger.LogError(ex, "Old password is not valid");
+                var errors = new List<object> {
+                    new { OldPassword = "La contraseña anterior no coincide" }
+                };
+                return UnprocessableEntity(new { Errors = errors });
+            }catch(Exception err){
+                _logger.LogError(err, "Error no controlado al obtener los datos de la sesion");
+                return Conflict( new {
+                    Message = "Error no controlado al obtener los datos de la sesion"
+                });
+            } 
+        }
+
+
+
+        /// <summary>
         /// Retrive the contact information of the person assigned to the session token
         /// </summary>
         /// <remarks>
@@ -286,7 +365,7 @@ namespace AuthApi.Controllers
             } 
         }
 
-
+    
 
         /// <summary>
         /// Get all the sessions data
