@@ -141,6 +141,12 @@ namespace AuthApi.Controllers
             try{
 
                 var person = sessionService.GetPersonSession(sessionToken) ?? throw new Exception("La respuesta es nula");
+                directoryDBContext.Entry(person).Reference( e => e.Gender).Load();
+                directoryDBContext.Entry(person).Reference( e => e.MaritalStatus).Load();
+                directoryDBContext.Entry(person).Reference( e => e.Nationality).Load();
+                directoryDBContext.Entry(person).Reference( e => e.Occupation).Load();
+                directoryDBContext.Entry(person).Collection( e => e.Addresses!).Load();
+                directoryDBContext.Entry(person).Collection( e => e.ContactInformations!).Load();
                 return Ok( PersonResponse.FromEntity(person!) );
 
             }catch(SessionNotValid sbv){

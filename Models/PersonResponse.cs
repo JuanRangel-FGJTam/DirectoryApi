@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using AuthApi.Entities;
 
@@ -60,6 +61,9 @@ namespace AuthApi.Models
             }
         }
 
+        public AddressResponse? Address {get; set;}
+        public IEnumerable<ContactResponse> ContactInformation {get; set;} = [];
+
 
         public PersonResponse( Guid personId ){
             this.PersonId = personId.ToString();
@@ -101,6 +105,15 @@ namespace AuthApi.Models
             if(person.Occupation != null){
                 _person.OccupationId = person.Occupation.Id;
                 _person.OccupationName = person.Occupation.Name;
+            }
+            
+            if( person.Addresses != null && person.Addresses.Any() ){
+                var _address = person.Addresses.OrderByDescending(item => item.UpdatedAt ).First();
+                _person.Address = AddressResponse.FromEntity(_address);
+            }
+
+            if( person.ContactInformations != null && person.ContactInformations.Any()){
+                _person.ContactInformation = person.ContactInformations.Select( item => ContactResponse.FromEntity(item));
             }
 
             return _person;
