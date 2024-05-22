@@ -28,7 +28,7 @@ namespace AuthApi.Controllers
     [Authorize]
     [ApiController]
     [Route("api/people")]
-    public class PeopleController(ILogger<PeopleController> logger, DirectoryDBContext context, PersonService personService, IEmailProvider emailProvider, IOptions<JwtSettings> optionsJwtSettings, IOptions<ResetPasswordSettings> optionsResetPasswordSettings ) : ControllerBase
+    public class PeopleController(ILogger<PeopleController> logger, DirectoryDBContext context, PersonService personService, IEmailProvider emailProvider, IOptions<JwtSettings> optionsJwtSettings, IOptions<ResetPasswordSettings> optionsResetPasswordSettings, ResetPasswordState resetPasswordState) : ControllerBase
     {
         private readonly ILogger<PeopleController> _logger = logger;
         private readonly DirectoryDBContext dbContext = context;
@@ -36,6 +36,7 @@ namespace AuthApi.Controllers
         private readonly IEmailProvider emailProvider = emailProvider;
         private readonly JwtSettings jwtSettings = optionsJwtSettings.Value;
         private readonly ResetPasswordSettings resetPasswordSettings = optionsResetPasswordSettings.Value;
+        private readonly ResetPasswordState resetPasswordState = resetPasswordState;
         
         
         /// <summary>
@@ -567,7 +568,7 @@ namespace AuthApi.Controllers
         /// <response code="422">Error at sending the email</response>
         [HttpPost]
         [Route("password/reset" )]
-        public async Task<ActionResult<ContactResponse?>> ResetPasswordEmail( [FromBody]  ResetPasswordEmailRequest resetPasswordEmailRequest )
+        public async Task<ActionResult<ContactResponse?>> SendEmailResetPassword( [FromBody]  ResetPasswordEmailRequest resetPasswordEmailRequest )
         {
             // * Retrive person by the email
             var person = this.personService.Search( resetPasswordEmailRequest.Email!, null, null ).FirstOrDefault();
@@ -579,8 +580,8 @@ namespace AuthApi.Controllers
             }
 
             // * Send email
-            try{
-                var emailID = await SendResetPasswordEmail(person)
+            try {
+                var emailID = await SendResetPasswordEmailv2(person)
                     ?? throw new Exception($"Error at sending the email to {person.Email!}, the response was null");
 
                 _logger.LogInformation("Email sended for reset the password of the user ID:'{person_id}' to the email '{email}' : response:{response}", person.Id.ToString(), person.Email!, emailID );
@@ -607,7 +608,7 @@ namespace AuthApi.Controllers
         /// <response code="200">The password was updated</response>
         /// <response code="400">The request is not valid</response>
         /// <response code="401">Auth token is not valid or is not present</response>
-        /// <response code="422">Unhandle exception</response>
+        /// <response code="422">Codigo no valido o caducado </response>
         [HttpPatch]
         [Route ("password/reset")]
         public IActionResult ResetPassword( [FromBody] ResetPasswordRequest resetPasswordRequest )
@@ -619,26 +620,23 @@ namespace AuthApi.Controllers
             
             try{
 
-                // * Validate reset password token and retrive person_id claim
-                ClaimsPrincipal claimsPrincipal = JwTokenHelper.ValidateToken( resetPasswordRequest.Token, jwtSettings);
-                var claimId = claimsPrincipal.Claims.Where( claim => claim.Type == "id").FirstOrDefault();
-                if( claimId == null){
-                    return BadRequest(new {
-                        Title = "The reset password token is not valid",
-                        Message = "The reset password token was not valid, missing claim"
+                // * Validate reset password code
+                Guid? personID = this.resetPasswordState.Validate( resetPasswordRequest.Code );
+                if( personID == null){
+                    return UnprocessableEntity( new {
+                        Code = "Codigo no es valido o ha caducado"
                     });
                 }
-                Guid personID = Guid.Parse(claimId!.Value);
                 
-                // * Get relations and validate
-                var errorsRelations = new Dictionary<string, object>();
-
                 // * Retrive the person data
-                Person person = this.dbContext.People.Find(personID)
-                    ?? throw new KeyNotFoundException($"Person id {personID} not found");
+                Person person = this.dbContext.People.Find(personID) ?? throw new KeyNotFoundException($"Person id {personID} not found");
 
                 // * Update the password
+                
                 this.personService.SetPassword( person.Id, resetPasswordRequest.Password);
+
+                // * Remove reset password record
+                this.resetPasswordState.Remove( person.Id);
                 
                 // Return response
                 return Ok( new {
@@ -652,8 +650,8 @@ namespace AuthApi.Controllers
                     knfe.Message
                 });
             }catch(Exception err){
-                this._logger.LogError( err, "Error at attempting to reset the password of the token [{token}]", resetPasswordRequest.Token );
-                return UnprocessableEntity( new {
+                this._logger.LogError( err, "Error at attempting to reset the password of the token [{token}]", resetPasswordRequest );
+                return BadRequest( new {
                     Title = "Unhandle exception",
                     err.Message
                 });
@@ -675,6 +673,28 @@ namespace AuthApi.Controllers
 
             // * Generate html
             var htmlBody = EmailTemplates.ResetPassword( resetPasswordSettings.DestinationUrl + $"?t={token}" );
+
+            // * Send email
+            return await emailProvider.SendEmail( person.Email!, "Restablecer contraseña", htmlBody );
+        }
+
+        private async Task<string> SendResetPasswordEmailv2(Person person){
+            // * Set token life time for 1 hour
+            var tokenLifeTime = TimeSpan.FromSeconds( resetPasswordSettings.TokenLifeTimeSeconds );
+
+            // * Generate the code
+            var _guidString = Guid.NewGuid().ToString().ToUpper();
+            var resetCode = _guidString.Substring(_guidString.Length - 6);
+
+            var lifeTime = TimeSpan.FromSeconds( this.resetPasswordSettings.TokenLifeTimeSeconds );
+            var date = DateTime.Now.Add(lifeTime);
+
+            // * Store the record
+            resetPasswordState.AddRecord( person.Id, resetCode, date );
+
+
+            // * Generate html
+            var htmlBody = EmailTemplates.ResetPasswordCode( resetCode, date.ToShortTimeString() );
 
             // * Send email
             return await emailProvider.SendEmail( person.Email!, "Restablecer contraseña", htmlBody );

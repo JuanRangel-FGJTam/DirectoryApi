@@ -8,8 +8,8 @@ namespace AuthApi.Models
 {
     public class ResetPasswordEmailRequest
     {
-        [Required]
-        [DataType(DataType.EmailAddress)]
+        [Required(ErrorMessage = "El correo electronico es requerido")]
+        [DataType(DataType.EmailAddress, ErrorMessage = "Debe ser un correo electronico valido")]
         public string Email {get;set;} = null!;
     }
 }

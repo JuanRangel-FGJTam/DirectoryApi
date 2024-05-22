@@ -26,6 +26,7 @@ builder.Services.AddScoped<PersonService>();
 builder.Services.AddScoped<PreregisterService>();
 builder.Services.AddScoped<IEmailProvider, FGJEmailProvider>();
 builder.Services.AddScoped<SessionService>();
+builder.Services.AddSingleton<ResetPasswordState>();
 builder.Services.AddMySwaggerConfig();
 builder.Services.ConfigureHttpJsonOptions( o => {
     o.SerializerOptions.AllowTrailingCommas = true;
