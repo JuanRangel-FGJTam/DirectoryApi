@@ -112,7 +112,7 @@ namespace AuthApi.Controllers
         /// Attempting to retrive the person data by the session token"
         /// </summary>
         /// <remarks>
-        ///  Will attempting to get the session token first by header request with the name "SessionToken", then from the query param "t" and by last by the cookie named "SessionToken" 
+        ///  NOTE: Will attempting to get the session token first by header request with the name "SessionToken", then from the query param "t" and by last by the cookie named "SessionToken" 
         /// </remarks>
         /// <response code="200">Succsessfull stored the person</response>
         /// <response code="400">The session cookie was not found</response>
@@ -168,6 +168,125 @@ namespace AuthApi.Controllers
                 });
             } 
         }
+
+        /// <summary>
+        /// Retrive the addresses of the person assigned to the session token
+        /// </summary>
+        /// <remarks>
+        ///  NOTE: Will attempting to get the session token first by header request with the name "SessionToken", then from the query param "t" and by last by the cookie named "SessionToken" 
+        /// </remarks>
+        /// <response code="200">Return the data</response>
+        /// <response code="400">The session cookie was not found</response>
+        /// <response code="403">The session token is not valid or expired</response>
+        /// <response code="409">Unhandle exception</response>
+        [HttpGet]
+        [Route("me/addresses")]
+        public ActionResult<IEnumerable<AddressResponse>?> GetAddressesBySession([FromQuery] string? t)
+        {
+            #region Validate Session
+            // * Retrieve the sessionToken by the header, query param or cookie value
+            string sessionToken = string.Empty;
+            if( Request.Headers.ContainsKey(headerSessionName)){
+                sessionToken = Request.Headers[headerSessionName]!;
+            }else{
+                sessionToken = t ?? Request.Cookies[ cookieName ]!;
+            }
+            
+            if( string.IsNullOrEmpty(sessionToken)) { 
+                return BadRequest( new {
+                    Message = "Sesion token no encontrado."
+                });
+            }
+
+            // * Validate the token 
+            string ipAddress = Request.Headers.ContainsKey("X-Forwarded-For")
+                ? Request.Headers["X-Forwarded-For"].ToString()
+                : HttpContext.Connection.RemoteIpAddress!.ToString();
+            string userAgent = Request.Headers["User-Agent"].ToString();
+            var session = sessionService.ValidateSession( sessionToken, ipAddress, userAgent, out string message );
+            if( session == null){
+                return StatusCode( 403, new { message });
+            }
+            #endregion
+
+            // * Attempt to get the person data
+            try{
+
+                var person = sessionService.GetPersonSession(sessionToken) ?? throw new Exception("La respuesta es nula");
+                directoryDBContext.Entry(person).Collection( e => e.Addresses!).Load();
+                return Ok( (person.Addresses??[]).Select( addr => AddressResponse.FromEntity(addr)) );
+
+            }catch(SessionNotValid sbv){
+                _logger.LogError(sbv, "Session token not valid");
+                return StatusCode( 403, new { sbv.Message });
+            }catch(Exception err){
+                _logger.LogError(err, "Error no controlado al obtener los datos de la sesion");
+                return Conflict( new {
+                    Message = "Error no controlado al obtener los datos de la sesion"
+                });
+            } 
+        }
+
+
+        /// <summary>
+        /// Retrive the contact information of the person assigned to the session token
+        /// </summary>
+        /// <remarks>
+        ///  NOTE: Will attempting to get the session token first by header request with the name "SessionToken", then from the query param "t" and by last by the cookie named "SessionToken" 
+        /// </remarks>
+        /// <response code="200">Return the contact information</response>
+        /// <response code="400">The session cookie was not found</response>
+        /// <response code="403">The session token is not valid or expired</response>
+        /// <response code="409">Unhandle exception</response>
+        [HttpGet]
+        [Route("me/contactInformations")]
+        public ActionResult<IEnumerable<ContactResponse>?> GetContactInformationBySession([FromQuery] string? t)
+        {
+            #region Validate Session
+            // * Retrieve the sessionToken by the header, query param or cookie value
+            string sessionToken = string.Empty;
+            if( Request.Headers.ContainsKey(headerSessionName)){
+                sessionToken = Request.Headers[headerSessionName]!;
+            }else{
+                sessionToken = t ?? Request.Cookies[ cookieName ]!;
+            }
+            
+            if( string.IsNullOrEmpty(sessionToken)) { 
+                return BadRequest( new {
+                    Message = "Sesion token no encontrado."
+                });
+            }
+
+            // * Validate the token 
+            string ipAddress = Request.Headers.ContainsKey("X-Forwarded-For")
+                ? Request.Headers["X-Forwarded-For"].ToString()
+                : HttpContext.Connection.RemoteIpAddress!.ToString();
+            string userAgent = Request.Headers["User-Agent"].ToString();
+            var session = sessionService.ValidateSession( sessionToken, ipAddress, userAgent, out string message );
+            if( session == null){
+                return StatusCode( 403, new { message });
+            }
+            #endregion
+
+            // * Attempt to get the person data
+            try{
+
+                var person = sessionService.GetPersonSession(sessionToken) ?? throw new Exception("La respuesta es nula");
+                directoryDBContext.Entry(person).Collection( e => e.ContactInformations!).Load();
+                return Ok( (person.ContactInformations??[]).Select( cont => ContactResponse.FromEntity(cont)) );
+
+            }catch(SessionNotValid sbv){
+                _logger.LogError(sbv, "Session token not valid");
+                return StatusCode( 403, new { sbv.Message });
+            }catch(Exception err){
+                _logger.LogError(err, "Error no controlado al obtener los datos de la sesion");
+                return Conflict( new {
+                    Message = "Error no controlado al obtener los datos de la sesion"
+                });
+            } 
+        }
+
+
 
         /// <summary>
         /// Get all the sessions data
