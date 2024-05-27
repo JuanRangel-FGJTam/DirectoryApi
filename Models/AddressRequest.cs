@@ -15,15 +15,15 @@ namespace AuthApi.Models
         public int CountryID {get;set;}
         
         [Required]
-        [Range(1, 999)]
+        [Range(1,9999)]
         public int StateID {get;set;}
         
         [Required]
-        [Range(1, 999)]
+        [Range(1, 99999)]
         public int MunicipalityID {get;set;}
        
         [Required]
-        [Range(1, 999)]
+        [Range(1, 99999)]
         public int? ColonyID {get;set;}
         
         [Required]
