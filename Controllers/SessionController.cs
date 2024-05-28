@@ -18,6 +18,7 @@ using Microsoft.EntityFrameworkCore;
 using AuthApi.Services;
 using System.ComponentModel.DataAnnotations;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace AuthApi.Controllers
 {
@@ -138,7 +139,8 @@ namespace AuthApi.Controllers
                 directoryDBContext.Entry(person).Collection( e => e.Addresses!).Load();
                 directoryDBContext.Entry(person).Collection( e => e.ContactInformations!).Load();
 
-                var json = JsonConvert.SerializeObject( PersonResponse.FromEntity(person!) );
+                var camelSettings = new JsonSerializerSettings { ContractResolver = new CamelCasePropertyNamesContractResolver() };
+                var json = JsonConvert.SerializeObject( PersonResponse.FromEntity(person!), camelSettings );
                 return new ContentResult {
                     Content = json,
                     ContentType = "application/json",
