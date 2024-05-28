@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using AuthApi.Services;
 using System.ComponentModel.DataAnnotations;
+using Newtonsoft.Json;
 
 namespace AuthApi.Controllers
 {
@@ -136,7 +137,14 @@ namespace AuthApi.Controllers
                 directoryDBContext.Entry(person).Reference( e => e.Occupation).Load();
                 directoryDBContext.Entry(person).Collection( e => e.Addresses!).Load();
                 directoryDBContext.Entry(person).Collection( e => e.ContactInformations!).Load();
-                return Ok( PersonResponse.FromEntity(person!) );
+
+                var json = JsonConvert.SerializeObject( PersonResponse.FromEntity(person!) );
+                return new ContentResult {
+                    Content = json,
+                    ContentType = "application/json",
+                    StatusCode = 200
+                };
+                
 
             }catch(SessionNotValid sbv){
                 _logger.LogError(sbv, "Session token not valid");

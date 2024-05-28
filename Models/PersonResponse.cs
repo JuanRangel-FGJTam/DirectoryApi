@@ -5,6 +5,9 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using AuthApi.Entities;
+using AuthApi.Helper;
+using Newtonsoft.Json;
+
 
 namespace AuthApi.Models
 {
@@ -23,7 +26,10 @@ namespace AuthApi.Models
         public string? LastName {get;set;}
         
         public string? Email {get;set;}
-
+        
+        [DataType(DataType.Date)]
+        [JsonProperty("birthdate")]
+        [JsonConverter(typeof(CustomDateConverter))]
         public DateTime? Birthdate {get;set;}
 
         public int? GenderId {get; set;}
