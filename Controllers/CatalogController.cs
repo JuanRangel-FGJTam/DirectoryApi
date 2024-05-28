@@ -31,7 +31,7 @@ namespace AuthApi.Controllers
         [Route("occupations")]
         public ActionResult<IEnumerable<Occupation>> GetOccupations()
         {
-            return Ok( dbContext.Occupation.ToArray() );
+            return Ok( dbContext.Occupation.OrderBy( item => item.Name).ToArray());
         }
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace AuthApi.Controllers
         [Route("genders")]
         public ActionResult<IEnumerable<Gender>> GetGenders()
         {
-            return Ok( dbContext.Gender.ToArray() );
+            return Ok( dbContext.Gender.OrderBy( item => item.Name).ToArray());
         }
 
         /// <summary>
@@ -53,7 +53,7 @@ namespace AuthApi.Controllers
         [Route("nationalities")]
         public ActionResult<IEnumerable<Nationality>> GetNationalities()
         {
-            return Ok( dbContext.Nationality.ToArray() );
+            return Ok( dbContext.Nationality.OrderBy( item => item.Name).ToArray());
         }
 
         /// <summary>
@@ -64,7 +64,7 @@ namespace AuthApi.Controllers
         [Route("marital-statuses")]
         public ActionResult<IEnumerable<MaritalStatus>> GetMaritalStatuses()
         {
-            return Ok( dbContext.MaritalStatus.ToArray() );
+            return Ok( dbContext.MaritalStatus.OrderBy(item => item.Name).ToArray() );
         }
 
         /// <summary>
@@ -75,7 +75,7 @@ namespace AuthApi.Controllers
         [Route("contact-types")]
         public ActionResult<IEnumerable<ContactType>> GetContactTypes()
         {
-            return Ok( dbContext.ContactTypes.ToArray() );
+            return Ok( dbContext.ContactTypes.OrderBy(item =>item.Name).ToArray() );
         }
 
         /// <summary>
@@ -86,7 +86,7 @@ namespace AuthApi.Controllers
         [Route("countries")]
         public ActionResult<IEnumerable<Country>> GetCountries()
         {
-            return Ok( dbContext.Countries.ToArray() );
+            return Ok( dbContext.Countries.OrderBy(item =>item.Name).ToArray() );
         }
 
         /// <summary>
@@ -100,6 +100,7 @@ namespace AuthApi.Controllers
             return Ok( dbContext.States
                 .Include( c => c.Country )
                 .Where( item => item.Country!.Id == country_id)
+                .OrderBy( item => item.Name)
                 .ToList()
             );
         }
@@ -115,6 +116,7 @@ namespace AuthApi.Controllers
             return Ok( dbContext.Municipalities
                 .Include( c => c.State )
                 .Where( c => c.State!.Id == state_id)
+                .OrderBy( item => item.Name)
                 .ToArray()
             );
         }
@@ -130,6 +132,7 @@ namespace AuthApi.Controllers
             return Ok( dbContext.Colonies
                 .Include( c =>c.Municipality )
                 .Where( item => item.Municipality!.Id == municipality_id)
+                .OrderBy(item =>item.Name)
                 .ToArray()
             );
         }
