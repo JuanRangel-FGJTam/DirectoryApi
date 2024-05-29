@@ -143,7 +143,7 @@ namespace AuthApi.Controllers
                 var json = JsonConvert.SerializeObject( PersonResponse.FromEntity(person!), camelSettings );
                 return new ContentResult {
                     Content = json,
-                    ContentType = "application/json",
+                    ContentType = "application/json; charset=utf-8",
                     StatusCode = 200
                 };
                 
