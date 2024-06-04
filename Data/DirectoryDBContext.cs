@@ -88,6 +88,10 @@ namespace AuthApi.Data
 
             // * Contact information entity
             var contactInformation = modelBuilder.Entity<ContactInformation>();
+            contactInformation.Property( p => p.Value).HasConversion(
+                v => cryptographyService.EncryptData(v??""),
+                v => cryptographyService.DecryptData(v)
+            );
             contactInformation.Property( b => b.CreatedAt)
                 .HasDefaultValueSql("getDate()")
                 .HasColumnType("datetime");
