@@ -136,8 +136,8 @@ namespace AuthApi.Controllers
                 directoryDBContext.Entry(person).Reference( e => e.MaritalStatus).Load();
                 directoryDBContext.Entry(person).Reference( e => e.Nationality).Load();
                 directoryDBContext.Entry(person).Reference( e => e.Occupation).Load();
-                directoryDBContext.Entry(person).Collection( e => e.Addresses!).Load();
-                directoryDBContext.Entry(person).Collection( e => e.ContactInformations!).Load();
+                directoryDBContext.Entry(person).Collection( e => e.Addresses!).Query().Where(item => item.DeletedAt == null).Load();
+                directoryDBContext.Entry(person).Collection( e => e.ContactInformations!).Query().Where(item => item.DeletedAt == null ).Load();
 
                 var camelSettings = new JsonSerializerSettings { ContractResolver = new CamelCasePropertyNamesContractResolver() };
                 var json = JsonConvert.SerializeObject( PersonResponse.FromEntity(person!), camelSettings );
@@ -182,7 +182,7 @@ namespace AuthApi.Controllers
             try{
 
                 var person = sessionService.GetPersonSession(sessionToken) ?? throw new Exception("La respuesta es nula");
-                directoryDBContext.Entry(person).Collection( e => e.Addresses!).Load();
+                directoryDBContext.Entry(person).Collection( e => e.Addresses!).Query().Where(item => item.DeletedAt == null).Load();
                 return Ok( (person.Addresses??[]).Select( addr => AddressResponse.FromEntity(addr)) );
 
             }catch(SessionNotValid sbv){
@@ -274,7 +274,8 @@ namespace AuthApi.Controllers
             try{
 
                 var person = sessionService.GetPersonSession(sessionToken) ?? throw new Exception("La respuesta es nula");
-                directoryDBContext.Entry(person).Collection( e => e.ContactInformations!).Load();
+                directoryDBContext.Entry(person).Collection( e => e.ContactInformations!).Query().Where(item => item.DeletedAt == null).Load();
+
                 return Ok( (person.ContactInformations??[]).Select( cont => ContactResponse.FromEntity(cont)) );
 
             }catch(SessionNotValid sbv){
