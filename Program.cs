@@ -40,11 +40,4 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// Attempt to encript the contact infomation if are not encripted yet
-using (var scope = app.Services.CreateScope()){  
-    var services = scope.ServiceProvider;
-    var encriptContactInfoTask = new EncriptContactInfoTask( services.GetService<DirectoryDBContext>()!, services.GetService<ICryptographyService>()! );
-    encriptContactInfoTask.Run();
-}  
-
 app.Run();
