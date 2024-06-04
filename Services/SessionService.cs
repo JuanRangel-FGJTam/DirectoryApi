@@ -106,11 +106,11 @@ namespace AuthApi.Services
                 return null;
             }
 
-            // if( session.IpAddress != ipAddress){
-            //     message = "Los datos de la sesión no coinciden";
-            //     CloseTheSession(session.SessionID);
-            //     return null;
-            // }
+            if( session.IpAddress != ipAddress){
+                message = "Los datos de la sesión no coinciden";
+                CloseTheSession(session.SessionID);
+                return null;
+            }
 
             if( session.EndAt < DateTime.Now){
                 message = "La sesion a expirado";
