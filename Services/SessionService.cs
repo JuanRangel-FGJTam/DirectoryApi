@@ -30,7 +30,7 @@ namespace AuthApi.Services
         /// <param name="ipAddress"></param>
         /// <param name="userAgent"></param>
         /// <returns>String token calculated by hash the data</returns>
-        public string StartPersonSession(Person person, string ipAddress, string userAgent ){
+        public string StartPersonSession(Person person, string? ipAddress, string? userAgent ){
             
             var _now = DateTime.Now;
 
@@ -105,12 +105,12 @@ namespace AuthApi.Services
                 message = "El token no es valido";
                 return null;
             }
-
-            if( session.IpAddress != ipAddress){
-                message = "Los datos de la sesión no coinciden";
-                CloseTheSession(session.SessionID);
-                return null;
-            }
+            
+            // if( session.IpAddress  != ipAddress){
+            //     message = "Los datos de la sesión no coinciden";
+            //     CloseTheSession(session.SessionID);
+            //     return null;
+            // }
 
             if( session.EndAt < DateTime.Now){
                 message = "La sesion a expirado";

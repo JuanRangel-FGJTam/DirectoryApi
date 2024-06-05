@@ -74,14 +74,8 @@ namespace AuthApi.Controllers
 
             // * Create a session record
             try{
-                // * Get the ipAddress and userAgent
-                string ipAddress = Request.Headers.ContainsKey("X-Forwarded-For")
-                ? Request.Headers["X-Forwarded-For"].ToString()
-                : HttpContext.Connection.RemoteIpAddress!.ToString();
-                string userAgent = Request.Headers["User-Agent"].ToString();
-
                 // * Make the session
-                var SessionToken = sessionService.StartPersonSession( person, ipAddress, userAgent);
+                var SessionToken = sessionService.StartPersonSession( person, authenticateRequest.IpAddress, authenticateRequest.UserAgent );
 
                 // * Set the cookie for the response
                 Response.Cookies.Append( cookieName, SessionToken, new CookieOptions

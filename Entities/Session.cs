@@ -15,10 +15,8 @@ namespace AuthApi.Entities
         public string SessionID {get;set;} = null!;
         [Required]
         public Person Person {get;set;} = null!;
-        [Required]
-        public string IpAddress {get;set;} = null!;
-        [Required]
-        public string UserAgent {get;set;} = null!;
+        public string? IpAddress {get;set;}
+        public string? UserAgent {get;set;}
 
         [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
         public DateTime BegginAt {get;set;}
