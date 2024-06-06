@@ -109,8 +109,11 @@ namespace AuthApi.Controllers
             }
 
             // Validate and prevent if the value is already stored
-            if( dbContext.ContactInformations.Where(item => item.Value == contactRequest.Value).Any() )
-            {  
+            var _contactIsStored = dbContext.ContactInformations
+             .Where(item => item.Person.Id.ToString() == contactRequest.PersonID )
+             .Where( item => item.DeletedAt == null)
+             .Where( item => item.Value == contactRequest.Value).Any();
+            if(_contactIsStored) {  
                 return StatusCode( StatusCodes.Status422UnprocessableEntity, new {
                     Title = "El telefono o correo ya se encuentra registrado"
                 });
