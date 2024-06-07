@@ -34,20 +34,34 @@ namespace AuthApi.Services
             
             var _now = DateTime.Now;
 
-            // Verify if there is a session already stored with the same data
-            var oldSession = this.directoryDBContext.Sessions
-                .Where( s => s.Person.Id == person.Id )
-                .Where( s => s.IpAddress == ipAddress )
-                .Where( s => s.UserAgent == userAgent )
-                .Where( s => s.DeletedAt == null)
-                .Where( s => s.EndAt > DateTime.Now)
-                .FirstOrDefault();
+            if( ipAddress != null || userAgent != null ){
 
-            if(oldSession != null){
-                oldSession.EndAt = DateTime.Now.Add( this.sessionLifeTime);
-                directoryDBContext.Sessions.Update( oldSession);
+                // Verify if there is a session already stored with the same data
+                var oldSession = this.directoryDBContext.Sessions
+                    .Where( s => s.Person.Id == person.Id )
+                    .Where( s => s.IpAddress == ipAddress )
+                    .Where( s => s.UserAgent == userAgent )
+                    .Where( s => s.DeletedAt == null)
+                    .Where( s => s.EndAt > DateTime.Now)
+                    .FirstOrDefault();
+
+                // If a session with the same data exist, return them
+                if(oldSession != null){
+                    oldSession.EndAt = DateTime.Now.Add( this.sessionLifeTime);
+                    directoryDBContext.Sessions.Update( oldSession);
+                    directoryDBContext.SaveChanges();
+                    return oldSession.Token;
+                }
+
+            }else{
+                // Close all the sessions of the user
+                var sessionsToUpdate = directoryDBContext.Sessions
+                    .Where(s => s.Person.Id == person.Id && s.DeletedAt == null)
+                    .ToList();
+                foreach (var session in sessionsToUpdate) {
+                    session.DeletedAt = DateTime.Now;
+                }
                 directoryDBContext.SaveChanges();
-                return oldSession.Token;
             }
             
             // Generate token
