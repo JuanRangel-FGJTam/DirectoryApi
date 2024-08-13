@@ -11,6 +11,7 @@ using AuthApi.Entities;
 using AuthApi.Models;
 using AuthApi.Helper;
 using AuthApi.Services;
+using Azure.Core;
 
 namespace AuthApi.Controllers
 {
@@ -41,6 +42,19 @@ namespace AuthApi.Controllers
             }catch(Exception){
                 return BadRequest( new {
                     message = $"Person id has formatted not valid"
+                });
+            }
+
+
+            // * validate if the folio is aleady stored
+            var exist = this.dbContext.Proceeding.Where( item => item.PersonId == _personID && item.Folio == request.Folio ).Any();
+            if(exist){
+                var errors = new List<object> {
+                    new { Folio = "El folio ya se encuentra registrado a esta persona" }
+                };
+                return UnprocessableEntity(new {
+                    Title = "Uno o mas campos tienen error",
+                    Errors = errors
                 });
             }
 
