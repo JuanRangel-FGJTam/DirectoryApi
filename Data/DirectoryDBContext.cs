@@ -22,6 +22,10 @@ namespace AuthApi.Data
         public DbSet<ContactInformation> ContactInformations { get; set; }
         public DbSet<User> Users {get;set;}
         public DbSet<Session> Sessions {get;set;}
+        public DbSet<Area> Area {get;set;}
+        public DbSet<ProceedingStatus> ProceedingStatus {get;set;}
+        public DbSet<Proceeding> Proceeding {get;set;}
+
 
         private readonly ICryptographyService cryptographyService;
 
