@@ -10,8 +10,7 @@ namespace AuthApi.Models
     {
 
         [Required]
-        public string Name {get;set;} = default!;
-
+        public string? Name {get;set;}
         public string? Folio {get;set;}
 
         public string? Status {get;set;}

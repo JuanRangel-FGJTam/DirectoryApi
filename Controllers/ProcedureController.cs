@@ -25,6 +25,28 @@ namespace AuthApi.Controllers
         private readonly DirectoryDBContext dbContext = context;
         #endregion
 
+
+        /// <summary>
+        /// almacena los datos de los trámites que realiza el ciudadano a través de las diversas aplicaciones.
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        /// 
+        ///     POST /api/people/{personId}/procedures
+        ///     {
+        ///         folio: string [required]
+        ///         status: string|null,
+        ///         area: string|null, 
+        ///         name: string [required]
+        ///         created_at: string|null [format('yyy-mm-dd HH:mm')] 
+        ///     }
+        /// 
+        /// </remarks>
+        /// <param name="personId"> identificador de la person in formato GUID</param>
+        /// <param name="request"></param>
+        /// <response code="201">Succsessfull create the new record</response>
+        /// <response code="400">The request is not valid (person id is not GUID, the payload is not 'appliaction/json' )</response>
+        /// <response code="422">Some request params are not valid</response>
         [HttpPost]
         [Route("/api/people/{personId}/procedures")]
         public IActionResult Store( [FromRoute] string personId, [FromBody] NewProceedingRequest request){
@@ -114,6 +136,12 @@ namespace AuthApi.Controllers
         }
 
 
+        /// <summary>
+        /// retorna el listado de tramites almacenados de la persona
+        /// </summary>
+        /// <param name="personId"> identificador de la person in formato GUID</param>
+        /// <response code="200">return the data</response>
+        /// <response code="400">The request is not valid ore some error are present</response>
         [HttpGet]
         [Route("/api/people/{personId}/procedures")]
         public ActionResult<IEnumerable<ProceedingResponse>> GetPersonProcedings([FromRoute] string personId){
