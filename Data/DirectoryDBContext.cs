@@ -113,11 +113,21 @@ namespace AuthApi.Data
             );
 
             // * Session entity
-            var sessionEntity =  modelBuilder.Entity<Session>();
+            var sessionEntity = modelBuilder.Entity<Session>();
             sessionEntity.Property( b => b.BegginAt)
                 .HasDefaultValueSql("getDate()")
                 .ValueGeneratedOnAdd();
             sessionEntity.Navigation(n => n.Person).AutoInclude();
+
+            // * Procedding Entity
+            var proccedingEntity = modelBuilder.Entity<Proceeding>();
+            proccedingEntity.Property( b => b.CreatedAt)
+                .HasDefaultValueSql("getDate()")
+                .HasColumnType("datetime");
+            proccedingEntity.Property( b => b.UpdatedAt)
+                .HasDefaultValueSql("getDate()")
+                .HasColumnType("datetime")
+                .ValueGeneratedOnAddOrUpdate();
 
             // * Seed DB
             modelBuilder.Entity<User>().HasData(
