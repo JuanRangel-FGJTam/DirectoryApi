@@ -9,7 +9,7 @@ namespace AuthApi.Models
 {
     public class ProceedingResponse( string peopleId, string name)
     {
-
+        public int Id {get;set;}
         public string PeopleId {get;set;} = peopleId;
         public string Name {get;set;} = name;
         public string? Folio {get;set;}
@@ -26,6 +26,7 @@ namespace AuthApi.Models
         public static ProceedingResponse FromIdentity(Proceeding p){
             var item = new ProceedingResponse(p.PersonId.ToString(), p.Name ?? "")
             {
+                Id = p.Id,
                 Folio = p.Folio,
                 CreatedAt = p.CreatedAt,
                 DenunciaId = p.DenunciaId,
