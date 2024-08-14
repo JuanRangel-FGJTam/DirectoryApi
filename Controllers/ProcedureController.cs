@@ -78,11 +78,23 @@ namespace AuthApi.Controllers
             }
 
 
-            // * validate if the folio is aleady stored
+            // * validate if the folio is already stored
             var exist = this.dbContext.Proceeding.Where( item => item.PersonId == _personID && item.Folio == request.Folio ).Any();
             if(exist){
                 var errors = new List<object> {
-                    new { Folio = "El folio ya se encuentra registrado a esta persona" }
+                    new { Folio = "El folio ya se encuentra registrado en esta persona." }
+                };
+                return UnprocessableEntity(new {
+                    Title = "Uno o mas campos tienen error",
+                    Errors = errors
+                });
+            }
+
+            // * validate if the denuncia id is already stored
+            exist = this.dbContext.Proceeding.Where( item => item.PersonId == _personID && item.DenunciaId == request.DenunciaId && item.DenunciaId != null ).Any();
+            if(exist){
+                var errors = new List<object> {
+                    new { Folio = "El ID de la denuncia ya se encuentra registrado en esta persona." }
                 };
                 return UnprocessableEntity(new {
                     Title = "Uno o mas campos tienen error",
@@ -188,7 +200,7 @@ namespace AuthApi.Controllers
         }
 
         /// <summary>
-        ///  allows to update the procedding by the person_id and the folio
+        ///  allows to update the procedding by the person_id and the denuncia-id
         /// </summary>
         /// <remarks>
         /// Sample request:
@@ -196,26 +208,27 @@ namespace AuthApi.Controllers
         ///     POST /api/people/{personId}/procedures
         ///     {
         ///         status: string [required, max:24],
-        ///         observations: string|null [max:200],
-        ///         denunciaId: string|null [max:100]
+        ///         observations: string|null [max:200]
         ///     }
         ///
         /// </remarks>
         /// <param name="personId">person id</param>
-        /// <param name="folio">folio </param>
+        /// <param name="denunciaId">denuncia id </param>
         /// <param name="updateProceedingRequest"> request payload</param>
         /// <response code="201">Resource updated</response>
         /// <response code="400">The request is not valid (person id is not GUID, the payload is not 'appliaction/json' )</response>
         /// <response code="404">The person or the proceding its not found</response>
         /// <response code="409">Fail to update the proceding</response>
         [HttpPatch]
-        [Route("/api/people/{personId}/procedures/{folio}")]
-        public IActionResult UpdateProcedingById([FromRoute] Guid personId, [FromRoute] string folio, [FromBody] UpdateProceedingRequest updateProceedingRequest ) {
+        [Route("/api/people/{personId}/procedures/{denunciaId}")]
+        public IActionResult UpdateProcedingById([FromRoute] Guid personId, [FromRoute] string denunciaId, [FromBody] UpdateProceedingRequest updateProceedingRequest ) {
 
             // * retrive the procedding
-            var procedding = this.dbContext.Proceeding.Where( p=> p.PersonId == personId && p.Folio == folio && folio != null ).FirstOrDefault();
+            var procedding = this.dbContext.Proceeding.Where( p=> p.PersonId == personId && p.DenunciaId !=null && p.DenunciaId == denunciaId ).FirstOrDefault();
             if( procedding == null){
-                return NotFound(new {Message = "No se encontro registro que concuerde con el Id"});
+                return NotFound(new {
+                    Message = "No se encontró registro que coincida con la persona y la denuncia."
+                });
             }
 
             // * validate the person
@@ -233,8 +246,8 @@ namespace AuthApi.Controllers
 
             // * attempting to update the resource
             try {
-                UpdateProceding(procedding, updateProceedingRequest);
-                return StatusCode(201, new {Message = $"Procedimiento persona:'{personId}' folio:'{folio}' actualizado"} );
+                UpdateProceding(procedding, updateProceedingRequest, updateDenunciaId: false);
+                return StatusCode(201, new {Message = $"Procedimiento persona:'{personId}' denuncia:'{denunciaId}' actualizado"} );
             }catch(Exception ex){
                 this._logger.LogError(ex, "Fail to attemting to update the proceding id {id}", procedding.Id);
                 return Conflict(new {
@@ -294,7 +307,7 @@ namespace AuthApi.Controllers
 
         }
 
-        private void UpdateProceding(Proceeding proceeding, UpdateProceedingRequest request){
+        private void UpdateProceding(Proceeding proceeding, UpdateProceedingRequest request, bool updateDenunciaId = true){
             
             // * find the status or create a new one
             ProceedingStatus? proceedingStatus = null;
@@ -312,7 +325,8 @@ namespace AuthApi.Controllers
             // * update the procceding
             proceeding.Status = proceedingStatus;
 
-            if( !string.IsNullOrEmpty(request.DenunciaId) ){
+            if( !string.IsNullOrEmpty(request.DenunciaId) && updateDenunciaId ){
+                // TODO: validate it the denuncia-id is already stored
                 proceeding.DenunciaId = request.DenunciaId.Trim();
             }
 
