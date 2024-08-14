@@ -48,6 +48,7 @@ namespace AuthApi.Controllers
         /// <param name="request"></param>
         /// <response code="201">Succsessfull create the new record</response>
         /// <response code="400">The request is not valid (person id is not GUID, the payload is not 'appliaction/json' )</response>
+        /// <response code="404">The person is not found</response>
         /// <response code="422">Some request params are not valid</response>
         [HttpPost]
         [Route("/api/people/{personId}/procedures")]
@@ -66,6 +67,13 @@ namespace AuthApi.Controllers
             }catch(Exception){
                 return BadRequest( new {
                     message = $"Person id has formatted not valid"
+                });
+            }
+
+            // * validate the person
+            if( !this.dbContext.People.Where(item => item.Id == _personID).Any()){
+                return NotFound( new {
+                    Message = "The person is not found"
                 });
             }
 
@@ -146,6 +154,7 @@ namespace AuthApi.Controllers
         /// <param name="personId"> identificador de la person in formato GUID</param>
         /// <response code="200">return the data</response>
         /// <response code="400">The request is not valid ore some error are present</response>
+        /// <response code="404">The person is not found</response>
         [HttpGet]
         [Route("/api/people/{personId}/procedures")]
         public ActionResult<IEnumerable<ProceedingResponse>> GetPersonProcedings([FromRoute] string personId){
@@ -160,7 +169,13 @@ namespace AuthApi.Controllers
                 });
             }
 
-            
+            // * validate the person
+            if( !this.dbContext.People.Where(item => item.Id == _personID).Any()){
+                return NotFound( new {
+                    Message = "The person is not found"
+                });
+            }
+
             // * get data
             var data = this.dbContext.Proceeding
                 .Where(item=> item.PersonId == _personID)
@@ -191,7 +206,7 @@ namespace AuthApi.Controllers
         /// <param name="updateProceedingRequest"> request payload</param>
         /// <response code="201">Resource updated</response>
         /// <response code="400">The request is not valid (person id is not GUID, the payload is not 'appliaction/json' )</response>
-        /// <response code="404">The proceding element its not found</response>
+        /// <response code="404">The person or the proceding its not found</response>
         /// <response code="409">Fail to update the proceding</response>
         [HttpPatch]
         [Route("/api/people/{personId}/procedures/{folio}")]
@@ -201,6 +216,13 @@ namespace AuthApi.Controllers
             var procedding = this.dbContext.Proceeding.Where( p=> p.PersonId == personId && p.Folio == folio && folio != null ).FirstOrDefault();
             if( procedding == null){
                 return NotFound(new {Message = "No se encontro registro que concuerde con el Id"});
+            }
+
+            // * validate the person
+            if( !this.dbContext.People.Where(item => item.Id == personId).Any()){
+                return NotFound( new {
+                    Message = "The person is not found"
+                });
             }
 
             // * validate request
