@@ -257,7 +257,7 @@ namespace AuthApi.Controllers
         ///         observations: string|null [max:200],
         ///         denunciaId: string|null [max:100]
         ///     }
-        ///
+        /// </remarks>
         /// <param name="procedingId">procedding id</param>
         /// <param name="updateProceedingRequest"> request payload</param>
         /// <response code="201">Resource udpated</response>
