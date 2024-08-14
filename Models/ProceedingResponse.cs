@@ -11,10 +11,10 @@ namespace AuthApi.Models
     {
 
         public string PeopleId {get;set;} = peopleId;
-        
         public string Name {get;set;} = name;
-        
         public string? Folio {get;set;}
+        public string? DenunciaId {get;set;}
+        public string? Observations {get;set;}
 
         public string? Status {get;set;}
         public int StatusId {get;set;}
@@ -23,14 +23,13 @@ namespace AuthApi.Models
         public int AreaId {get;set;}
 
         public DateTime? CreatedAt {get;set;}
-        
-
-
         public static ProceedingResponse FromIdentity(Proceeding p){
             var item = new ProceedingResponse(p.PersonId.ToString(), p.Name ?? "")
             {
                 Folio = p.Folio,
-                CreatedAt = p.CreatedAt
+                CreatedAt = p.CreatedAt,
+                DenunciaId = p.DenunciaId,
+                Observations = p.Observations
             };
             
             if ( p.Status != null){

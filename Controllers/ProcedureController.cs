@@ -31,16 +31,18 @@ namespace AuthApi.Controllers
         /// </summary>
         /// <remarks>
         /// Sample request:
-        /// 
+        ///
         ///     POST /api/people/{personId}/procedures
         ///     {
-        ///         folio: string [required]
-        ///         status: string|null,
-        ///         area: string|null, 
-        ///         name: string [required]
-        ///         created_at: string|null [format('yyy-mm-dd HH:mm')] 
+        ///         folio: string [required, max:100]
+        ///         status: string|null [max:24],
+        ///         area: string|null [max:100],
+        ///         name: string [required, max:120],
+        ///         observations: string|null [max:200],
+        ///         denunciaId: string|null [max:100],
+        ///         created_at: string|null [format('yyy-mm-dd HH:mm')]
         ///     }
-        /// 
+        ///
         /// </remarks>
         /// <param name="personId"> identificador de la person in formato GUID</param>
         /// <param name="request"></param>
@@ -123,10 +125,12 @@ namespace AuthApi.Controllers
                 Folio = request.Folio!.Trim(),
                 Status = proceedingStatus,
                 Area = area,
+                DenunciaId = request.DenunciaId,
+                Observations = request.Observations,
                 CreatedAt = datetime??DateTime.Now
             };
 
-            // * insert into db 
+            // * insert into db
             dbContext.Proceeding.Add( newProceeding );
             dbContext.SaveChanges();
 
