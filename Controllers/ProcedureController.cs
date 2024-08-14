@@ -129,12 +129,12 @@ namespace AuthApi.Controllers
             // * create the new resorce
             var newProceeding = new Proceeding {
                 PersonId = _personID,
-                Name = request.Name!.Trim(),
+                Name = request.Name !=null ?request.Name!.Trim() :null,
                 Folio = request.Folio!.Trim(),
                 Status = proceedingStatus,
                 Area = area,
-                DenunciaId = request.DenunciaId!.Trim(),
-                Observations = request.Observations!.Trim(),
+                DenunciaId = request.DenunciaId!=null ? request.DenunciaId!.Trim() :null,
+                Observations = request.Observations!=null ?request.Observations!.Trim() :null,
                 CreatedAt = datetime??DateTime.Now
             };
 
