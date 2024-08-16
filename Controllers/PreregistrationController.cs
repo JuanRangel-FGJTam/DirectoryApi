@@ -150,7 +150,46 @@ namespace AuthApi.Controllers
                     err.Message
                 });
             }
+        }
 
+
+        /// <summary>
+        /// Send a mail of welcoming if the email is stored in the db (for testing)
+        /// </summary>
+        /// <returns code="200">Mail sended to the server provider</returns>
+        /// <returns code="404">Email not found</returns>
+        /// <returns code="409">Error at attempting to send the mail to the server</returns>
+        [Authorize]
+        [HttpPost("send/mail/welcome/to/{email}")]
+        public IActionResult SendWelcomeMail([FromRoute] string email)
+        {
+            // * attempt to find the person
+            Person? person = dbContext.People.Where(item => item.Email == email).FirstOrDefault();
+            if(person == null){
+                return NotFound(new {
+                    Title = "Email not found"
+                });
+            }
+
+            // * send the email
+            try {
+
+                var sendEmailTask = preregisterService.SendWelcomeMail(person);
+                sendEmailTask.Wait();
+
+                // return the response
+                return Ok( new {
+                    Email = email,
+                    EmailResponse = sendEmailTask.Result
+                });
+
+            }catch(Exception ex){
+                return Conflict( new {
+                    Title = "Error al enviar el mensage",
+                    Message = ex.Message
+                });
+            }
+            
         }
 
     }
