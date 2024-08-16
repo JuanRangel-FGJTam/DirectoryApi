@@ -9,7 +9,7 @@ namespace AuthApi.Helper
     {
 
         public static string ValidationEmail(string href){
-            return "<body><table width='100%' border='0' cellspacing='0' cellpadding='0'><tr><td align='center' style='padding: 20px;'><table class='content' width='600' border='0' cellspacing='0' cellpadding='0' style='border-collapse: collapse;'><tr><td class='body' style='padding: 40px; text-align: left; font-size: 16px; line-height: 1.6;'>Gracias por darse de alta, para continuar con el proceso de registro necesitamos verificar su dirección de correo electrónico para garantizar la seguridad de su cuenta.<br/><br/>Haga clic en el siguiente enlace</td></tr><tr><td style='padding: 0px 40px 0px 40px; text-align: center;'><table cellspacing='0' cellpadding='0' style='margin: auto;'><tr><td align='center' style='background-color: #345C72; padding: 10px 20px; border-radius: 5px;'><a href='{{urlRef}}' target='_blank' style='color: #ffffff; text-decoration: none; font-weight: bold;'>Continuar</a></td></tr></table></td></tr><tr><td class='body' style='padding: 40px; text-align: left; font-size: 16px; line-height: 1.6;'>Una vez que el enlace se abra en su navegador, será dirigido a una página que confirma la verificación de su correo electrónico y continuará con la captura de sus datos generales.<br/><br/> Si no se ha registrado o tiene alguna duda sobre este correo electrónico, no lo tenga en cuenta. Su seguridad es nuestra máxima prioridad y tomamos todas las medidas necesarias para proteger su información</td></tr></table></td></tr></table></body>".Replace("{{urlRef}}", href);
+            return "<body><table width='100%' border='0' cellspacing='0' cellpadding='0'><tr><td align='center' style='padding:20px'><table class='content' width='600' border='0' cellspacing='0' cellpadding='0' style='border-collapse:collapse'><tr><td class='body' style='padding:40px 40px 10px 40px;text-align:left;font-size:16px;line-height:1.6'><p>¡Gracias por registrarte en la Fiscalía Digital del Estado de Tamaulipas! Estás a solo un paso de completar la creación de tu cuenta, que será tu <b>llave digital</b> para acceder a todos nuestros servicios en línea.</p><p>Para continuar, necesitamos que valides tu dirección de correo electrónico. Esta validación es importante, ya que te permitirá recibir notificaciones y actualizaciones importantes sobre tus trámites y servicios.</p><p>Por favor, haz clic en el siguiente enlace para confirmar tu correo electrónico y continuar con la captura de tus datos personales:</p></td></tr><tr><td style='padding:0px 40px 0px 40px;text-align:center'><table cellspacing='0' cellpadding='0' style='margin:auto'><tr><td><a href='{{urlRef}}' target='_blank' style='margin:0 auto;display:flex;align-items:center;justify-content:center;background-color:#627a8b;padding:.25rem 1rem;border:1px solid #566977;border-radius:.25rem;color:white;cursor:pointer;box-shadow:#00000033 0px 2px 4px 1px;text-decoration:none'><svg fill='currentColor' height='22' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 640 512'><path d='M48 64C21.5 64 0 85.5 0 112c0 15.1 7.1 29.3 19.2 38.4L236.8 313.6c11.4 8.5 27 8.5 38.4 0l57.4-43c23.9-59.8 79.7-103.3 146.3-109.8l13.9-10.4c12.1-9.1 19.2-23.3 19.2-38.4c0-26.5-21.5-48-48-48H48zM294.4 339.2c-22.8 17.1-54 17.1-76.8 0L0 176V384c0 35.3 28.7 64 64 64H360.2C335.1 417.6 320 378.5 320 336c0-5.6 .3-11.1 .8-16.6l-26.4 19.8zM640 336a144 144 0 1 0 -288 0 144 144 0 1 0 288 0zm-76.7-43.3c6.2 6.2 6.2 16.4 0 22.6l-72 72c-6.2 6.2-16.4 6.2-22.6 0l-40-40c-6.2-6.2-6.2-16.4 0-22.6s16.4-6.2 22.6 0L480 353.4l60.7-60.7c6.2-6.2 16.4-6.2 22.6 0z'/></svg><span style='margin:0rem 0.5rem;text-transform:uppercase;font-size:1rem'>Continuar</span></a></td></tr></table></td></tr><tr><td class='body' style='padding:20px;text-align:left;font-size:16px;line-height:1.6'><p>Estamos comprometidos en ofrecerte un servicio eficiente y seguro. Completa este último paso y empieza a aprovechar todas las ventajas de la Fiscalía Digital.</p></td></tr><tr><td class='body' style='padding:10px;text-align:left;font-size:16px;line-height:1.6'><p><center>Atentamente</center><b style='padding-top:.1rem'><center>Fiscalía General de Justicia del Estado de Tamaulipas</center></b></p></td></tr></table></td></tr></table></body>".Replace("{{urlRef}}", href);
         }
 
         public static string ResetPassword(string href){
@@ -21,68 +21,8 @@ namespace AuthApi.Helper
 
         public static string Welcome(string personFullName, string imageNameSrc, string imageProfileSrc, string welcomeMessage){
             // welcomeMessage = "¡Bienvenido(a) a la Fiscalía Digital!"
-            return @"<body style='
-                    margin: 2rem auto 2rem auto;
-                    width: 40rem;
-                '>
-
-                <h2 style='text-align: center;'>
-                    {welcome-message}
-                    <br/>
-                    {user-name}
-                </h2>
-
-                <p>Con su cuenta, tiene acceso completo a todos los servicios digitales que ofrece la Fiscalía General de Justicia del Estado de Tamaulipas, de manera fácil y rápida. Aquí tiene algunas de las opciones disponibles:</p>
-                <ul>
-                    <li>Denuncia en línea</li>
-                    <li>Constancia de antecedentes penales</li>
-                    <li>Extravio de documentos</li>
-                    <li>Ubicación de oficinas</li>
-                    <li>Queja en línea contra servidores públicos de la Fiscalía`</li>
-                </ul>
-                
-                <p style='margin-top: 2rem;'>
-                    Puede actualizar sus datos personales en cualquier momento haciendo clic en su nombre
-                </p>
-                <img style='
-                        width: 36rem;
-                        margin: .25rem auto;
-                        background: #ddd;
-                        padding: .25rem;
-                        border: solid 1px #bbb;
-                        border-radius: .25rem;
-                        box-shadow: #3333334b 2px 0px 12px;
-                    '
-                    src='{image-name}'
-                    alt='imagen descriptiva opcion consulta tramites'
-                />
-                
-                <p style='margin-top: 2rem;'>
-                    Además,tiene acceso a un apartado donde podrá consultar el historial de todos sus trámites.
-                </p>
-                <img style='
-                        width: 36rem;
-                        margin: .25rem auto;
-                        background: #ddd;
-                        padding: .25rem;
-                        border: solid 1px #bbb;
-                        border-radius: .25rem;
-                        box-shadow: #3333334b 2px 0px 12px;
-                    '
-                    src='{image-profile}'
-                    alt='imagen descriptiva opcion consulta tramites'
-                />
-                
-                <p style='margin-top: 2rem;'>
-                    Nuestro compromiso es brindarle un servicio eficiente y transparente, asegurando que sus derechos sean protegidos y que la justicia esté al alcance de todos.
-                </p>
-                <p>Gracias por confiar en nosotros.</p>
-                
-                <p style='margin-top: 4rem;'>
-                    <center>Atentamente</center>
-                    <b style='padding-top:0.1rem;'><center>Fiscalía General de Justicia del Estado de Tamaulipas</center></b>
-                </p>
-            </body>".Replace("{user-name}", personFullName)
+            return "<body style='margin:2rem auto;width:40rem'><h2 style='text-align:center'>{welcome-message}<br/>{user-name}</h2><p>Nos complace informarle que su cuenta recién creada es mucho más que un simple registro, es su <b>llave digital</b> para acceder a una amplia gama de servicios ofrecidos por la Fiscalía General de Justicia del Estado de Tamaulipas.</p><p>Con esta llave digital, podrá:</p><ul><li><b>Presentar denuncias en línea</b> de manera rápida y segura.</li><li><b>Obtener constancias de antecedentes penales</b> sin tener que desplazarse.</li><li><b>Reportar el extravío de documentos</b> desde cualquier lugar.</li><li><b>Localizar oficinas</b> de la Fiscalía con facilidad.</li><li><b>Presentar quejas en línea</b> contra servidores públicos de la Fiscalía.</li></ul><p>Su cuenta le permite gestionar todos estos servicios desde un solo lugar, brindándole la comodidad de acceder a la justicia y a la información que necesita, cuando la necesita.</p><p style='margin-top:1rem'>Puede actualizar sus datos personales en cualquier momento haciendo clic en su nombre, asegurándose de que su llave digital siempre esté al día.</p><img style='width:36rem;margin:.25rem auto;background:#627a8b;padding:.25rem;border:1px solid #566977;border-radius:.25rem;box-shadow:#00000033 0px 2px 12px 1px' src='{image-name}' alt='imagen descriptiva opcion perfil'/><p style='margin-top:2rem'>Además, tiene acceso a un apartado donde podrá consultar el historial de todos sus trámites.</p><img style='width:36rem;margin:.25rem auto;background:#627a8b;padding:.25rem;border:1px solid #566977;border-radius:.25rem;box-shadow:#00000033 0px 2px 12px 1px' src='{image-profile}' alt='imagen descriptiva opcion consulta tramites'/><p style='margin-top:2rem'>Nuestro compromiso es brindarle un servicio eficiente y transparente, asegurando que sus derechos sean protegidos y que la justicia esté al alcance de todos.</p><p><b>Gracias por confiar en nosotros.</b></p><div style='display:flex;justify-items:center;margin-top:2rem'><a href='https://fiscaliadigital.fgjtam.gob.mx/mi-perfil' style='margin:0 auto;display:flex;align-items:center;justify-content:center;background-color:#627a8b;padding:.25rem 1rem;border:1px solid #566977;border-radius:.25rem;color:white;cursor:pointer;box-shadow:#00000033 0px 2px 4px 1px;text-decoration:none'><svg fill='currentColor' height='22' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 384 512'><path d='M64 0C28.7 0 0 28.7 0 64V448c0 35.3 28.7 64 64 64H320c35.3 0 64-28.7 64-64V64c0-35.3-28.7-64-64-64H64zm96 320h64c44.2 0 80 35.8 80 80c0 8.8-7.2 16-16 16H96c-8.8 0-16-7.2-16-16c0-44.2 35.8-80 80-80zm96-96c0 35.3-28.7 64-64 64s-64-28.7-64-64s28.7-64 64-64s64 28.7 64 64zM144 64h96c8.8 0 16 7.2 16 16s-7.2 16-16 16H144c-8.8 0-16-7.2-16-16s7.2-16 16-16z'/></svg><span style='margin-left:.5rem;text-transform:uppercase;font-size:1rem'>Ver mi perfil</span></a></div><p style='margin-top:2rem'><center>Atentamente</center><b style='padding-top:.1rem'><center>Fiscalía General de Justicia del Estado de Tamaulipas</center></b></p></body>"
+                .Replace("{user-name}", personFullName)
                 .Replace("{image-name}", imageNameSrc)
                 .Replace("{image-profile}", imageProfileSrc)
                 .Replace("{welcome-message}", welcomeMessage);

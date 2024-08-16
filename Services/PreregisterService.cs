@@ -147,8 +147,10 @@ namespace AuthApi.Services
         
 
         private async Task<string?> SendEmail( Preregistration preregistration, string? url = null){
-            
-            // TODO: Set a base url endpoint 
+
+            // * prepare the parameters
+            var _subject = "¡Estás a un Paso de Crear Tu Llave Digital!";
+            // TODO: create a configuration entry for the url validattion endpoint 
             var _ref = string.Format("{0}?t={1}",
                 url ?? "http://auth.fgjtam.gob.mx/person/validate/email",
                 preregistration.Token
@@ -160,7 +162,11 @@ namespace AuthApi.Services
             // * Send email
             try{
                 var emailID = await Task.Run<string>( async ()=>{
-                    return await this.emailProvider.SendEmail( preregistration.Mail!, "Validacion de correo", _htmlBody );
+                    return await this.emailProvider.SendEmail(
+                        emailDestination: preregistration.Mail!,
+                        subject: _subject,
+                        data: _htmlBody
+                    );
                 });
                 logger.LogInformation( "Email ID:{emailID} sending", emailID);
                 return emailID;
@@ -174,12 +180,12 @@ namespace AuthApi.Services
             
             // * prepare the message resources
             dbContext.Entry(person).Reference(p => p.Gender).Load();
-            var welcomeMessage = "¡Bienvenido(a) a la Fiscalía Digital!";
+            var _welcome = "Bienvenido(a)";
             if( person.Gender != null){
-                welcomeMessage = person.Gender.Id == 1 // masculino
-                    ? "¡Bienvenido a la Fiscalía Digital!"
-                    : "¡Bienvenida a la Fiscalía Digital!";
+                _welcome = person.Gender.Id == 1 ? "Bienvenido" : "Bienvenida";
             }
+            var welcomeMessage = $"¡{_welcome} a la Fiscalía Digital!";
+            var subjectMessage = $"{_welcome} a la Fiscalía Digital del Estado de Tamaulipas";
 
             // * make the email message
             var mailtemplate = EmailTemplates.Welcome(
@@ -192,7 +198,7 @@ namespace AuthApi.Services
             // * send the email
             var response = await emailProvider.SendEmail(
                 emailDestination: person.Email!,
-                subject: "Bienvenido(a) a la Fiscalía Digital del Estado de Tamaulipas",
+                subject: subjectMessage,
                 data: mailtemplate
             );
 
