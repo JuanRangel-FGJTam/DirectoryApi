@@ -28,7 +28,7 @@ namespace AuthApi.Controllers
     [Authorize]
     [ApiController]
     [Route("api/people")]
-    public class PeopleController(ILogger<PeopleController> logger, DirectoryDBContext context, PersonService personService, IEmailProvider emailProvider, IOptions<JwtSettings> optionsJwtSettings, IOptions<ResetPasswordSettings> optionsResetPasswordSettings, ResetPasswordState resetPasswordState) : ControllerBase
+    public class PeopleController(ILogger<PeopleController> logger, DirectoryDBContext context, PersonService personService, IEmailProvider emailProvider, IOptions<JwtSettings> optionsJwtSettings, IOptions<ResetPasswordSettings> optionsResetPasswordSettings, ResetPasswordState resetPasswordState, ChangeEmailState changeEmailState) : ControllerBase
     {
         private readonly ILogger<PeopleController> _logger = logger;
         private readonly DirectoryDBContext dbContext = context;
@@ -37,6 +37,7 @@ namespace AuthApi.Controllers
         private readonly JwtSettings jwtSettings = optionsJwtSettings.Value;
         private readonly ResetPasswordSettings resetPasswordSettings = optionsResetPasswordSettings.Value;
         private readonly ResetPasswordState resetPasswordState = resetPasswordState;
+        private readonly ChangeEmailState changeEmailState = changeEmailState;
         
         
         /// <summary>
@@ -573,7 +574,7 @@ namespace AuthApi.Controllers
         /// <response code="422">Error at sending the email</response>
         [HttpPost]
         [Route("password/reset" )]
-        public async Task<ActionResult<ContactResponse?>> SendEmailResetPassword( [FromBody]  ResetPasswordEmailRequest resetPasswordEmailRequest )
+        public async Task<ActionResult<ContactResponse?>> SendEmailResetPassword( [FromBody] ResetPasswordEmailRequest resetPasswordEmailRequest )
         {
             // * Retrive person by the email
             var person = this.personService.Search( resetPasswordEmailRequest.Email!, null, null ).FirstOrDefault();
@@ -665,6 +666,134 @@ namespace AuthApi.Controllers
         }
 
 
+        /// <summary>
+        /// Send email with a code for validate the new email
+        /// </summary>
+        /// <param name="personID"></param>
+        /// <param name="updateEmailRequest"></param>
+        /// <returns code="200">Email sended</returns>
+        /// <returns code="400">Request payload no valid</returns>
+        /// <returns code="404">Person not found</returns>
+        /// <returns code="409">Error at sending the mail with the code</returns>
+        /// <returns code="422">New email not valid or already stored</returns>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("{personID}/updateEmail/sendCode" )]
+        public IActionResult SendEmailChangePassword(string personID, [FromBody] UpdateEmailRequest updateEmailRequest){
+            
+            // * Validate request
+            if (!ModelState.IsValid) {
+                return BadRequest( ModelState );
+            }
+
+            // * prevenet email diplicated
+            if( dbContext.People.Where( p => p.DeletedAt == null && p != null && p.Email == updateEmailRequest.Email ).Any() ){
+                var errors = new List<KeyValuePair<string, string>> {
+                    new("email", "El correo ya se encuentra almacenado en la base de datos.")
+                };
+                return UnprocessableEntity(new {
+                    Title = "One or more field had errors",
+                    Errors = errors
+                });
+            }
+
+            // * Get the person
+            Guid _personID = Guid.Empty;
+            try {
+                _personID = Guid.Parse( personID );
+            }catch(Exception){
+                return BadRequest( new {
+                    message = $"Person id format not valid"
+                });
+            }
+            var person = this.personService.GetPeople() .FirstOrDefault(p => p.Id == _personID);
+            if ( person == null) {
+                return NotFound(new {
+                    Title = "Person not found"
+                });
+            }
+
+            // * attemp to send the validation email code
+            try {
+                var emailSendingTask = this.SendChangeEmailCode(person, updateEmailRequest.Email);
+                emailSendingTask.Wait();
+
+                return Ok( new {
+                    Title = "Email de verificacion enviado",
+                    Message = $"Code sended to '{updateEmailRequest.Email}'"
+                });
+            }
+            catch(Exception err){
+                _logger.LogError(err, "Error at attempting to send the email for reset change the email of the user ID:'{person_Id}' to the email '{email}'", person.Id.ToString(), updateEmailRequest.Email );
+                return Conflict( new {
+                    Title = "Error al enviar el codigo de verificacion.",
+                    err.Message
+                });
+            }
+
+        }
+
+
+        /// <summary>
+        /// Send email with a code for validate the new email
+        /// </summary>
+        /// <param name="newEmailRequest"></param>
+        /// <returns code="200">Email sended</returns>
+        /// <returns code="400">Request payload no valid</returns>
+        /// <returns code="409">Error at updating the email</returns>
+        /// <returns code="422">Validation code and new email nod valid or expired</returns>
+        /// <returns></returns>
+        [HttpPatch]
+        [Route("updateEmail" )]
+        public IActionResult ChangeEmail( [FromBody] NewEmailRequest newEmailRequest){
+
+            // Validate request
+            if(!ModelState.IsValid){
+                return BadRequest(ModelState);
+            }
+            
+            try {
+
+                // * Validate reset password code
+                Guid? personID = this.changeEmailState.Validate( newEmailRequest.ValidationCode, newEmailRequest.Email);
+                if( personID == null){
+                    return UnprocessableEntity( new {
+                        ValidationCode = "Codigo no es valido o ha caducado"
+                    });
+                }
+                
+                // * Retrive the person data
+                Person person = this.dbContext.People.Find(personID) ?? throw new KeyNotFoundException($"Person id {personID} not found");
+
+                // * Update the password
+                this.personService.UpdateEmail(person.Id, newEmailRequest.Email);
+
+                // * Remove reset password record
+                this.changeEmailState.Remove(person.Id);
+                
+                // Return response
+                return Ok( new {
+                    Title = "Correo actualizar",
+                    Message = $"El correo se actualizo el correo por '{newEmailRequest.Email!}'."
+                });
+
+            }catch(KeyNotFoundException  knfe){
+                return BadRequest( new {
+                    Title = "Element not found",
+                    knfe.Message
+                });
+            }catch(Exception err){
+                this._logger.LogError( err, "Error at attempting to change the email");
+                return Conflict( new {
+                    Title = "Error no controlado al actualizar el correo",
+                    err.Message
+                });
+            }
+
+        }
+        
+
+
         private async Task<string> SendResetPasswordEmail(Person person){
             // * Set token life time for 1 hour
             var tokenLifeTime = TimeSpan.FromSeconds( resetPasswordSettings.TokenLifeTimeSeconds );
@@ -703,6 +832,28 @@ namespace AuthApi.Controllers
 
             // * Send email
             return await emailProvider.SendEmail( person.Email!, "Restablecer contraseña", htmlBody );
+        }
+
+        private async Task<string> SendChangeEmailCode(Person person, string newEmail){
+            // * Set token life time for 1 hour
+            var tokenLifeTime = TimeSpan.FromSeconds( resetPasswordSettings.TokenLifeTimeSeconds );
+
+            // * Generate the code
+            var _guidString = Guid.NewGuid().ToString().ToUpper();
+            var resetCode = _guidString.Substring(_guidString.Length - 6);
+
+            var lifeTime = TimeSpan.FromSeconds( this.resetPasswordSettings.TokenLifeTimeSeconds );
+            var date = DateTime.Now.Add(lifeTime);
+
+            // * Store the record
+            changeEmailState.AddRecord( person.Id, resetCode, date, newEmail);
+
+
+            // * Generate html
+            var htmlBody = EmailTemplates.ResetPasswordCode( resetCode, date.ToShortTimeString() );
+
+            // * Send email
+            return await emailProvider.SendEmail( newEmail, "Confirmar correo", htmlBody );
         }
     }
 }
