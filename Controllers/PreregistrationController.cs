@@ -55,7 +55,7 @@ namespace AuthApi.Controllers
             }catch(Exception err){
                 logger.LogError(err, "Error at trying to generate a new preregistration record; {message}", err.Message );
                 return BadRequest( new {
-                    Title = "Error no controlado al generar la solicitud",
+                    Title = "Error no controlado al generar la solicitud.",
                     err.Message
                 });
             }
@@ -110,17 +110,17 @@ namespace AuthApi.Controllers
                 var preregister =  this.preregisterService.GetPreregistrationByToken(request.Token!);
                 if( preregister == null){
                     return NotFound( new {
-                        Title = "The preregister record was not found",
-                        Message = $"The preregister record was not found with the token {request.Token!}"
+                        Title = "El código de prerregistro no es válido.",
+                        Message = $"No se encontró registro que corresponda al código '{request.Token!}'."
                     });
                 }
 
                 // * Store the person data 
-                var newPerson = this.preregisterService.ValidateRegister( preregister.Id, request );    
+                var newPerson = this.preregisterService.ValidateRegister( preregister.Id, request );
                 if( newPerson == null){
                     return BadRequest( new {
-                        Title = "Cant register the person",
-                        Message = "Errot at create the person, the response was null"
+                        Title = "No se puede registrar la persona.",
+                        Message = "No se puede registrar la persona, el registro no se encuentra."
                     });
                 }
 
@@ -140,13 +140,13 @@ namespace AuthApi.Controllers
             catch( ValidationException ve){
                 var errorsData = (Dictionary<string, object>) ve.Value!;
                 return UnprocessableEntity(new {
-                    Title = "Uno o mas campos tienen error",
+                    Title = "Uno o mas campos tienen error.",
                     Errors = errorsData
                 });
             }
             catch (System.Exception err) {
                 return BadRequest( new {
-                    Title = "Unhandle exception",
+                    Title = "Error no controlado al validar el registro.",
                     err.Message
                 });
             }
