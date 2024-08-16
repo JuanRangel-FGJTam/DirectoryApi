@@ -185,6 +185,19 @@ namespace AuthApi.Services
             dbContext.SaveChanges();
         }
 
+        /// <summary>
+        /// Set a new email
+        /// </summary>
+        /// <param name="person_id"></param>
+        /// <param name="email"></param>
+        /// <exception cref="ValidationException"></exception>
+        public void UpdateEmail( Guid person_id, string email){
+            var person = dbContext.People.Find(person_id)?? throw new ValidationException("Person not found");
+            person.Email = email.Trim();
+            dbContext.People.Update( person);
+            dbContext.SaveChanges();
+        }
+
 
         public Person? AuthPerson( string email, string password)
         {
