@@ -149,6 +149,7 @@ namespace AuthApi.Controllers
         /// <response code="201">The person is updated</response>
         /// <response code="400">The request is not valid</response>
         /// <response code="401">Auth token is not valid or is not present</response>
+        /// <response code="409">Fail to to update the user password</response>/// 
         [HttpPatch]
         [Route ("{personID}")]
         public IActionResult UpdatePerson( string personID, [FromBody] UpdatePersonRequest personRequest  )
@@ -254,8 +255,12 @@ namespace AuthApi.Controllers
                 try {
                     this.personService.SetPassword( person.Id, personRequest.Password);
                 }
-                catch (System.Exception) {
-                    // TODO: Log exception
+                catch (System.Exception ex) {
+                    this._logger.LogError(ex, "Fail to update the user password");
+                    return Conflict(new {
+                        Title = "Error al actualizar la contraseña",
+                        Message = ex.Message
+                    });
                 }
             }
 
