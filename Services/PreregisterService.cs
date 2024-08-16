@@ -14,13 +14,14 @@ using Microsoft.Extensions.Options;
 
 namespace AuthApi.Services
 {
-    public class PreregisterService( DirectoryDBContext dbContext, ICryptographyService cryptographyService, ILogger<PreregisterService> logger, PersonService personService, IEmailProvider emailProvider )
+    public class PreregisterService( DirectoryDBContext dbContext, ICryptographyService cryptographyService, ILogger<PreregisterService> logger, PersonService personService, IEmailProvider emailProvider, IOptions<WelcomeEmailSources> WelcomeEmailSourcesOptions )
     {
         private readonly DirectoryDBContext dbContext = dbContext;
         private readonly ICryptographyService cryptographyService = cryptographyService;
         private readonly ILogger<PreregisterService> logger = logger;
         private readonly PersonService personService = personService;
         private readonly IEmailProvider emailProvider = emailProvider;
+        private readonly WelcomeEmailSources welcomeEmailSources = WelcomeEmailSourcesOptions.Value;
         
         /// <summary>
         ///  Create a new preregister record
@@ -113,8 +114,19 @@ namespace AuthApi.Services
 
 
             // Create person record
-            var newPerson = personService.StorePerson(newPersonRequest, preregister.Id, DateTime.Now) 
+            var newPerson = personService.StorePerson(newPersonRequest, preregister.Id, DateTime.Now)
               ?? throw new Exception("Excepcion no controlada, la respuesta al registrar la persona es nula");
+
+
+            // send welcome mail
+            try {
+                var taskEmail = this.SendWelcomeMail(newPerson);
+                taskEmail.Wait();
+            }
+            catch (System.Exception ex) {
+                this.logger.LogError(ex, "Cant send the welcome mail");
+            }
+
 
             // Delete the pre-register record
             try{
@@ -156,6 +168,35 @@ namespace AuthApi.Services
                 logger.LogError( err, "Error at attempting to send Email for validation to email {mail}; {message}", preregistration.Mail!, err.Message);
                 return null;
             }
+        }
+
+        public async Task<string> SendWelcomeMail(Person person){
+            
+            // * prepare the message resources
+            dbContext.Entry(person).Reference(p => p.Gender).Load();
+            var welcomeMessage = "¡Bienvenido(a) a la Fiscalía Digital!";
+            if( person.Gender != null){
+                welcomeMessage = person.Gender.Id == 1 // masculino
+                    ? "¡Bienvenido a la Fiscalía Digital!"
+                    : "¡Bienvenida a la Fiscalía Digital!";
+            }
+
+            // * make the email message
+            var mailtemplate = EmailTemplates.Welcome(
+                personFullName: person.FullName,
+                imageNameSrc: welcomeEmailSources.ImageNameSrc,
+                imageProfileSrc: welcomeEmailSources.ImageProfileSrc,
+                welcomeMessage: welcomeMessage
+            );
+
+            // * send the email
+            var response = await emailProvider.SendEmail(
+                emailDestination: person.Email!,
+                subject: "Bienvenido(a) a la Fiscalía Digital del Estado de Tamaulipas",
+                data: mailtemplate
+            );
+
+            return response;
         }
 
     }
