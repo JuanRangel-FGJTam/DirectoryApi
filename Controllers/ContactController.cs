@@ -110,7 +110,6 @@ namespace AuthApi.Controllers
 
             // Validate and prevent if the value is already stored
             var _contactIsStored = dbContext.ContactInformations
-             .Where(item => item.Person.Id.ToString() == contactRequest.PersonID )
              .Where( item => item.DeletedAt == null)
              .Where( item => item.Value == contactRequest.Value).Any();
             if(_contactIsStored) {  
