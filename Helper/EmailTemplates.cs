@@ -27,6 +27,9 @@ namespace AuthApi.Helper
                 .Replace("{image-profile}", imageProfileSrc)
                 .Replace("{welcome-message}", welcomeMessage);
         }
-        
+
+        public static string CodeChangeEmail(string code, string time){
+            return @"<body><table style='margin:0 auto;' class='content' width='600' border='0' cellspacing='0' cellpadding='0' style='border-collapse:collapse;'><tr><td class='body' style='padding:40px;text-align:left;font-size:16px;line-height:1.6;'>Hemos recibido una solicitud para cambiar la dirección de correo electrónico asociada a su cuenta. Si usted ha solicitado este cambio, por favor, utilice el siguiente código de verificación para confirmar la actualización de su correo electrónico:</td></tr><tr><td style='padding:0 40px;text-align:center;'><table cellspacing='0' cellpadding='0' style='margin:auto;'><tr><td style='background-color:#345C72;padding:10px 20px;border-radius:5px;'><div style='font-size:1.75rem;color:#ffffff;text-align:center;text-decoration:none;font-weight:bold;letter-spacing:1.5rem;font-family:consolas,monospace;'>{code}</div></td></tr></table></td></tr><tr><td class='body' style='padding:40px;text-align:left;font-size:16px;line-height:1.6;'>Si no ha solicitado un cambio de correo electrónico, ignore este mensaje. Por su seguridad, este código caducará a las {time}.</td></tr><tr><td class='body' style='padding:40px;text-align:left;font-size:16px;line-height:1.6;'>Si tiene alguna pregunta o necesita más ayuda, no dude en ponerse en contacto con nuestro equipo de asistencia.</td></tr></table><center>Atentamente</center><b style='padding-top:0.2rem'><center>Fiscalía General de Justicia del Estado de Tamaulipas</center></b></body>".Replace("{code}", code).Replace("{time}", time);
+        }
     }
 }

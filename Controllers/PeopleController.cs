@@ -850,10 +850,14 @@ namespace AuthApi.Controllers
 
 
             // * Generate html
-            var htmlBody = EmailTemplates.ResetPasswordCode( resetCode, date.ToShortTimeString() );
+            var htmlBody = EmailTemplates.CodeChangeEmail( resetCode, date.ToShortTimeString() );
 
             // * Send email
-            return await emailProvider.SendEmail( newEmail, "Confirmar correo", htmlBody );
+            return await emailProvider.SendEmail(
+                emailDestination: newEmail,
+                subject: "Solicitud de Cambio de Correo Electrónico",
+                data: htmlBody
+            );
         }
     }
 }
