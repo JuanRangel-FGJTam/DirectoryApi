@@ -81,24 +81,18 @@ namespace AuthApi.Controllers
             // * validate if the folio is already stored
             var exist = this.dbContext.Proceeding.Where( item => item.PersonId == _personID && item.Folio == request.Folio ).Any();
             if(exist){
-                var errors = new List<object> {
-                    new { Folio = "El folio ya se encuentra registrado en esta persona." }
-                };
                 return UnprocessableEntity(new {
                     Title = "Uno o mas campos tienen error",
-                    Errors = errors
+                    Errors = new { Folio = "El folio ya se encuentra registrado en esta persona." }
                 });
             }
 
             // * validate if the denuncia id is already stored
             exist = this.dbContext.Proceeding.Where( item => item.PersonId == _personID && item.DenunciaId == request.DenunciaId && item.DenunciaId != null ).Any();
             if(exist){
-                var errors = new List<object> {
-                    new { Folio = "El ID de la denuncia ya se encuentra registrado en esta persona." }
-                };
                 return UnprocessableEntity(new {
                     Title = "Uno o mas campos tienen error",
-                    Errors = errors
+                    Errors = new { Folio = "El ID de la denuncia ya se encuentra registrado en esta persona." }
                 });
             }
 

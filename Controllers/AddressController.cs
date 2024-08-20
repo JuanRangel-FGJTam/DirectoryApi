@@ -42,7 +42,7 @@ namespace AuthApi.Controllers
                 _addressID = Guid.Parse( addressID );
             }catch(Exception){
                 return BadRequest( new {
-                    message = $"Address id format not valid"
+                    Message = $"Address id format not valid"
                 });
             }
 
@@ -58,7 +58,7 @@ namespace AuthApi.Controllers
             if( address == null)
             {
                 return BadRequest( new {
-                    message = $"Address id {addressID} not found"
+                    Message = $"Address id {addressID} not found"
                 });
             }
 

@@ -299,7 +299,9 @@ namespace AuthApi.Controllers
 
             var person = people.FirstOrDefault();
             if( person == null){
-                return NotFound();
+                return NotFound( new {
+                    Message = "Person not found"
+                });
             }
 
             return Ok( new {
@@ -344,7 +346,7 @@ namespace AuthApi.Controllers
                 _personID = Guid.Parse( personID );
             }catch(Exception){
                 return BadRequest( new {
-                    message = $"Person id format not valid"
+                    Message = $"Person id format not valid"
                 });
             }
 
@@ -355,7 +357,9 @@ namespace AuthApi.Controllers
 
             if ( person == null)
             {
-                return NotFound();
+                return NotFound( new {
+                    Message = "Person not found"
+                });
             }
             
             return Ok( PersonResponse.FromEntity(person) );
@@ -571,7 +575,8 @@ namespace AuthApi.Controllers
         /// </summary>
         /// <response code="200">Email sended successfully</response>
         /// <response code="404">The email was not found on the database</response>
-        /// <response code="422">Error at sending the email</response>
+        /// <response code="409">Fail to send the email</response>
+        /// <response code="422">Fail on validate the request parameters</response>
         [HttpPost]
         [Route("password/reset" )]
         public async Task<ActionResult<ContactResponse?>> SendEmailResetPassword( [FromBody] ResetPasswordEmailRequest resetPasswordEmailRequest )
@@ -598,7 +603,7 @@ namespace AuthApi.Controllers
             }
             catch(Exception err){
                 _logger.LogError(err, "Error at attempting to send the email for reset the password of the user ID:'{person_Id}' to the email '{email}'", person.Id.ToString(), person.Email! );
-                return UnprocessableEntity( new {
+                return Conflict ( new {
                     Title = "Unhandle exception attempting to send the email",
                     err.Message
                 });
@@ -630,7 +635,10 @@ namespace AuthApi.Controllers
                 Guid? personID = this.resetPasswordState.Validate( resetPasswordRequest.Code );
                 if( personID == null){
                     return UnprocessableEntity( new {
-                        Code = "Codigo no es valido o ha caducado"
+                        Title = "One or more field had errors",
+                        Errors = new {
+                            code = "Codigo no es valido o ha caducado"
+                        }
                     });
                 }
                 
@@ -688,12 +696,11 @@ namespace AuthApi.Controllers
 
             // * prevenet email diplicated
             if( dbContext.People.Where( p => p.DeletedAt == null && p != null && p.Email == updateEmailRequest.Email ).Any() ){
-                var errors = new List<KeyValuePair<string, string>> {
-                    new("email", "El correo ya se encuentra almacenado en la base de datos.")
-                };
                 return UnprocessableEntity(new {
                     Title = "One or more field had errors",
-                    Errors = errors
+                    Errors = new {
+                        email = "El correo ya se encuentra almacenado en la base de datos.",
+                    }
                 });
             }
 
@@ -709,7 +716,8 @@ namespace AuthApi.Controllers
             var person = this.personService.GetPeople() .FirstOrDefault(p => p.Id == _personID);
             if ( person == null) {
                 return NotFound(new {
-                    Title = "Person not found"
+                    Title = "Person not found",
+                    Message = "Person not found"
                 });
             }
 
@@ -758,7 +766,10 @@ namespace AuthApi.Controllers
                 Guid? personID = this.changeEmailState.Validate( newEmailRequest.ValidationCode, newEmailRequest.Email);
                 if( personID == null){
                     return UnprocessableEntity( new {
-                        ValidationCode = "Codigo no es valido o ha caducado"
+                        Title = "One or more field had errors",
+                        Errors = new {
+                            ValidationCode = "El codigo no es valido o ha caducado"
+                        }
                     });
                 }
                 

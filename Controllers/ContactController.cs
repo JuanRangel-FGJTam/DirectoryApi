@@ -173,6 +173,7 @@ namespace AuthApi.Controllers
         /// <response code="200">The contact information is deleted</response>
         /// <response code="400">The request is not valid</response>
         /// <response code="401">Auth token is not valid or is not present</response>
+        /// <response code="422">Fail on validate the request</response>
         [HttpPatch]
         [Route("{contactID}")]
         public IActionResult UpdateContact( [FromRoute] Guid contactID, [FromBody] ContactRequest contactRequest )
@@ -185,24 +186,23 @@ namespace AuthApi.Controllers
             // * Validate contact id
             ContactInformation? currentContact = dbContext.ContactInformations.Find( contactID );
             if( currentContact == null){
-                return BadRequest(new {
-                    message = $"Contact id {contactID} not found"
+                return NotFound( new{
+                    Message = "Contact not found"
                 });
             }
-
 
             // * Validate relations
             ContactType? contactType = dbContext.ContactTypes.Find( contactRequest.ContactTypeID );
             if( contactType == null){
-                return BadRequest(new {
-                    Title = "One or more relations are not found",
-                    Errors = new string[]{ $"ContactType id {contactRequest.ContactTypeID} not found"}
+                return UnprocessableEntity( new {
+                    Title= "One or more relations are not found",
+                    Errors= new { ContactTypeID = "ContactType id not found on the database" }
                 });
             }
 
             
             // * Update address model
-            currentContact.ContactType = contactType;
+            currentContact!.ContactType = contactType;
             currentContact.Value = contactRequest.Value!;
 
             // * Save changes
