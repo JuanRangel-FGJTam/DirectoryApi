@@ -16,7 +16,30 @@ namespace AuthApi.Helper
             return "<body><table width='100%' border='0' cellspacing='0' cellpadding='0'><tr><td align='center' style='padding: 20px;'><table class='content' width='600' border='0' cellspacing='0' cellpadding='0' style='border-collapse: collapse;'><tr><td class='body' style='padding: 40px; text-align: left; font-size: 16px; line-height: 1.6;'>Para restablecer su contraseña, siga el enlace siguiente:</td></tr><tr><td style='padding: 0px 40px 0px 40px; text-align: center;'><table cellspacing='0' cellpadding='0' style='margin: auto;'><tr><td align='center' style='background-color: #345C72; padding: 10px 20px; border-radius: 5px;'><a href='{{urlRef}}' target='_blank' style='color: #ffffff; text-decoration: none; font-weight: bold;'>Restablecer contraseña</a></td></tr></table></td></tr><tr><td class='body' style='padding: 40px; text-align: left; font-size: 16px; line-height: 1.6;'>Si tiene alguna pregunta o necesita más ayuda, no dude en ponerse en contacto con nuestro equipo de asistencia.</td></tr></table></td></tr></table></body>".Replace("{{urlRef}}", href);
         }
         public static string ResetPasswordCode(string code, string time){
-            return "<body><table width='100%' border='0' cellspacing='0' cellpadding='0'><tr><td align='center' style='padding:20px;'><table class='content' width='600' border='0' cellspacing='0' cellpadding='0' style='border-collapse:collapse;'><tr><td class='body' style='padding:40px; text-align:left; font-size:16px; line-height:1.6;'>Hemos recibido una solicitud para restablecer la contraseña de su cuenta. Utilice el siguiente código para restablecer su contraseña:</td></tr><tr><td style='padding:0 40px; text-align:center;'><table cellspacing='0' cellpadding='0' style='margin:auto;'><tr><td align='center' style='background-color:#345C72; padding:10px 20px; border-radius:5px;'><div style='font-size:1.75rem; color:#ffffff; text-decoration:none; font-weight:bold; letter-spacing:1.5rem;font-family:'consolas',monospace;'>{{code}}</div></td></tr></table></td></tr><tr><td class='body' style='padding:40px; text-align:left; font-size:16px; line-height:1.6;'>Si no ha solicitado un restablecimiento de contraseña, ignore este correo electrónico. Este enlace caducará a las {{time}} por su seguridad.<br/><br/>Si tiene alguna pregunta o necesita más ayuda, no dude en ponerse en contacto con nuestro equipo de asistencia.</td></tr></table></td></tr></table></body>".Replace("{{code}}", code).Replace("{{time}}", time);;
+            return @"<body>
+                <table class='content' width='600' border='0' cellspacing='0' cellpadding='0' style='margin:0 auto;border-collapse:collapse;'>
+                    <tr><td class='body' style='padding:20px 40px;text-align:left;font-size:16px;line-height:1.6;'>
+                        <p>Hemos recibido su solicitud para restablecer la contraseña de su llave digital. Para completar el proceso, por favor utilice el siguiente código de verificación:</p>
+                    </td></tr>
+                    <tr><td style='padding:10px 20px;'>
+                        <div style='margin:0 auto;padding:10px 20px 10px 45px;background-color:#345C72;border-radius:5px;width:fit-content;text-align:center;font-size:1.75rem;color:#ffffff;text-decoration:none;font-weight:bold;letter-spacing:1.5rem;font-family:consolas,monospace;'>{{code}}</div>
+                    </td></tr>
+                    <tr><td class='body' style='padding:10px 40px;text-align:left;font-size:16px;line-height:1.6;'>
+                        <p>Este código es válido por un tiempo limitado y deberá utilizarlo antes de las {{time}}. Si no realiza el restablecimiento antes de esta hora, tendrá que solicitar un nuevo código.</p>
+                    </td></tr>
+                    <tr><td class='body' style='padding:10px 40px;text-align:left;font-size:16px;line-height:1.6;'>
+                        <b>Importante: </b>
+                        <ul>
+                            <li>No comparta este código con nadie más.</li>
+                            <li>El personal de la Fiscalía nunca le pedirá su contraseña ni este código de verificación.</li>
+                        </ul>
+                    </td></tr>
+                    <tr><td class='body' style='padding:10px 40px;text-align:left;font-size:16px;line-height:1.6;'>
+                        <p>Si usted no solicitó el restablecimiento de su contraseña, puede ignorar este correo electrónico. Su cuenta permanecerá segura y sin cambios.</p>
+                    </td></tr>
+                </table>
+                <div style='margin-top:2rem;text-align:center;'>Atentamente</div>
+                <b style='padding-top:0.2rem;text-align:center;'>Fiscalía General de Justicia del Estado de Tamaulipas</b> </body>".Replace("{{code}}", code).Replace("{{time}}", time);;
         }
 
         public static string Welcome(string personFullName, string imageNameSrc, string imageProfileSrc, string welcomeMessage){
@@ -29,7 +52,28 @@ namespace AuthApi.Helper
         }
 
         public static string CodeChangeEmail(string code, string time){
-            return @"<body><table style='margin:0 auto;' class='content' width='600' border='0' cellspacing='0' cellpadding='0' style='border-collapse:collapse;'><tr><td class='body' style='padding:40px;text-align:left;font-size:16px;line-height:1.6;'>Hemos recibido una solicitud para cambiar la dirección de correo electrónico asociada a su cuenta. Si usted ha solicitado este cambio, por favor, utilice el siguiente código de verificación para confirmar la actualización de su correo electrónico:</td></tr><tr><td style='padding:0 40px;text-align:center;'><table cellspacing='0' cellpadding='0' style='margin:auto;'><tr><td style='background-color:#345C72;padding:10px 20px;border-radius:5px;'><div style='font-size:1.75rem;color:#ffffff;text-align:center;text-decoration:none;font-weight:bold;letter-spacing:1.5rem;font-family:consolas,monospace;'>{code}</div></td></tr></table></td></tr><tr><td class='body' style='padding:40px;text-align:left;font-size:16px;line-height:1.6;'>Si no ha solicitado un cambio de correo electrónico, ignore este mensaje. Por su seguridad, este código caducará a las {time}.</td></tr><tr><td class='body' style='padding:40px;text-align:left;font-size:16px;line-height:1.6;'>Si tiene alguna pregunta o necesita más ayuda, no dude en ponerse en contacto con nuestro equipo de asistencia.</td></tr></table><center>Atentamente</center><b style='padding-top:0.2rem'><center>Fiscalía General de Justicia del Estado de Tamaulipas</center></b></body>".Replace("{code}", code).Replace("{time}", time);
+            return @"<body>
+            <table style='margin:0 auto;border-collapse:collapse;' class='content' width='600' border='0' cellspacing='0' cellpadding='0'>
+                <tr><td class='body' style='padding:10px 40px;text-align:left;font-size:16px;line-height:1.6;'>
+                    <p>Hemos recibido una solicitud para cambiar la dirección de correo electrónico asociada a su cuenta. Si usted ha solicitado este cambio, por favor, utilice el siguiente código de verificación para confirmar la actualización de su correo electrónico:</p>
+                </td></tr>
+                <tr><td style='padding:10px 20px;'>
+                    <div style='margin:0 auto;padding:10px 20px 10px 45px;background-color:#345C72;border-radius:5px;width:fit-content;text-align:center;font-size:1.75rem;color:#ffffff;text-decoration:none;font-weight:bold;letter-spacing:1.5rem;font-family:consolas,monospace;'>{code}</div>
+                </td></tr>
+                <tr><td class='body' style='padding:10px 40px;text-align:left;font-size:16px;line-height:1.6;'>
+                    <p>Si no ha solicitado un cambio de correo electrónico, ignore este mensaje. Por su seguridad, este código caducará a las {time}.</p>
+                </td></tr>
+                <tr><td class='body' style='padding:0px 40px;text-align:left;font-size:16px;line-height:1.6;'>
+                    <b>Importante: </b>
+                    <ul>
+                        <li>No comparta este código con nadie más.</li>
+                        <li>El personal de la Fiscalía nunca le pedirá su contraseña ni este código de verificación.</li>
+                    </ul>
+                </td></tr>
+            </table>
+            <div style='margin-top:2rem;text-align:center;'>Atentamente</div>
+            <b style='padding-top:0.2rem;text-align:center;'>Fiscalía General de Justicia del Estado de Tamaulipas</b>
+            </body>".Replace("{code}", code).Replace("{time}", time);
         }
     }
 }
