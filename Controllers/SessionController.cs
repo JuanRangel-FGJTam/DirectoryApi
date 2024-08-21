@@ -328,12 +328,12 @@ namespace AuthApi.Controllers
 
                 var data = Array.Empty<Session>();
                 if(take > 0){
-                    data = dataQuery.ToArray();
-                }else {
                     data = dataQuery
                     .Take(take)
                     .Skip(skip)
                     .ToArray();
+                }else {
+                    data = dataQuery.ToArray();
                 }
             
                 // * Return the data
