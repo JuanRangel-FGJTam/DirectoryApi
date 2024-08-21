@@ -28,7 +28,7 @@ namespace AuthApi.Controllers
     [Authorize]
     [ApiController]
     [Route("api/people")]
-    public class PeopleController(ILogger<PeopleController> logger, DirectoryDBContext context, PersonService personService, IEmailProvider emailProvider, IOptions<JwtSettings> optionsJwtSettings, IOptions<ResetPasswordSettings> optionsResetPasswordSettings, ResetPasswordState resetPasswordState, ChangeEmailState changeEmailState) : ControllerBase
+    public class PeopleController(ILogger<PeopleController> logger, DirectoryDBContext context, PersonService personService, IEmailProvider emailProvider, IOptions<JwtSettings> optionsJwtSettings, IOptions<ResetPasswordSettings> optionsResetPasswordSettings, ResetPasswordState resetPasswordState, ChangeEmailState changeEmailState, ICryptographyService cryptographyService) : ControllerBase
     {
         private readonly ILogger<PeopleController> _logger = logger;
         private readonly DirectoryDBContext dbContext = context;
@@ -38,6 +38,7 @@ namespace AuthApi.Controllers
         private readonly ResetPasswordSettings resetPasswordSettings = optionsResetPasswordSettings.Value;
         private readonly ResetPasswordState resetPasswordState = resetPasswordState;
         private readonly ChangeEmailState changeEmailState = changeEmailState;
+        private readonly ICryptographyService cryptographyService = cryptographyService;
         
         
         /// <summary>
@@ -253,6 +254,25 @@ namespace AuthApi.Controllers
 
             // Update password
             if( !string.IsNullOrEmpty(personRequest.Password) && personRequest.Password == personRequest.ConfirmPassword ){
+
+                if(string.IsNullOrEmpty( personRequest.OldPassword)){
+                    return UnprocessableEntity( new {
+                        Title = "One or more field had errors",
+                        Errors = new {
+                            oldPassword = "El campo es requerido para actualizar la contraseña."
+                        }
+                    });
+                }
+
+                // * verify the old password
+                var hashedPassword = this.cryptographyService.HashData(personRequest.OldPassword??"");
+                if( person.Password != hashedPassword ){
+                    return Conflict(new {
+                        Title = "Error al actualizar la contraseña",
+                        Message = "La contraseña anterior no coincide con la almacenada en la base de datos."
+                    });
+                }
+
                 try {
                     this.personService.SetPassword( person.Id, personRequest.Password);
                 }

@@ -44,5 +44,6 @@ namespace AuthApi.Models
         [Compare("Password", ErrorMessage = "Passwords are no equals")]
         public string? ConfirmPassword {get;set;}
 
+        public string? OldPassword {get;set;}
     }
 }
