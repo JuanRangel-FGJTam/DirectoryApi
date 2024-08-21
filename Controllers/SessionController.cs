@@ -19,6 +19,7 @@ using AuthApi.Services;
 using System.ComponentModel.DataAnnotations;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace AuthApi.Controllers
 {
@@ -286,31 +287,70 @@ namespace AuthApi.Controllers
     
 
         /// <summary>
-        /// Get all the sessions data
+        /// Get all the session ordered indescending by date.
         /// </summary>
+        /// <param name="personId"> Person id in UUID format</param>
+        /// <param name="take"> Elements to take, if its 0 then return all the data, otherwise return the n elements. </param>
+        /// <param name="skip"></param>
         /// <response code="200">Get all the session</response>
         /// <response code="401">No authenticated</response>
+        /// <response code="409">Error al retrive the session, verify the logs.</response>
+        /// <response code="422">pesonId format is invalid, UUID required</response>
         [HttpGet]
         [Route("")]
-        public IActionResult GetAllSessions( int take = 10, int skip = 0)
+        public IActionResult GetAllSessions( [FromQuery] string? personId, [FromQuery] int take = 25, [FromQuery] int skip = 0)
         {
-            // * Get data
-            var data = this.directoryDBContext.Sessions
-                .OrderByDescending( item => item.BegginAt)
-                .Take(50)
-                .Skip(0)
-                .ToArray();
+            Guid personID = Guid.Empty;
+            if( !string.IsNullOrEmpty(personId) ){
+                if (!Guid.TryParse(personId, out personID) ){
+                    return UnprocessableEntity( new {
+                        Title = "One or more field had errors",
+                        Errors = new {
+                           personId =  "Formato no valido, UUID requerido."
+                        }
+                    });
+                }
+            }
 
-            // * Get the total sessions
-            var total = directoryDBContext.Sessions.Count();
-          
-            // * Return the data
-            return Ok( new {
-                take,
-                skip,
-                total,
-                data
-            });
+            try {
+                
+                // * Get data
+                var dataQuery = this.directoryDBContext.Sessions
+                    .OrderByDescending( item => item.BegginAt)
+                    .Where( item => item.Person.Id == (string.IsNullOrEmpty(personId) ?item.Person.Id :personID) )
+                    .AsQueryable();
+                    
+
+                // * get the total sessions
+                var total = dataQuery.Count();
+            
+                // * get data 
+
+                var data = Array.Empty<Session>();
+                if(take > 0){
+                    data = dataQuery.ToArray();
+                }else {
+                    data = dataQuery
+                    .Take(take)
+                    .Skip(skip)
+                    .ToArray();
+                }
+            
+                // * Return the data
+                return Ok( new {
+                    take,
+                    skip,
+                    total,
+                    data
+                });
+
+            }
+            catch (System.Exception ex) {
+                this._logger.LogError(ex, "Fail to retrive the data");
+                return Conflict(new{
+                    Message = "Error no controlado al tratar de obtener las sesiones."
+                });
+            }
         }
 
     }
