@@ -98,12 +98,12 @@ namespace AuthApi.Services
             // Validate unique parameters
             var rfcStored =  dbContext.People.Where( p => p.DeletedAt == null && p.Rfc == personRequest.Rfc ).Count();
             if(rfcStored > 0){
-                errorsRelations.Add( "rfc", new string[]{ $"El RFC ya se encuentra en la base de datos"} );
+                errorsRelations.Add( "rfc", new string[]{ $"El RFC ingresado ya está registrado en nuestro sistema. Si ha olvidado su contraseña, por favor proceda a restablecerla."} );             
             }
 
             var curpStored =  dbContext.People.Where( p => p.DeletedAt == null && p.Curp == personRequest.Curp ).Count();
             if(curpStored > 0){
-                errorsRelations.Add( "curp", new string[]{ $"El CURP ya se encuentra en la base de datos"} );
+                errorsRelations.Add( "curp", new string[]{ $"El CURP ingresado ya está registrado en nuestro sistema. Si ha olvidado su contraseña, por favor proceda a restablecerla."} );
             }
 
             var emailStored =  dbContext.People.Where( p => p.DeletedAt == null && p.Email == personRequest.Email ).Count();
