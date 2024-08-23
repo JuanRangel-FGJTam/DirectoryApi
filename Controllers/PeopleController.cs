@@ -197,7 +197,7 @@ namespace AuthApi.Controllers
             {
                 var rfcStored =  dbContext.People.Where( p => p.DeletedAt == null && p.Rfc == personRequest.Rfc && p.Id != _personID ).Count();
                 if(rfcStored > 0){
-                    errorsRelations.Add( "rfc", new string[]{ $"The RFC is already stored"} );
+                    errorsRelations.Add( "rfc", new string[]{ "El RFC ingresado ya está registrado en nuestro sistema."} );
                 }
                 person.Rfc = personRequest.Rfc;
             }
@@ -206,7 +206,7 @@ namespace AuthApi.Controllers
             {
                 var curpStored =  dbContext.People.Where( p => p.DeletedAt == null && p.Curp == personRequest.Curp && p.Id != _personID ).Count();
                 if(curpStored > 0){
-                    errorsRelations.Add( "curp", new string[]{ $"The CURP is already stored"} );
+                    errorsRelations.Add( "curp", new string[]{ "El CURP ingresado ya está registrado en nuestro sistema."} );
                 }
                 person.Curp = personRequest.Curp;
             }
