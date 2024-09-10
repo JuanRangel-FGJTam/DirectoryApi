@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -12,6 +13,7 @@ using AuthApi.Models;
 using AuthApi.Helper;
 using AuthApi.Services;
 using Azure.Core;
+
 
 namespace AuthApi.Controllers
 {
@@ -158,12 +160,14 @@ namespace AuthApi.Controllers
         /// retorna el listado de tramites almacenados de la persona
         /// </summary>
         /// <param name="personId"> identificador de la person in formato GUID</param>
+        /// <param name="orderBy"> propertie name used for ordering by default 'createdAt' posibles ["id", "name", "folio", "denunciaId","status","area", "createdAt"] </param>
+        /// <param name="ascending"></param>
         /// <response code="200">return the data</response>
         /// <response code="400">The request is not valid ore some error are present</response>
         /// <response code="404">The person is not found</response>
         [HttpGet]
         [Route("/api/people/{personId}/procedures")]
-        public ActionResult<IEnumerable<ProceedingResponse>> GetPersonProcedings([FromRoute] string personId){
+        public ActionResult<IEnumerable<ProceedingResponse>> GetPersonProcedings([FromRoute] string personId, [FromQuery] string orderBy = "createdAt", [FromQuery] bool ascending = true ){
             
             // * Validate person id
             Guid _personID = Guid.Empty;
@@ -183,11 +187,18 @@ namespace AuthApi.Controllers
             }
 
             // * get data
-            var data = this.dbContext.Proceeding
+            var query = this.dbContext.Proceeding
                 .Where(item=> item.PersonId == _personID)
                 .Include(p => p.Status)
                 .Include(p => p.Area)
-                .ToList<Proceeding>();
+                .AsQueryable();
+
+            // * ordering the data
+            string ordering = ascending ? $"{orderBy} asc" : $"{orderBy} desc";
+            query = query.OrderBy(ordering);
+
+            var data = query.ToList<Proceeding>();
+
 
             // * return the data
             return data.Select(item => ProceedingResponse.FromIdentity(item)).ToList<ProceedingResponse>();
