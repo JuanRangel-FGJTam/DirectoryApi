@@ -167,7 +167,7 @@ namespace AuthApi.Controllers
         /// <response code="404">The person is not found</response>
         [HttpGet]
         [Route("/api/people/{personId}/procedures")]
-        public ActionResult<IEnumerable<ProceedingResponse>> GetPersonProcedings([FromRoute] string personId, [FromQuery] string orderBy = "createdAt", [FromQuery] bool ascending = true ){
+        public ActionResult<IEnumerable<ProceedingResponse>> GetPersonProcedings([FromRoute] string personId, [FromQuery] string orderBy = "createdAt", [FromQuery] bool ascending = false ){
             
             // * Validate person id
             Guid _personID = Guid.Empty;
