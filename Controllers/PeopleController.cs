@@ -825,6 +825,41 @@ namespace AuthApi.Controllers
         
 
 
+
+        [HttpPost("/api/people/generate-fake-users")]
+        public IActionResult GenerateUsers(){
+            var createdPeople = new List<string>();
+
+            for(int i=0; i<=666; i++){
+                var _name = Faker.Name.First();
+                var _random = _name + Faker.Identification.MedicareBeneficiaryIdentifier() + Faker.Identification.MedicareBeneficiaryIdentifier();
+
+                var requ = new PersonRequest() {
+                    Rfc =  _random.ToUpper().Substring(0, 12),
+                    Curp = _random.ToUpper().Substring(0, 18),
+                    Name = _name,
+                    FirstName = Faker.Name.Middle(),
+                    LastName = Faker.Name.Last(),
+                    Email = Faker.Internet.Email(),
+                    Birthdate = Faker.Identification.DateOfBirth(),
+                    GenderId = context.Gender.ElementAt( (int) Faker.RandomNumber.Next(1,2)).Id,
+                    MaritalStatusId = context.MaritalStatus.ElementAt( (int) Faker.RandomNumber.Next(1,2)).Id,
+                    NationalityId = 31,
+                    OccupationId = context.Occupation.ElementAt( Faker.RandomNumber.Next(1,205)).Id,
+                    AppName = "API",
+                    Password = "password01",
+                    ConfirmPassword = "password01",
+                };
+
+                var person = this.personService.StorePerson(requ);
+
+                createdPeople.Add(person.FullName);
+            }
+
+            return Ok( createdPeople );
+        }
+
+
         private async Task<string> SendResetPasswordEmail(Person person){
             // * Set token life time for 1 hour
             var tokenLifeTime = TimeSpan.FromSeconds( resetPasswordSettings.TokenLifeTimeSeconds );
