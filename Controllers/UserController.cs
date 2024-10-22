@@ -36,7 +36,7 @@ namespace AuthApi.Controllers
         [HttpPost("authenticate")]
         public async Task<IActionResult> Authenticate([FromBody] AuthenticateRequest model)
         {
-             // Validate request
+            // Validate request
             if( !ModelState.IsValid){
                 // Process errors
                 var _errorsMessages = new List<KeyValuePair<string,string>>();
@@ -155,6 +155,31 @@ namespace AuthApi.Controllers
             }
 
         }
-        
+
+
+        /// <summary>
+        /// Seek in the database if the email is already stored in the database and if exist return de his datra.
+        /// </summary>
+        /// <param name="email"></param>
+        /// <response code="200">Return the user related with the email</response>
+        /// <response code="404">There is no user with the email searched</response>
+        [HttpGet]
+        [Route("search")]
+        public async Task<IActionResult> SearchUSer( [FromQuery] string email ){
+
+            var user = await this.userService.GetByEmail(email);
+
+            if( user == null){
+                return NotFound( new {
+                    Message = "User not found"
+                });
+            }
+
+            return Ok( new {
+                Id = user.Id,
+                FullName = user.FirstName + " " + user.LastName,
+                Email = user.Email
+            });
+        }
     }
 }

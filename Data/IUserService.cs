@@ -12,5 +12,6 @@ namespace AuthApi.Data
         Task<User?> GetById(int id);
         Task<int?> CreateUser(UserRequest userRequest);
         Task<User?> UpdateUser(int userId, UserUpdateRequest userUpdateRequest);
+        Task<User?> GetByEmail(string email);
     }
 }
