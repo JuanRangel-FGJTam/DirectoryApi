@@ -824,6 +824,18 @@ namespace AuthApi.Controllers
         }
         
 
+        [HttpGet]
+        [Route("search-people")]
+        public ActionResult<IEnumerable<PersonSearchResponse>> SearchPeople([FromQuery] string? search ){
+
+            // * search for the people
+            var peopleRaw = this.personService.Search(search);
+
+            // * process the data
+            List<PersonSearchResponse> people = peopleRaw.Select( item => PersonSearchResponse.FromEntity(item)).ToList();
+            
+            return Ok(people);
+        }
 
 
         [HttpPost("/api/people/generate-fake-users")]
@@ -925,5 +937,6 @@ namespace AuthApi.Controllers
                 data: htmlBody
             );
         }
+
     }
 }
