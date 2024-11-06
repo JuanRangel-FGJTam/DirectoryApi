@@ -42,7 +42,7 @@ namespace AuthApi.Controllers
         ///         name: string [required, max:120],
         ///         observations: string|null [max:200],
         ///         denunciaId: string|null [max:100],
-        ///         created_at: string|null [format('yyy-mm-dd HH:mm')]
+        ///         created_at: string|null [format('yyyy-MM-dd HH:mm')]
         ///     }
         ///
         /// </remarks>
@@ -126,12 +126,17 @@ namespace AuthApi.Controllers
             }
 
             // * parse datetime
-            DateTime? datetime = DateTime.Now;
+            DateTime? datetime = null;
             if( request.CreatedAt != null){
-                try {
-                    datetime = DateTime.Parse(request.CreatedAt);
+                if( DateTime.TryParseExact(
+                    request.CreatedAt,
+                    "yyyy-MM-dd HH:mm",
+                    System.Globalization.CultureInfo.InvariantCulture,
+                    System.Globalization.DateTimeStyles.None,
+                    out DateTime parsedDate
+                )){
+                    datetime = parsedDate;
                 }
-                catch (System.Exception) { }
             }
 
             // * create the new resorce
@@ -143,7 +148,7 @@ namespace AuthApi.Controllers
                 Area = area,
                 DenunciaId = request.DenunciaId!=null ? request.DenunciaId!.Trim() :null,
                 Observations = request.Observations!=null ?request.Observations!.Trim() :null,
-                CreatedAt = datetime??DateTime.Now
+                CreatedAt = datetime ?? DateTime.Now
             };
 
             // * insert into db
@@ -152,7 +157,6 @@ namespace AuthApi.Controllers
 
             // Return response
             return Created("Proceeding stored", newProceeding);
-
         }
 
 
