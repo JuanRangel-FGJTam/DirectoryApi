@@ -67,6 +67,13 @@ namespace AuthApi.Services
 
         }
 
+        public IEnumerable<Person> Search(string search){
+            var peopleQuery = this.GetPeople().ToList();
+            return peopleQuery.Where(
+                item => item.Curp.ToLower().Equals(search.ToLower() ) ||
+                item.Email.ToLower().Contains(search.ToLower())
+            );
+        }
 
         /// <summary>
         /// Stored new person

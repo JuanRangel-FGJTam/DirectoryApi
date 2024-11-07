@@ -142,6 +142,11 @@ namespace AuthApi.Services
         {
             return await db.Users.FirstOrDefaultAsync(x => x.Id == id);
         }
+
+        public async Task<User?> GetByEmail(string email)
+        {
+            return await db.Users.FirstOrDefaultAsync(x => x.Email.ToLower() == email.ToLower());
+        }
         
         
         #region Local Functions

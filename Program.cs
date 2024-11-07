@@ -5,6 +5,17 @@ using AuthApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        builder =>
+        {
+            builder.AllowAnyOrigin()  // Allow all origins
+                   .AllowAnyHeader()  // Allow any header
+                   .AllowAnyMethod(); //
+        });
+});
+
 // Add services to the container.
 builder.Services.Configure<JwtSettings>( builder.Configuration.GetSection("JwtSettings"));
 builder.Services.Configure<ResetPasswordSettings>( builder.Configuration.GetSection("ResetPasswordSettings"));
@@ -35,6 +46,7 @@ builder.Services.ConfigureHttpJsonOptions( o => {
 });
 
 var app = builder.Build();
+app.UseCors("AllowAll");
 app.UseSwagger();
 app.UseSwaggerUI( c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "FGJTam Directory API") );
 app.UseHttpsRedirection();
