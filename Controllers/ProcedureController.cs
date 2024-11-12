@@ -166,12 +166,14 @@ namespace AuthApi.Controllers
         /// <param name="personId"> identificador de la person in formato GUID</param>
         /// <param name="orderBy"> propertie name used for ordering by default 'createdAt' posibles ["id", "name", "folio", "denunciaId","status","area", "createdAt"] </param>
         /// <param name="ascending"></param>
+        /// <param name="take"></param>
+        /// /// <param name="offset"></param>
         /// <response code="200">return the data</response>
         /// <response code="400">The request is not valid ore some error are present</response>
         /// <response code="404">The person is not found</response>
         [HttpGet]
         [Route("/api/people/{personId}/procedures")]
-        public ActionResult<IEnumerable<ProceedingResponse>> GetPersonProcedings([FromRoute] string personId, [FromQuery] string orderBy = "createdAt", [FromQuery] bool ascending = false ){
+        public ActionResult<IEnumerable<ProceedingResponse>> GetPersonProcedings([FromRoute] string personId, [FromQuery] string orderBy = "createdAt", [FromQuery] bool ascending = false, [FromQuery] int take = 5, [FromQuery] int offset = 0){
             
             // * Validate person id
             Guid _personID = Guid.Empty;
@@ -199,7 +201,7 @@ namespace AuthApi.Controllers
 
             // * ordering the data
             string ordering = ascending ? $"{orderBy} asc" : $"{orderBy} desc";
-            query = query.OrderBy(ordering);
+            query = query.OrderBy(ordering).Skip(offset).Take(take);
 
             var data = query.ToList<Proceeding>();
 
