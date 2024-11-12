@@ -161,6 +161,43 @@ namespace AuthApi.Controllers
 
 
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="personId"></param>
+        /// <param name="formData"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("/api/people/{personId}/procedures-files")]
+        public async Task<IActionResult> StoreWithFiles([FromRoute] string personId, [FromForm] NewProceedingRequest formData){
+
+            if (!ModelState.IsValid){
+                return BadRequest(ModelState);
+            }
+
+            // Validate the file
+            if( formData.File == null || formData.File?.Count == 0){
+                return BadRequest("Not files sended");
+            }
+
+            // // Save the file
+            // var filePath = Path.Combine("wwwroot/uploads", file.FileName);
+            // Directory.CreateDirectory(Path.GetDirectoryName(filePath)); // Ensure the directory exists
+
+            // using (var stream = new FileStream(filePath, FileMode.Create))
+            // {
+            //     await file.CopyToAsync(stream);
+            // }
+            
+            await Task.CompletedTask;
+
+            return Ok( new {
+                Data = formData,
+                PersonID = personId,
+            });
+        }
+
+
+        /// <summary>
         /// retorna el listado de tramites almacenados de la persona
         /// </summary>
         /// <param name="personId"> identificador de la person in formato GUID</param>

@@ -29,6 +29,8 @@ namespace AuthApi.Models
         public string? Observations {get;set;}
         
         public string? CreatedAt {get;set;}
+        
+        public IFormFileCollection? File { get; set; }
 
     }
 }
