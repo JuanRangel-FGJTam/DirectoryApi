@@ -19,5 +19,6 @@ public class Proceeding
     public string? Observations {get;set;}
     public DateTime CreatedAt {get;set;}
     public DateTime UpdatedAt {get;set;}
+    public virtual IEnumerable<ProceedingFile>? Files {get; set;}
 
 }
