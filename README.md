@@ -19,16 +19,6 @@ For full installation instructions on Ubuntu, refer to the [official .NET docume
 
 ---
 
-## Publish
-
-### Ubuntu
-1. Ensure .NET runtime is installed:
-2. Navigate to the directory containing the *.csproj file.
-3. Run the following command to publish the application:
-> `dotnet publish --configuration Release`
-
-This command generates the publish folder in the directory, e.g., `bin/Release/net8.0/publish`.
-
 ## Configuration
 
 Ensure you have the connection string and a secret key defined in the `appsettings.json` file.
@@ -140,6 +130,18 @@ WantedBy=multi-user.target
 - Show the logs
 
 `sudo journalctl -fu api-fd.service`
+
+## Publish
+
+### Ubuntu
+1. Ensure .NET runtime is installed:
+2. Navigate to the directory containing the *.csproj file.
+3. Run the following command to publish the application:
+> `dotnet publish --configuration Release`
+
+This command generates the publish folder in the directory, e.g., `bin/Release/net8.0/publish`.
+
+---
 
 ## Contributors
 
