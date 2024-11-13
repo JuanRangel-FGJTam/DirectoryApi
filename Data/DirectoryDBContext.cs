@@ -25,6 +25,7 @@ namespace AuthApi.Data
         public DbSet<Area> Area {get;set;}
         public DbSet<ProceedingStatus> ProceedingStatus {get;set;}
         public DbSet<Proceeding> Proceeding {get;set;}
+        public DbSet<ProceedingFile> ProceedingFiles {get;set;}
 
 
         private readonly ICryptographyService cryptographyService;
@@ -128,6 +129,21 @@ namespace AuthApi.Data
                 .HasDefaultValueSql("getDate()")
                 .HasColumnType("datetime")
                 .ValueGeneratedOnAddOrUpdate();
+            proccedingEntity.HasMany(p => p.Files)
+                .WithOne( f => f.Proceeding)
+                .HasForeignKey(f => f.ProceedingId);
+                
+
+            // * Procedding File Entity
+            var proceddingFileEntity = modelBuilder.Entity<ProceedingFile>();
+            proceddingFileEntity.Property( b => b.CreatedAt)
+                .HasDefaultValueSql("getDate()")
+                .HasColumnType("datetime");
+            proceddingFileEntity.Property( b => b.UpdatedAt)
+                .HasDefaultValueSql("getDate()")
+                .HasColumnType("datetime")
+                .ValueGeneratedOnAddOrUpdate();
+
 
             // * Seed DB
             modelBuilder.Entity<User>().HasData(

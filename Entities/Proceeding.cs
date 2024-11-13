@@ -19,5 +19,7 @@ public class Proceeding
     public string? Observations {get;set;}
     public DateTime CreatedAt {get;set;}
     public DateTime UpdatedAt {get;set;}
-
+    
+    // Navigation property for related files
+    public virtual ICollection<ProceedingFile>? Files { get; set; }
 }

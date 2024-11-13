@@ -13,6 +13,8 @@ using AuthApi.Models;
 using AuthApi.Helper;
 using AuthApi.Services;
 using Azure.Core;
+using Minio;
+using Minio.DataModel.Args;
 
 
 namespace AuthApi.Controllers
@@ -20,11 +22,13 @@ namespace AuthApi.Controllers
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
-    public class ProcedureController(ILogger<ProcedureController> logger, DirectoryDBContext context) : ControllerBase
+    public class ProcedureController(ILogger<ProcedureController> logger, IConfiguration configuration, DirectoryDBContext context, IMinioClient minioClient ) : ControllerBase
     {
         #region Injected properties
         private readonly ILogger<ProcedureController> _logger = logger;
+        private readonly IConfiguration configuration = configuration;
         private readonly DirectoryDBContext dbContext = context;
+        private readonly IMinioClient minioClient = minioClient;
         #endregion
 
 
@@ -157,6 +161,228 @@ namespace AuthApi.Controllers
 
             // Return response
             return Created("Proceeding stored", newProceeding);
+        }
+
+
+        /// <summary>
+        /// almacena los datos de los trámites que realiza el ciudadano a través de las diversas aplicaciones junto con los archivos
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST /api/people/{personId}/procedures-files
+        ///     Content-Type: multipart/form-data
+        ///     Authorization: Bearer {auth-token}
+        ///
+        /// **Body Parameters:**
+        /// - **folio**: (string, required, max length: 100)
+        /// - **status**: (string, optional, max length: 24)
+        /// - **area**: (string, optional, max length: 100)
+        /// - **name**: (string, required, max length: 120)
+        /// - **observations**: (string, optional, max length: 200)
+        /// - **denunciaId**: (string, optional, max length: 100)
+        /// - **created_at**: (string, optional, format: "yyyy-MM-dd HH:mm")
+        /// - **file**: (File) Multiple files can be uploaded with keys as `file1`, `file2`, `fileN`.
+        ///
+        /// </remarks>
+        /// <param name="personId"></param>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpPost]
+        [Route("/api/people/{personId}/procedures-files")]
+        public async Task<IActionResult> StoreWithFiles([FromRoute] string personId, [FromForm] NewProceedingRequest request){
+
+            if (!ModelState.IsValid){
+                return BadRequest(ModelState);
+            }
+
+            // * validate the files
+            if( request.File == null || request.File?.Count == 0){
+                return BadRequest( new {
+                    Message = "Not files sended"
+                });
+            }
+
+            // * validate person id
+            Guid _personID = Guid.Empty;
+            try{
+                _personID = Guid.Parse( personId );
+            }catch(Exception){
+                return BadRequest( new {
+                    message = $"Person id has formatted not valid"
+                });
+            }
+
+            // * validate the person
+            if( !this.dbContext.People.Where(item => item.Id == _personID).Any()){
+                return NotFound( new {
+                    Message = "The person is not found"
+                });
+            }
+
+
+            // * validate if the folio is already stored
+            var exist = this.dbContext.Proceeding.Where( item => item.PersonId == _personID && item.Folio == request.Folio ).Any();
+            if(exist){
+                return UnprocessableEntity(new {
+                    Title = "Uno o mas campos tienen error",
+                    Errors = new { Folio = "El folio ya se encuentra registrado en esta persona." }
+                });
+            }
+
+            // * validate if the denuncia id is already stored
+            exist = this.dbContext.Proceeding.Where( item => item.PersonId == _personID && item.DenunciaId == request.DenunciaId && item.DenunciaId != null ).Any();
+            if(exist){
+                return UnprocessableEntity(new {
+                    Title = "Uno o mas campos tienen error",
+                    Errors = new { Folio = "El ID de la denuncia ya se encuentra registrado en esta persona." }
+                });
+            }
+
+
+            dbContext.Database.BeginTransaction();
+
+            // * insert the proceding
+            Proceeding newProceeding;
+            try {
+                // * find the status or create a new one
+                ProceedingStatus? proceedingStatus = null;
+                if( !string.IsNullOrEmpty(request.Status) ){
+                    proceedingStatus = dbContext.ProceedingStatus.Where(item => item.Name == request.Status).FirstOrDefault();
+                    if(proceedingStatus == null){
+                        proceedingStatus = new ProceedingStatus {
+                            Name = request.Status.Trim()
+                        };
+                        dbContext.ProceedingStatus.Add(proceedingStatus);
+                        dbContext.SaveChanges();
+                    }
+                }
+
+                // * find the area or create a new one
+                Area? area = null;
+                if( !string.IsNullOrEmpty(request.Area) ){
+                    area = dbContext.Area.Where(item => item.Name == request.Area).FirstOrDefault();
+                    if(area == null){
+                        area = new Area {
+                            Name = request.Area.Trim()
+                        };
+                        dbContext.Area.Add(area);
+                        dbContext.SaveChanges();
+                    }
+                }
+
+                // * parse datetime
+                DateTime? datetime = null;
+                if( request.CreatedAt != null){
+                    if( DateTime.TryParseExact(
+                        request.CreatedAt,
+                        "yyyy-MM-dd HH:mm",
+                        System.Globalization.CultureInfo.InvariantCulture,
+                        System.Globalization.DateTimeStyles.None,
+                        out DateTime parsedDate
+                    )){
+                        datetime = parsedDate;
+                    }
+                }
+
+                // * create the new resorce
+                newProceeding = new Proceeding {
+                    PersonId = _personID,
+                    Name = request.Name !=null ?request.Name!.Trim() :null,
+                    Folio = request.Folio!.Trim(),
+                    Status = proceedingStatus,
+                    Area = area,
+                    DenunciaId = request.DenunciaId!=null ? request.DenunciaId!.Trim() :null,
+                    Observations = request.Observations!=null ?request.Observations!.Trim() :null,
+                    CreatedAt = datetime ?? DateTime.Now
+                };
+
+                // * insert into db
+                dbContext.Proceeding.Add( newProceeding );
+                dbContext.SaveChanges();
+
+
+            }catch(Exception err){
+                dbContext.Database.RollbackTransaction();
+                return Conflict( new {
+                    Message = err.Message
+                });
+            }
+
+
+            // * insert the files
+            var procedingFiles = new List<ProceedingFile>();
+            try {
+
+                // * verify if the buket is created
+                var beArgs = new BucketExistsArgs().WithBucket( configuration["MinioSettings:BucketName"] );
+                var found = await minioClient.BucketExistsAsync(beArgs).ConfigureAwait(false);
+                if(!found){
+                    var mbArgs = new MakeBucketArgs().WithBucket( configuration["MinioSettings:BucketName"] );
+                    await minioClient.MakeBucketAsync(mbArgs).ConfigureAwait(false);
+                }
+
+                // * upload the files to minio
+                foreach(var uploadedFile in request.File!){
+                    var _newProcedingFile = new ProceedingFile {
+                        FileName = uploadedFile.FileName,
+                        FilePath = string.Format("{0}.{1}", Guid.NewGuid().ToString().Replace("-",""), uploadedFile.FileName.Split(".").Last() ),
+                        FileType = uploadedFile.ContentType,
+                        FileSize = uploadedFile.Length,
+                        CreatedAt = DateTime.Now,
+                        UpdatedAt = DateTime.Now,
+                        ProceedingId = newProceeding.Id,
+                    };
+
+                    using(var uploadFileStream = uploadedFile.OpenReadStream()){
+                        // * Upload a file to bucket.
+                        var putObjectArgs = new PutObjectArgs()
+                            .WithBucket( configuration["MinioSettings:BucketName"] )
+                            .WithObject( _newProcedingFile.FilePath )
+                            .WithStreamData(uploadFileStream)
+                            .WithObjectSize(uploadFileStream.Length)
+                            .WithContentType("application/octet-stream");
+                        await minioClient.PutObjectAsync(putObjectArgs);
+                    }
+
+                    procedingFiles.Add( _newProcedingFile );
+                }
+
+                dbContext.ProceedingFiles.AddRange(procedingFiles);
+                dbContext.SaveChanges();
+
+            } catch(Exception err){
+                dbContext.Database.RollbackTransaction();
+                return Conflict( new {
+                    Message = err.Message
+                });
+            }
+
+            dbContext.Database.CommitTransaction();
+
+            // * return the data stored
+            return StatusCode(201, new {
+                PersonID = personId,
+                Data = new {
+                    newProceeding.Id,
+                    newProceeding.PersonId,
+                    newProceeding.Name,
+                    newProceeding.Folio,
+                    newProceeding.Status,
+                    newProceeding.Area,
+                    newProceeding.DenunciaId,
+                    newProceeding.Observations,
+                    newProceeding.CreatedAt
+                },
+                Files = procedingFiles.Select( pf => new {
+                    pf.Id,
+                    OriginalName = pf.FileName,
+                    pf.FilePath,
+                    pf.FileType,
+                    pf.FileSize,
+                })
+            });
+
         }
 
 
