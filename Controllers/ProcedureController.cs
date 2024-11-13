@@ -421,6 +421,7 @@ namespace AuthApi.Controllers
             // * get data
             var query = this.dbContext.Proceeding
                 .Where(item=> item.PersonId == _personID)
+                .Include(p=>p.Files)
                 .Include(p => p.Status)
                 .Include(p => p.Area)
                 .AsQueryable();
@@ -430,7 +431,6 @@ namespace AuthApi.Controllers
             query = query.OrderBy(ordering).Skip(offset).Take(take);
 
             var data = query.ToList<Proceeding>();
-
 
             // * return the data
             return data.Select(item => ProceedingResponse.FromIdentity(item)).ToList<ProceedingResponse>();

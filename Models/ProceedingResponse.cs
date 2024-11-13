@@ -42,9 +42,22 @@ namespace AuthApi.Models
                 item.Area = p.Area.Name;
                 item.AreaId = p.Area.Id;
             }
+
+            if(p.Files?.Count > 0){
+                item.Files = p.Files.Select( f => new {
+                    f.Id,
+                    f.FileName,
+                    f.FilePath,
+                    f.FileType,
+                    f.FileSize,
+                    f.ProceedingId,
+                    f.CreatedAt
+                });
+            }
             
             return item;
         }
 
+        public IEnumerable<dynamic> Files {get;set;} = Array.Empty<dynamic>();
     }
 }
