@@ -199,7 +199,7 @@ namespace AuthApi.Controllers
             // * validate the files
             if( request.File == null || request.File?.Count == 0){
                 return BadRequest( new {
-                    Message = "Not files sended"
+                    Message = "The file are required, No files were found in the request"
                 });
             }
 
@@ -574,12 +574,29 @@ namespace AuthApi.Controllers
             // * validate the files
             if( updateProceedingRequest.File == null || updateProceedingRequest.File?.Count == 0){
                 return BadRequest( new {
-                    Message = "Not files sended"
+                    Message = "The file are required, No files were found in the request"
                 });
             }
             #endregion
 
             dbContext.Database.BeginTransaction();
+
+            // * attempt to remove the old files
+            try {
+                var files = dbContext.ProceedingFiles
+                    .Where( item => item.ProceedingId == procedding.Id && item.FilePath != null)
+                    .ToList();
+                await minioService.RemoveFiles( files.Select(item => item.FilePath!) );
+                dbContext.ProceedingFiles.RemoveRange(files);
+                dbContext.SaveChanges();
+
+            } catch(Exception ex){
+                dbContext.Database.RollbackTransaction();
+                return Conflict( new {
+                    Message = "Error no controlado al subir los archivos",
+                    ErrorMessage = ex.Message
+                });
+            }
 
             // * upload the files
             var procedingFiles = new List<ProceedingFile>();

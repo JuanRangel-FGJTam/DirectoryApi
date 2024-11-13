@@ -44,6 +44,7 @@ namespace AuthApi.Services
 
             return response.ObjectName;
         }
+        
         public async Task<string?> MakeTemporalUrl(string fileName, string mimmeType){
 
             // URL expiration time (in seconds)
@@ -69,5 +70,18 @@ namespace AuthApi.Services
             return presignedUrl;
         }
 
+        public async Task RemoveFiles(IEnumerable<string> fileNames){
+            string bucketName = configuration["MinioSettings:BucketName"]!;
+
+            var tasks = fileNames.Select( async fileName => {
+                var removeArgs = new RemoveObjectArgs()
+                    .WithBucket(bucketName)
+                    .WithObject(fileName);
+                await minioClient.RemoveObjectAsync(removeArgs);
+            });
+
+            await Task.WhenAll( tasks.ToArray() );
+            
+        }
     }
 }
