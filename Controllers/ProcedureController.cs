@@ -33,7 +33,7 @@ namespace AuthApi.Controllers
 
 
         /// <summary>
-        /// almacena los datos de los trámites que realiza el ciudadano a través de las diversas aplicaciones.
+        /// Almacena los datos de los trámites que realiza el ciudadano a través de las diversas aplicaciones.
         /// </summary>
         /// <remarks>
         /// Sample request:
@@ -165,7 +165,7 @@ namespace AuthApi.Controllers
 
 
         /// <summary>
-        /// almacena los datos de los trámites que realiza el ciudadano a través de las diversas aplicaciones junto con los archivos
+        /// Almacena los datos de los trámites que realiza el ciudadano a través de las diversas aplicaciones junto con los archivos
         /// </summary>
         /// <remarks>
         /// Sample request:
@@ -176,13 +176,13 @@ namespace AuthApi.Controllers
         ///
         /// **Body Parameters:**
         /// - **folio**: (string, required, max length: 100)
-        /// - **status**: (string, optional, max length: 24)
+        /// - **status**: (string, required, max length: 24)
         /// - **area**: (string, optional, max length: 100)
         /// - **name**: (string, required, max length: 120)
         /// - **observations**: (string, optional, max length: 200)
         /// - **denunciaId**: (string, optional, max length: 100)
         /// - **created_at**: (string, optional, format: "yyyy-MM-dd HH:mm")
-        /// - **file**: (File) Multiple files can be uploaded with keys as `file1`, `file2`, `fileN`.
+        /// - **file**: (Filea, required) Multiple files can be uploaded with keys as `file1`, `file2`, `fileN`.
         ///
         /// </remarks>
         /// <param name="personId"></param>
@@ -375,7 +375,7 @@ namespace AuthApi.Controllers
 
 
         /// <summary>
-        /// retorna el listado de tramites almacenados de la persona
+        /// Retorna el listado de tramites almacenados de la persona
         /// </summary>
         /// <param name="personId"> identificador de la person in formato GUID</param>
         /// <param name="orderBy"> propertie name used for ordering by default 'createdAt' posibles ["id", "name", "folio", "denunciaId","status","area", "createdAt"] </param>
@@ -456,10 +456,15 @@ namespace AuthApi.Controllers
         }
 
         /// <summary>
-        ///  allows to update the procedding by the person_id and the denuncia-id
+        ///  Actualiza el estatus y observación del procedimiento almacenado que coincida con la denunciaId y el personId
         /// </summary>
         /// <remarks>
+        /// 
         /// Sample request:
+        ///
+        ///     PATCH /api/people/{personId}/procedures-files/{denunciaId}
+        ///     Content-Type: application/json
+        ///     Authorization: Bearer {auth-token}
         ///
         ///     POST /api/people/{personId}/procedures
         ///     {
@@ -477,7 +482,9 @@ namespace AuthApi.Controllers
         /// <response code="409">Fail to update the proceding</response>
         [HttpPatch]
         [Route("/api/people/{personId}/procedures/{denunciaId}")]
-        public IActionResult UpdateProcedingById([FromRoute] Guid personId, [FromRoute] string denunciaId, [FromBody] UpdateProceedingRequest updateProceedingRequest ) {
+        public IActionResult UpdateProcedingByCode([FromRoute] Guid personId, [FromRoute] string denunciaId, [FromBody] UpdateProceedingRequest updateProceedingRequest ) {
+
+            #region Validate request
 
             // * retrive the procedding
             var procedding = this.dbContext.Proceeding.Where( p=> p.PersonId == personId && p.DenunciaId !=null && p.DenunciaId == denunciaId ).FirstOrDefault();
@@ -500,6 +507,8 @@ namespace AuthApi.Controllers
                 return BadRequest(ModelState);
             }
 
+            #endregion
+
             // * attempting to update the resource
             try {
                 UpdateProceding(procedding, updateProceedingRequest, updateDenunciaId: false);
@@ -515,7 +524,138 @@ namespace AuthApi.Controllers
         }
 
         /// <summary>
-        ///  allows to update the procedding by the id
+        ///  Actualiza el estatus y la observación del procedimiento e inserta uno o más archivos relacionados con el procedimiento.
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     PATCH /api/people/{personId}/procedures-files/{denunciaId}
+        ///     Content-Type: multipart/form-data
+        ///     Authorization: Bearer {auth-token}
+        ///
+        /// **Body Parameters:**
+        /// - **status**: (string, required, max length: 24)
+        /// - **observations**: (string, optional, max length: 200)
+        /// - **file**: (File, required) Multiple files can be uploaded with keys as `file1`, `file2`, `fileN`.
+        ///
+        /// </remarks>
+        /// <param name="personId">person id</param>
+        /// <param name="denunciaId">denuncia id </param>
+        /// <param name="updateProceedingRequest"> request payload</param>
+        /// <response code="201">Resource updated</response>
+        /// <response code="400">The request is not valid (person id is not GUID, the payload is not 'appliaction/json' )</response>
+        /// <response code="404">The person or the proceding its not found</response>
+        /// <response code="409">Fail to update the proceding</response>
+        [HttpPatch]
+        [Route("/api/people/{personId}/procedures-files/{denunciaId}")]
+        public async Task<IActionResult> UpdateProcedingWithFile([FromRoute] Guid personId, [FromRoute] string denunciaId, [FromForm] UpdateProceedingRequest updateProceedingRequest ) {
+
+            #region validate request
+            // * retrive the procedding
+            var procedding = this.dbContext.Proceeding.Where( p=> p.PersonId == personId && p.DenunciaId !=null && p.DenunciaId == denunciaId ).FirstOrDefault();
+            if( procedding == null){
+                return NotFound(new {
+                    Message = "No se encontró registro que coincida con la persona y la denuncia."
+                });
+            }
+
+            // * validate the person
+            if( !this.dbContext.People.Where(item => item.Id == personId).Any()){
+                return NotFound( new {
+                    Message = "The person is not found"
+                });
+            }
+
+            // * validate request
+            if (!ModelState.IsValid) {
+                return BadRequest(ModelState);
+            }
+
+            // * validate the files
+            if( updateProceedingRequest.File == null || updateProceedingRequest.File?.Count == 0){
+                return BadRequest( new {
+                    Message = "Not files sended"
+                });
+            }
+            #endregion
+
+            dbContext.Database.BeginTransaction();
+
+            // * upload the files
+            var procedingFiles = new List<ProceedingFile>();
+            try {
+                // * verify if the buket is created
+                await minioService.EnsureBuketIsCreated();
+                
+                // * upload the files to minio
+                foreach(var uploadedFile in updateProceedingRequest.File!){
+                    var _newProcedingFile = new ProceedingFile {
+                        FileName = uploadedFile.FileName,
+                        FilePath = "",
+                        FileType = uploadedFile.ContentType,
+                        FileSize = uploadedFile.Length,
+                        CreatedAt = DateTime.Now,
+                        UpdatedAt = DateTime.Now,
+                        ProceedingId = procedding.Id,
+                    };
+
+                    // * store the file on minio
+                    using var uploadFileStream = uploadedFile.OpenReadStream();
+                    _newProcedingFile.FilePath = await minioService.UploadFile( uploadedFile.FileName, uploadFileStream);
+                    
+                    procedingFiles.Add( _newProcedingFile );
+                }
+
+                dbContext.ProceedingFiles.AddRange(procedingFiles);
+                dbContext.SaveChanges();
+
+            } catch(Exception ex){
+                dbContext.Database.RollbackTransaction();
+                return Conflict( new {
+                    Message = "Error no controlado al subir los archivos",
+                    ErrorMessage = ex.Message
+                });
+            }
+
+            // * attempting to update the resource
+            try {
+                UpdateProceding(procedding, updateProceedingRequest, updateDenunciaId: false);
+            }catch(Exception ex){
+                this._logger.LogError(ex, "Fail to attemting to update the proceding id {id}", procedding.Id);
+                dbContext.Database.RollbackTransaction();
+                return Conflict(new {
+                    Message = "Error no controlado al actualizar",
+                    ErrorMessage = ex.Message
+                });
+            }
+
+            dbContext.Database.CommitTransaction();
+            return StatusCode(201, new {
+                Message = $"Procedimiento persona:'{personId}' denuncia:'{denunciaId}' actualizado",
+                Data = new {
+                    procedding.Id,
+                    procedding.PersonId,
+                    procedding.Name,
+                    procedding.Folio,
+                    procedding.Status,
+                    procedding.Area,
+                    procedding.DenunciaId,
+                    procedding.Observations,
+                    procedding.CreatedAt
+                },
+                Files = procedingFiles.Select( pf => new {
+                    pf.Id,
+                    OriginalName = pf.FileName,
+                    pf.FilePath,
+                    pf.FileType,
+                    pf.FileSize,
+                })
+            });
+
+        }
+
+        /// <summary>
+        ///  Actualiza el estatus y la observación del procedimiento
         /// </summary>
         /// <remarks>
         /// Sample request:
