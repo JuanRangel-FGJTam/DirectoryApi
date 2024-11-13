@@ -167,6 +167,24 @@ namespace AuthApi.Controllers
         /// <summary>
         /// almacena los datos de los trámites que realiza el ciudadano a través de las diversas aplicaciones junto con los archivos
         /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST /api/people/{personId}/procedures-files
+        ///     Content-Type: multipart/form-data
+        ///     Authorization: Bearer {auth-token}
+        ///
+        /// **Body Parameters:**
+        /// - **folio**: (string, required, max length: 100)
+        /// - **status**: (string, optional, max length: 24)
+        /// - **area**: (string, optional, max length: 100)
+        /// - **name**: (string, required, max length: 120)
+        /// - **observations**: (string, optional, max length: 200)
+        /// - **denunciaId**: (string, optional, max length: 100)
+        /// - **created_at**: (string, optional, format: "yyyy-MM-dd HH:mm")
+        /// - **file**: (File) Multiple files can be uploaded with keys as `file1`, `file2`, `fileN`.
+        ///
+        /// </remarks>
         /// <param name="personId"></param>
         /// <param name="request"></param>
         /// <returns></returns>
