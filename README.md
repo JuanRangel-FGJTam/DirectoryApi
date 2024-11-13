@@ -18,7 +18,6 @@ Api for manage people data
 For full installation instructions on Ubuntu, refer to the [official .NET documentation](https://learn.microsoft.com/en-us/dotnet/core/install/linux-ubuntu-2204).
 
 ---
-
 ## Configuration
 
 Ensure you have the connection string and a secret key defined in the `appsettings.json` file.
@@ -88,14 +87,27 @@ Properties:
  - **BucketName**: The name of the bucket where files will be stored.  If the bucket doesn’t exist, the application will create it automatically.
  - **ExpiryDuration**: Expiration duration of the temporally files in seconds.
 
-
+---
 ## Usage
+
+### Implementing EF Migrations
+  List Existing Migrations: To view the list of all migrations, use:
+  > `dotnet ef migrations list`
+
+  Apply the pending Migrations: you can apply it to the database using:
+  > `dotnet ef database update`
+
+  Revert to a Previous Migration: To revert to a specific migration, use:
+  > `dotnet ef database update <MigrationName>`
+
+### Run the application
 
 To run the application, execute the following command:
 > `dotnet bin/Release/net8.0/publish/{projectName}.dll`
 
-Replace `{projectName}` with the actual name of your project.
+    Replace `{projectName}` with the actual name of your project.
 
+---
 ## Hosting
 
 ### Ubuntu
@@ -133,6 +145,7 @@ WantedBy=multi-user.target
 
 `sudo journalctl -fu api-fd.service`
 
+---
 ## Publish
 
 ### Ubuntu
@@ -144,7 +157,6 @@ WantedBy=multi-user.target
 This command generates the publish folder in the directory, e.g., `bin/Release/net8.0/publish`.
 
 ---
-
 ## Contributors
 
 - [JuanRangel-FGJTam](https://github.com/JuanRangel-FGJTam)
