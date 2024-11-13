@@ -46,14 +46,13 @@ builder.Services.AddMySwaggerConfig();
 builder.Services.ConfigureHttpJsonOptions( o => {
     o.SerializerOptions.AllowTrailingCommas = true;
 });
-
-
 builder.Services.AddMinio(client => client
     .WithEndpoint( builder.Configuration["MinioSettings:Endpoint"])
     .WithCredentials(builder.Configuration["MinioSettings:AccessKey"], builder.Configuration["MinioSettings:SecretKey"])
     .WithSSL(false)
     .Build()
 );
+builder.Services.AddScoped<MinioService>();
 
 var app = builder.Build();
 app.UseCors("AllowAll");

@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 using AuthApi.Entities;
+using AuthApi.Services;
 
 namespace AuthApi.Models
 {
@@ -23,6 +24,10 @@ namespace AuthApi.Models
         public int AreaId {get;set;}
 
         public DateTime? CreatedAt {get;set;}
+
+        public IEnumerable<ProceedingFileResponse> Files {get;set;} = Array.Empty<ProceedingFileResponse>();
+
+
         public static ProceedingResponse FromIdentity(Proceeding p){
             var item = new ProceedingResponse(p.PersonId.ToString(), p.Name ?? "")
             {
@@ -44,20 +49,10 @@ namespace AuthApi.Models
             }
 
             if(p.Files?.Count > 0){
-                item.Files = p.Files.Select( f => new {
-                    f.Id,
-                    f.FileName,
-                    f.FilePath,
-                    f.FileType,
-                    f.FileSize,
-                    f.ProceedingId,
-                    f.CreatedAt
-                });
+                item.Files = p.Files.Select( f => ProceedingFileResponse.FromEnity(f));
             }
             
             return item;
         }
-
-        public IEnumerable<dynamic> Files {get;set;} = Array.Empty<dynamic>();
     }
 }

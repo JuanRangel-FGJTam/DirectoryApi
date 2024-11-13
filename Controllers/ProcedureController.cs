@@ -22,13 +22,13 @@ namespace AuthApi.Controllers
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
-    public class ProcedureController(ILogger<ProcedureController> logger, IConfiguration configuration, DirectoryDBContext context, IMinioClient minioClient ) : ControllerBase
+    public class ProcedureController(ILogger<ProcedureController> logger, IConfiguration configuration, DirectoryDBContext context, MinioService minioService ) : ControllerBase
     {
         #region Injected properties
         private readonly ILogger<ProcedureController> _logger = logger;
         private readonly IConfiguration configuration = configuration;
         private readonly DirectoryDBContext dbContext = context;
-        private readonly IMinioClient minioClient = minioClient;
+        private readonly MinioService minioService = minioService;
         #endregion
 
 
@@ -315,18 +315,13 @@ namespace AuthApi.Controllers
             try {
 
                 // * verify if the buket is created
-                var beArgs = new BucketExistsArgs().WithBucket( configuration["MinioSettings:BucketName"] );
-                var found = await minioClient.BucketExistsAsync(beArgs).ConfigureAwait(false);
-                if(!found){
-                    var mbArgs = new MakeBucketArgs().WithBucket( configuration["MinioSettings:BucketName"] );
-                    await minioClient.MakeBucketAsync(mbArgs).ConfigureAwait(false);
-                }
-
+                await minioService.EnsureBuketIsCreated();
+                
                 // * upload the files to minio
                 foreach(var uploadedFile in request.File!){
                     var _newProcedingFile = new ProceedingFile {
                         FileName = uploadedFile.FileName,
-                        FilePath = string.Format("{0}.{1}", Guid.NewGuid().ToString().Replace("-",""), uploadedFile.FileName.Split(".").Last() ),
+                        FilePath = "",
                         FileType = uploadedFile.ContentType,
                         FileSize = uploadedFile.Length,
                         CreatedAt = DateTime.Now,
@@ -334,17 +329,10 @@ namespace AuthApi.Controllers
                         ProceedingId = newProceeding.Id,
                     };
 
-                    using(var uploadFileStream = uploadedFile.OpenReadStream()){
-                        // * Upload a file to bucket.
-                        var putObjectArgs = new PutObjectArgs()
-                            .WithBucket( configuration["MinioSettings:BucketName"] )
-                            .WithObject( _newProcedingFile.FilePath )
-                            .WithStreamData(uploadFileStream)
-                            .WithObjectSize(uploadFileStream.Length)
-                            .WithContentType("application/octet-stream");
-                        await minioClient.PutObjectAsync(putObjectArgs);
-                    }
-
+                    // * store the file on minio
+                    using var uploadFileStream = uploadedFile.OpenReadStream();
+                    _newProcedingFile.FilePath = await minioService.UploadFile( uploadedFile.FileName, uploadFileStream);
+                    
                     procedingFiles.Add( _newProcedingFile );
                 }
 
@@ -399,7 +387,7 @@ namespace AuthApi.Controllers
         /// <response code="404">The person is not found</response>
         [HttpGet]
         [Route("/api/people/{personId}/procedures")]
-        public ActionResult<IEnumerable<ProceedingResponse>> GetPersonProcedings([FromRoute] string personId, [FromQuery] string orderBy = "createdAt", [FromQuery] bool ascending = false, [FromQuery] int take = 5, [FromQuery] int offset = 0){
+        public async Task<ActionResult<IEnumerable<ProceedingResponse>>> GetPersonProcedings([FromRoute] string personId, [FromQuery] string orderBy = "createdAt", [FromQuery] bool ascending = false, [FromQuery] int take = 5, [FromQuery] int offset = 0){
             
             // * Validate person id
             Guid _personID = Guid.Empty;
@@ -430,10 +418,38 @@ namespace AuthApi.Controllers
             string ordering = ascending ? $"{orderBy} asc" : $"{orderBy} desc";
             query = query.OrderBy(ordering).Skip(offset).Take(take);
 
-            var data = query.ToList<Proceeding>();
+            var proccedings = query
+                .ToList<Proceeding>()
+                .Select(item => ProceedingResponse.FromIdentity(item))
+                .ToList<ProceedingResponse>();
+
+            // * make temporal url for files
+            foreach( var p in proccedings){
+                if(!p.Files.Any()){
+                    continue;
+                }
+
+                // * override the proceding file with the temporally url
+                var fileTasks = p.Files.Select(async file => {
+                    var fileUrl = await minioService.MakeTemporalUrl(file.FilePath!, file.FileType??"application/pdf");
+                    return new ProceedingFileResponse {
+                        Id = file.Id,
+                        FileName = file.FileName,
+                        FilePath = file.FilePath,
+                        FileType = file.FileType,
+                        FileSize = file.FileSize,
+                        CreatedAt = file.CreatedAt,
+                        UpdatedAt = file.UpdatedAt,
+                        FileUrl = fileUrl,
+                        DeletedAt = file.DeletedAt
+                    };
+                }).ToList();
+                
+                p.Files = await Task.WhenAll(fileTasks);
+            }
 
             // * return the data
-            return data.Select(item => ProceedingResponse.FromIdentity(item)).ToList<ProceedingResponse>();
+            return proccedings;
         }
 
         /// <summary>
@@ -575,6 +591,6 @@ namespace AuthApi.Controllers
             dbContext.SaveChanges();
 
         }
-        
+
     }
 }

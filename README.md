@@ -78,13 +78,15 @@ Add the MinioSettings section to your configuration file (appsettings.json):
     "Endpoint": "host-port-without-http",
     "AccessKey": "key",
     "SecretKey": "secret",
-    "BucketName": "directory-api"
+    "BucketName": "directory-api",
+    "ExpiryDuration": "3600"
   },
 }
 ```
 Properties:
  - **Endpoint**: The URL of your MinIO server, without the http or https schema. The URL should include the port, like "minio.example.com:9000".
  - **BucketName**: The name of the bucket where files will be stored.  If the bucket doesn’t exist, the application will create it automatically.
+ - **ExpiryDuration**: Expiration duration of the temporally files in seconds.
 
 
 ## Usage
