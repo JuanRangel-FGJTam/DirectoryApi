@@ -559,6 +559,10 @@ namespace AuthApi.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("filePath");
 
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint")
+                        .HasColumnName("fileSize");
+
                     b.Property<string>("FileType")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("fileType");

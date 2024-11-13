@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AuthApi.Migrations
 {
     [DbContext(typeof(DirectoryDBContext))]
-    [Migration("20241112223548_added_file_entity")]
-    partial class added_file_entity
+    [Migration("20241113154920_added_table_proceding_file")]
+    partial class added_table_proceding_file
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -561,6 +561,10 @@ namespace AuthApi.Migrations
                     b.Property<string>("FilePath")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("filePath");
+
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint")
+                        .HasColumnName("fileSize");
 
                     b.Property<string>("FileType")
                         .HasColumnType("nvarchar(max)")

@@ -310,9 +310,10 @@ namespace AuthApi.Controllers
                         FileName = uploadedFile.FileName,
                         FilePath = string.Format("{0}.{1}", Guid.NewGuid().ToString().Replace("-",""), uploadedFile.FileName.Split(".").Last() ),
                         FileType = uploadedFile.ContentType,
+                        FileSize = uploadedFile.Length,
                         CreatedAt = DateTime.Now,
                         UpdatedAt = DateTime.Now,
-                        Proceeding = newProceeding
+                        ProceedingId = newProceeding.Id,
                     };
 
                     using(var uploadFileStream = uploadedFile.OpenReadStream()){
@@ -342,11 +343,26 @@ namespace AuthApi.Controllers
             dbContext.Database.CommitTransaction();
 
             // * return the data stored
-            // TODO: fix the `System.Text.Json.ThrowHelper.ThrowJsonException_SerializerCycleDetected(Int32 maxDepth)`
             return StatusCode(201, new {
                 PersonID = personId,
-                Data = newProceeding,
-                Files = procedingFiles
+                Data = new {
+                    newProceeding.Id,
+                    newProceeding.PersonId,
+                    newProceeding.Name,
+                    newProceeding.Folio,
+                    newProceeding.Status,
+                    newProceeding.Area,
+                    newProceeding.DenunciaId,
+                    newProceeding.Observations,
+                    newProceeding.CreatedAt
+                },
+                Files = procedingFiles.Select( pf => new {
+                    pf.Id,
+                    OriginalName = pf.FileName,
+                    pf.FilePath,
+                    pf.FileType,
+                    pf.FileSize,
+                })
             });
 
         }

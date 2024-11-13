@@ -13,8 +13,13 @@ public class ProceedingFile
     public string? FileName {get;set;}
     public string? FilePath {get;set;}
     public string? FileType {get;set;}
-    public Proceeding Proceeding {get;set;} = default!;
+    public long FileSize {get;set;}
+    public int ProceedingId { get; set; }
     public DateTime CreatedAt {get;set;}
     public DateTime UpdatedAt {get;set;}
+
+    // Navigation property with ForeignKey attribute
+    [ForeignKey("ProceedingId")]
+    public Proceeding? Proceeding { get; set; }
 
 }

@@ -129,6 +129,10 @@ namespace AuthApi.Data
                 .HasDefaultValueSql("getDate()")
                 .HasColumnType("datetime")
                 .ValueGeneratedOnAddOrUpdate();
+            proccedingEntity.HasMany(p => p.Files)
+                .WithOne( f => f.Proceeding)
+                .HasForeignKey(f => f.ProceedingId);
+                
 
             // * Procedding File Entity
             var proceddingFileEntity = modelBuilder.Entity<ProceedingFile>();

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace AuthApi.Migrations
 {
     /// <inheritdoc />
-    public partial class added_file_entity : Migration
+    public partial class added_table_proceding_file : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -20,6 +20,7 @@ namespace AuthApi.Migrations
                     fileName = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     filePath = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     fileType = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    fileSize = table.Column<long>(type: "bigint", nullable: false),
                     proceedingId = table.Column<int>(type: "int", nullable: false),
                     createdAt = table.Column<DateTime>(type: "datetime", nullable: false, defaultValueSql: "getDate()"),
                     updatedAt = table.Column<DateTime>(type: "datetime", nullable: false, defaultValueSql: "getDate()")
