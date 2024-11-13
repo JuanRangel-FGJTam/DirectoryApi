@@ -431,6 +431,9 @@ namespace AuthApi.Controllers
 
                 // * override the proceding file with the temporally url
                 var fileTasks = p.Files.Select(async file => {
+                    if( file.DeletedAt != null || string.IsNullOrEmpty(file.FilePath)){
+                        return file;
+                    }
                     var fileUrl = await minioService.MakeTemporalUrl(file.FilePath!, file.FileType??"application/pdf");
                     return new ProceedingFileResponse {
                         Id = file.Id,

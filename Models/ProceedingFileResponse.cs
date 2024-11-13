@@ -28,8 +28,8 @@ namespace AuthApi.Models
             proceedingFileResponse.FileSize = pf.FileSize;
             proceedingFileResponse.CreatedAt = pf.CreatedAt;
             proceedingFileResponse.UpdatedAt = pf.UpdatedAt;
+            proceedingFileResponse.DeletedAt = pf.DeletedAt;
             proceedingFileResponse.FileUrl = null;
-            proceedingFileResponse.DeletedAt = null;
             return proceedingFileResponse;
         }
 

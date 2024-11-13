@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AuthApi.Migrations
 {
     [DbContext(typeof(DirectoryDBContext))]
-    [Migration("20241113154920_added_table_proceding_file")]
+    [Migration("20241113191045_added_table_proceding_file")]
     partial class added_table_proceding_file
     {
         /// <inheritdoc />
@@ -553,6 +553,10 @@ namespace AuthApi.Migrations
                         .HasColumnType("datetime")
                         .HasColumnName("createdAt")
                         .HasDefaultValueSql("getDate()");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("deletedAt");
 
                     b.Property<string>("FileName")
                         .HasColumnType("nvarchar(max)")

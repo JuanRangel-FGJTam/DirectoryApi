@@ -23,7 +23,8 @@ namespace AuthApi.Migrations
                     fileSize = table.Column<long>(type: "bigint", nullable: false),
                     proceedingId = table.Column<int>(type: "int", nullable: false),
                     createdAt = table.Column<DateTime>(type: "datetime", nullable: false, defaultValueSql: "getDate()"),
-                    updatedAt = table.Column<DateTime>(type: "datetime", nullable: false, defaultValueSql: "getDate()")
+                    updatedAt = table.Column<DateTime>(type: "datetime", nullable: false, defaultValueSql: "getDate()"),
+                    deletedAt = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {

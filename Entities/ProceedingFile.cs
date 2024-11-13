@@ -17,6 +17,7 @@ public class ProceedingFile
     public int ProceedingId { get; set; }
     public DateTime CreatedAt {get;set;}
     public DateTime UpdatedAt {get;set;}
+    public DateTime? DeletedAt {get;set;}
 
     // Navigation property with ForeignKey attribute
     [ForeignKey("ProceedingId")]

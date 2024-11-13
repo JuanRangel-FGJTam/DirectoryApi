@@ -551,6 +551,10 @@ namespace AuthApi.Migrations
                         .HasColumnName("createdAt")
                         .HasDefaultValueSql("getDate()");
 
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("deletedAt");
+
                     b.Property<string>("FileName")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("fileName");
