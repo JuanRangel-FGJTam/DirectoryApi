@@ -18,7 +18,9 @@ Api for manage people data
 For full installation instructions on Ubuntu, refer to the [official .NET documentation](https://learn.microsoft.com/en-us/dotnet/core/install/linux-ubuntu-2204).
 
 ---
+
 ## Publish
+
 ### Ubuntu
 1. Ensure .NET runtime is installed:
 2. Navigate to the directory containing the *.csproj file.
@@ -59,8 +61,41 @@ To run the application, execute the following command:
 Replace `{projectName}` with the actual name of your project.
 
 ## Hosting
+
 ### Ubuntu
 For information on hosting a .NET API on Ubuntu, refer to the [official documentation](https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/linux-nginx?view=aspnetcore-8.0&tabs=linux-ubuntu).
+
+- Create the service file
+
+`sudo vim /etc/systemd/system/api-fd.service`
+
+```bash
+[Unit]
+Description=API Fiscalia Digital
+
+[Service]
+WorkingDirectory=/var/www/DirectoryApi
+ExecStart=/usr/bin/dotnet /var/www/DirectoryApi/bin/Release/net8.0/AuthApi.dll
+Restart=always
+# Restart service after 10 seconds if the dotnet service crashes:
+RestartSec=10
+KillSignal=SIGINT
+SyslogIdentifier=dotnet-example
+User=www-data
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=DOTNET_NOLOGO=true
+
+[Install]
+WantedBy=multi-user.target
+```
+
+- Save the file and enable the service.
+
+`sudo systemctl enable api-fd.service`
+
+- Show the logs
+
+`sudo journalctl -fu api-fd.service`
 
 ## Contributors
 
