@@ -29,7 +29,7 @@ For full installation instructions on Ubuntu, refer to the [official .NET docume
 
 This command generates the publish folder in the directory, e.g., `bin/Release/net8.0/publish`.
 
-## Usage
+## Configuration
 
 Ensure you have the connection string and a secret key defined in the `appsettings.json` file.
 
@@ -53,7 +53,51 @@ Ensure you have the connection string and a secret key defined in the `appsettin
       "Secret": "{my_secret_string}",
     }
     ```
+    
+### Email Settings
+The application sends emails for three main purposes: validating a user's email during registration, resetting passwords, and sending welcome messages upon successful registration.
+Configuration Example
 
+Include the following settings in your configuration file (appsettings.json):
+```json
+{
+ "ResetPasswordSettings":{
+     "TokenLifeTimeSeconds": 3600,
+     "DestinationUrl": "https://auth.fgjtam.gob.mx/api/person/password-reset"
+   },
+   "EmailSettings":{
+     "ApiUri": "https://api-email.fgjtam.gob.mx/api/v1/send-email",
+     "From": "from@fgjtam.gob.mx",
+     "Token": "authToken"
+   },
+   "WelcomeEmailSources": {
+     "ImageNameSrc": "url-image-banner",
+     "ImageProfileSrc": "url-image-profile"
+   }
+}
+```
+
+### Minio Settings
+The API uses MinIO to store files, so ensure MinIO is configured properly in your application’s settings. The MinioSettings configuration includes essential properties for connecting to your MinIO instance.
+Configuration Example:
+
+Add the MinioSettings section to your configuration file (appsettings.json):
+```json
+{
+ "MinioSettings": {
+    "Endpoint": "host-port-without-http",
+    "AccessKey": "key",
+    "SecretKey": "secret",
+    "BucketName": "directory-api"
+  },
+}
+```
+Properties:
+ - **Endpoint**: The URL of your MinIO server, without the http or https schema. The URL should include the port, like "minio.example.com:9000".
+ - **BucketName**: The name of the bucket where files will be stored.  If the bucket doesn’t exist, the application will create it automatically.
+
+
+## Usage
 
 To run the application, execute the following command:
 > `dotnet bin/Release/net8.0/publish/{projectName}.dll`
