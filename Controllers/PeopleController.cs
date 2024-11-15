@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -42,18 +43,25 @@ namespace AuthApi.Controllers
         
         
         /// <summary>
-        /// Return all people stored
+        /// Return the people stored, by default returns 5 ordered by `createdAt`
         /// </summary>
-        /// <remarks> This endpoint returns all people stored.</remarks>
-        /// <response code="200">Returns the person created</response>
+        /// <param name="orderBy"> propertie name used for ordering by default 'createdAt' posibles ["id", "name", "firstName", "curp", "email", "createdAt"] </param>
+        /// <param name="ascending"></param>
+        /// <param name="take"></param>
+        /// <param name="offset"></param>
+        /// <returns></returns>
+        /// <response code="200">Returns the person</response>
         [HttpGet]
-        public ActionResult<IEnumerable<PersonResponse>?> GetAllPeople( [FromQuery] int chunk = 100, [FromQuery] int skip = 0 )
+        public ActionResult<IEnumerable<PersonResponse>?> GetAllPeople( [FromQuery] string orderBy = "createdAt", [FromQuery] bool ascending = false, [FromQuery] int take = 5, [FromQuery] int offset = 0 )
         {
             var peopleQuery = this.personService.GetPeople();
 
-            var dataPeople = peopleQuery.OrderBy(p => p.CreatedAt)
-                .Skip(skip)
-                .Take(chunk)
+            // * ordering the data
+            string ordering = ascending ? $"{orderBy} asc" : $"{orderBy} desc";
+            var dataPeople = peopleQuery
+                .OrderBy(ordering)
+                .Skip(offset)
+                .Take(take)
                 .ToArray();
 
             // * Return response
