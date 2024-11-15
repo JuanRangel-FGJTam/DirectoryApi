@@ -19,7 +19,7 @@ namespace AuthApi.Services
         private readonly ILogger<SessionService> logger = logger;
         private readonly DirectoryDBContext directoryDBContext = directoryDBContext;
         private readonly IConfiguration configuration = configuration;
-        private readonly TimeSpan sessionLifeTime = TimeSpan.FromHours(6);
+        private readonly TimeSpan sessionLifeTime = TimeSpan.FromHours(1);
         private readonly int tokenLength = 64;
 
 
