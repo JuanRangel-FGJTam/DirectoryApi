@@ -11,7 +11,6 @@ namespace AuthApi.Models
 
         public string? Rfc {get;set;}
         
-        [Required]
         public string? Curp {get;set;}
         
         [Required]

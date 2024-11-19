@@ -87,7 +87,7 @@ namespace AuthApi.Services
             // * Create person entity
             var _person = new Person(){
                 Rfc = personRequest.Rfc??"",
-                Curp = personRequest.Curp!,
+                Curp = personRequest.Curp??"",
                 Name = personRequest.Name,
                 FirstName = personRequest.FirstName,
                 LastName = personRequest.LastName,

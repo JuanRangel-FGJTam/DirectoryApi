@@ -11,7 +11,7 @@ namespace AuthApi.Models
 
         public string? Rfc {get;set;}
         
-        [Required(ErrorMessage = "El curp es requerido")]
+        // [Required(ErrorMessage = "El curp es requerido")]
         public string? Curp {get;set;}
         
         [Required(ErrorMessage = "El nombre es requerido")]
