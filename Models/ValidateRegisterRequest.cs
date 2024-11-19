@@ -17,10 +17,8 @@ namespace AuthApi.Models
         [Required(ErrorMessage = "El nombre es requerido")]
         public string? Name {get;set;}
         
-        [Required(ErrorMessage = "El apellido paterno es requerido")]
         public string? FirstName {get;set;}
        
-        [Required(ErrorMessage = "El apellido materno es requerido")]
         public string? LastName {get;set;}
         
         [Required(ErrorMessage = "La fecha de nacimiento es requerido")]
