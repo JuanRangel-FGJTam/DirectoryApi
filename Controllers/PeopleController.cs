@@ -69,7 +69,6 @@ namespace AuthApi.Controllers
         /// 
         ///     POST api/people
         ///     {
-        ///       "curp": "RAAE190394MTSNLL02",
         ///       "name": "Juan Salvador",
         ///       "firstName": "Rangel",
         ///       "lastName": "Almaguer",

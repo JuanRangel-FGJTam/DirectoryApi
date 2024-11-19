@@ -19,6 +19,8 @@ namespace AuthApi.Services
         private readonly ICryptographyService cryptographyService = cryptographyService;
         private readonly ILogger<PersonService> logger = logger;
 
+        private static int NACIONALITY_MX = 31;
+
         public enum SearchMode {
             Like = 1,
             Equals = 2
@@ -87,7 +89,7 @@ namespace AuthApi.Services
             // * Create person entity
             var _person = new Person(){
                 Rfc = personRequest.Rfc??"",
-                Curp = personRequest.Curp!,
+                Curp = personRequest.Curp??"",
                 Name = personRequest.Name,
                 FirstName = personRequest.FirstName,
                 LastName = personRequest.LastName,
@@ -101,6 +103,22 @@ namespace AuthApi.Services
             }
 
             var errorsRelations = new Dictionary<string, object>();
+
+
+            // * add validations exclusive for mexicans
+            if( (personRequest.NationalityId??NACIONALITY_MX) == NACIONALITY_MX){
+                if( string.IsNullOrEmpty(personRequest.Curp) ){
+                    errorsRelations.Add( "curp", new string[]{ "El CURP es requerido."} );
+                }
+
+                if( string.IsNullOrEmpty(personRequest.FirstName) ){
+                    errorsRelations.Add( "firstName", new string[]{ "El apellido materno es requerido."} );
+                }
+
+                if( string.IsNullOrEmpty(personRequest.LastName) ){
+                    errorsRelations.Add( "lastName", new string[]{ "El apellido paterno es requerido."} );
+                }
+            }
 
             // Validate unique parameters
             var rfcStored =  dbContext.People.Where( p => p.DeletedAt == null && p.Rfc == personRequest.Rfc ).Count();
