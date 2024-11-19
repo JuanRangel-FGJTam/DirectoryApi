@@ -10,9 +10,14 @@ Api for manage people data
 > `sudo apt-get update`
 
 2. Install .NET SDK and runtime .NET 8:
- > `sudo apt-get install -y dotnet-sdk-8.0`
 
- > `sudo apt-get install -y aspnetcore-runtime-8.0`
+> `sudo apt-get install -y dotnet-sdk-8.0`
+
+> `sudo apt-get install -y aspnetcore-runtime-8.0`
+
+3. Entity Framework Core tools for create migrations, apply migrations, and generate code for a model based on an existing database. 
+
+> `dotnet tool install --global dotnet-ef`
 
 
 For full installation instructions on Ubuntu, refer to the [official .NET documentation](https://learn.microsoft.com/en-us/dotnet/core/install/linux-ubuntu-2204).
@@ -115,7 +120,7 @@ For information on hosting a .NET API on Ubuntu, refer to the [official document
 
 - Create the service file
 
-`sudo vim /etc/systemd/system/api-fd.service`
+`sudo vim /etc/systemd/system/api-usersfd.service`
 
 ```bash
 [Unit]
@@ -139,11 +144,11 @@ WantedBy=multi-user.target
 
 - Save the file and enable the service.
 
-`sudo systemctl enable api-fd.service`
+`sudo systemctl enable api-usersfd.service`
 
 - Show the logs
 
-`sudo journalctl -fu api-fd.service`
+`sudo journalctl -fu api-usersfd.service`
 
 ---
 ## Publish
@@ -152,9 +157,17 @@ WantedBy=multi-user.target
 1. Ensure .NET runtime is installed:
 2. Navigate to the directory containing the *.csproj file.
 3. Run the following command to publish the application:
+
 > `dotnet publish --configuration Release`
 
 This command generates the publish folder in the directory, e.g., `bin/Release/net8.0/publish`.
+
+For apply changes run previous command and reload service
+
+`sudo systemctl daemon-reload`
+
+`sudo systemctl restart api-usersfd.service`
+
 
 ---
 ## Contributors
