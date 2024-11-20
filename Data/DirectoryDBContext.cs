@@ -26,6 +26,9 @@ namespace AuthApi.Data
         public DbSet<ProceedingStatus> ProceedingStatus {get;set;}
         public DbSet<Proceeding> Proceeding {get;set;}
         public DbSet<ProceedingFile> ProceedingFiles {get;set;}
+        public DbSet<DocumentType> DocumentTypes {get;set;}
+        public DbSet<AccountRecoveryFile> AccountRecoveryFiles {get;set;}
+        public DbSet<AccountRecovery> AccountRecoveryRequests {get;set;}
 
 
         private readonly ICryptographyService cryptographyService;
@@ -132,7 +135,6 @@ namespace AuthApi.Data
             proccedingEntity.HasMany(p => p.Files)
                 .WithOne( f => f.Proceeding)
                 .HasForeignKey(f => f.ProceedingId);
-                
 
             // * Procedding File Entity
             var proceddingFileEntity = modelBuilder.Entity<ProceedingFile>();
@@ -143,6 +145,33 @@ namespace AuthApi.Data
                 .HasDefaultValueSql("getDate()")
                 .HasColumnType("datetime")
                 .ValueGeneratedOnAddOrUpdate();
+
+            // * Document Types
+            var documentTypeEntity = modelBuilder.Entity<DocumentType>();
+            documentTypeEntity.Property(b => b.CreatedAt)
+                .HasDefaultValueSql("getDate()")
+                .HasColumnType("datetime2");
+            documentTypeEntity.Property(b => b.UpdatedAt)
+                .HasDefaultValueSql("getDate()")
+                .HasColumnType("datetime2");
+            documentTypeEntity.HasData(
+                new DocumentType {Id = 1, Name = "INE" },
+                new DocumentType {Id = 2, Name = "CURP" },
+                new DocumentType {Id = 3, Name = "Acta de nacimiento" },
+                new DocumentType {Id = 4, Name = "Pasaporte" }
+            );
+
+            // * Account Recovery Files
+            var accountRecoveryFile = modelBuilder.Entity<AccountRecoveryFile>();
+            accountRecoveryFile.Property(b => b.CreatedAt)
+                .HasDefaultValueSql("getDate()")
+                .HasColumnType("datetime2");
+
+            // * Account Recovery Requests
+            var accountRecovery = modelBuilder.Entity<AccountRecovery>();
+            accountRecovery.Property(b => b.CreatedAt)
+                .HasDefaultValueSql("getDate()")
+                .HasColumnType("datetime2");
 
 
             // * Seed DB
