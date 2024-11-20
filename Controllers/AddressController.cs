@@ -6,11 +6,14 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.Authorization;
 using AuthApi.Data;
 using AuthApi.Entities;
 using AuthApi.Helper;
 using AuthApi.Models;
-using Microsoft.AspNetCore.Authorization;
+using AuthApi.Validators.Address;
+using AuthApi.Models.Responses;
+using System.Net.Mime;
 
 namespace AuthApi.Controllers
 {
@@ -73,14 +76,18 @@ namespace AuthApi.Controllers
         /// <response code="201">The Address is stored</response>
         /// <response code="400">The request is not valid</response>
         /// <response code="401">Auth token is not valid or is not present</response>
+        /// <response code="422">The request params are not valid</response>
         [HttpPost]
+        [Consumes(MediaTypeNames.Application.Json)]
+        [Produces(MediaTypeNames.Application.Json)]
+        [ProducesResponseType(typeof(UnprocesableResponse), StatusCodes.Status422UnprocessableEntity)]
         public IActionResult StoreAddress( [FromBody] AddressRequest addressRequest )
         {
 
             // * Validate request
-            if (!ModelState.IsValid)
-            {
-                return BadRequest( ModelState );
+            var validationResults = new AddressValidator().Validate(addressRequest);
+            if(!validationResults.IsValid){
+                return UnprocessableEntity( new UnprocesableResponse(validationResults.Errors));
             }
 
             // * Get relations and validate them
@@ -188,12 +195,18 @@ namespace AuthApi.Controllers
         /// <response code="200">The Address is updated</response>
         /// <response code="400">The request is not valid</response>
         /// <response code="401">Auth token is not valid or is not present</response>
+        /// <response code="422">The request params are not valid</response>
         [HttpPatch]
         [Route("{addressID}")]
+        [Consumes(MediaTypeNames.Application.Json)]
+        [Produces(MediaTypeNames.Application.Json)]
+        [ProducesResponseType(typeof(UnprocesableResponse), StatusCodes.Status422UnprocessableEntity)]
         public IActionResult UpdateAddress( [FromRoute] Guid addressID, [FromBody] AddressRequest addressRequest )
         {
-            if( !ModelState.IsValid) {
-                return BadRequest( ModelState );
+            // * Validate request
+            var validationResults = new AddressValidator().Validate(addressRequest);
+            if(!validationResults.IsValid){
+                return UnprocessableEntity( new UnprocesableResponse(validationResults.Errors));
             }
 
 
