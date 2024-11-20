@@ -32,13 +32,17 @@ namespace AuthApi.Helper
         {
             using (Aes aesAlg = Aes.Create())
             {
-                aesAlg.Mode = CipherMode.ECB;
-                aesAlg.Key = this.aesKey;
-                aesAlg.Padding = PaddingMode.PKCS7;
-                ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, null);
-                byte[] encryptedBytes = Convert.FromHexString(encryptedData);
-                byte[] decryptedBytes = decryptor.TransformFinalBlock(encryptedBytes, 0, encryptedBytes.Length);
-                return System.Text.Encoding.UTF8.GetString(decryptedBytes);
+                try{
+                    aesAlg.Mode = CipherMode.ECB;
+                    aesAlg.Key = this.aesKey;
+                    aesAlg.Padding = PaddingMode.PKCS7;
+                    ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, null);
+                    byte[] encryptedBytes = Convert.FromHexString(encryptedData);
+                    byte[] decryptedBytes = decryptor.TransformFinalBlock(encryptedBytes, 0, encryptedBytes.Length);
+                    return System.Text.Encoding.UTF8.GetString(decryptedBytes);
+                }catch(Exception){
+                    return "******";
+                }
             }
         }
  
