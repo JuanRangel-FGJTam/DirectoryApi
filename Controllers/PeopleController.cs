@@ -449,6 +449,7 @@ namespace AuthApi.Controllers
         /// <param name="personID"></param>
         /// <response code="200">Return the addresses stored</response>
         /// <response code="400">The request is not valid</response>
+        /// <response code="404">The person has no address</response>
         [HttpGet]
         [Route("{personID}/addresses" )]
         public ActionResult<IEnumerable<AddressResponse>?> GetAllPersonAddresses( string personID )
@@ -461,17 +462,29 @@ namespace AuthApi.Controllers
             }
             
             // Get the data
-            try {   
+            try {
                 var addressesDataRaw = this.personService.GetPersonAddress(_personID)
-                    ?? throw new Exception("Not address data found for person id " + _personID.ToString());
+                    ?? throw new KeyNotFoundException("Not address data found for person id " + _personID.ToString());
+
+                    if(!addressesDataRaw.Any()){
+                        throw new KeyNotFoundException("Not address data found for person id " + _personID.ToString());
+                    }
+
                 return Ok( addressesDataRaw.Select( item => AddressResponse.FromEntity(item) ).ToArray() );
+            }
+            catch (KeyNotFoundException knfe){
+                this._logger.LogError( knfe, "Error at retrieving the addresses of the person {personId}", _personID.ToString() );
+                return NotFound( new {
+                    Title = "No existe registro de dirección para esta persona.",
+                    knfe.Message
+                } );
             }
             catch (Exception ex)
             {
                 this._logger.LogError( ex, "Error at retrieving the addresses of the person {personId}", _personID.ToString() );
                 return BadRequest( new {
                     Title = "Error al obtener las direcciones de la persona",
-                    Message = ex.Message
+                    ex.Message
                 } );
             }
         }
@@ -494,13 +507,25 @@ namespace AuthApi.Controllers
             }
             
             // Get the data
-            try {   
+            try {
                 var addressesDataRaw = this.personService.GetPersonAddress(_personID)
-                    ?? throw new Exception("Not address data found for person id " + _personID.ToString());
+                    ?? throw new KeyNotFoundException("Not address data found for person id " + _personID.ToString());
+                
+                if(!addressesDataRaw.Any()){
+                    throw new KeyNotFoundException("Not address data found for person id " + _personID.ToString());
+                }
+                
 
                 var lastAddressRaw = addressesDataRaw.OrderByDescending( a => a.CreatedAt).First();
 
                 return Ok( AddressResponse.FromEntity(lastAddressRaw) );
+            }
+            catch (KeyNotFoundException knfe){
+                this._logger.LogError( knfe, "Error at retrieving the addresses of the person {personId}", _personID.ToString() );
+                return NotFound( new {
+                    Title = "No existe registro de dirección para esta persona.",
+                    knfe.Message
+                } );
             }
             catch (Exception ex)
             {

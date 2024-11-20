@@ -73,7 +73,7 @@ namespace AuthApi.Services
             var peopleQuery = this.GetPeople().ToList();
             return peopleQuery.Where(
                 item => item.Curp.ToLower().Equals(search.ToLower() ) ||
-                item.Email.ToLower().Contains(search.ToLower())
+                (item.Email??"").ToLower().Contains(search.ToLower())
             );
         }
 
@@ -82,6 +82,7 @@ namespace AuthApi.Services
         /// </summary>
         /// <param name="personRequest"></param>
         /// <param name="personId">Set the person id (optional)</param>
+        /// <param name="validateAt"> (optional)</param>
         /// <exception cref="ValidationException"></exception>
         public Person? StorePerson( PersonRequest personRequest, Guid? personId = null, DateTime? validateAt = null)
         {
@@ -236,8 +237,7 @@ namespace AuthApi.Services
         
         public IEnumerable<Address>? GetPersonAddress(Guid personId){
             return this.dbContext.Addresses
-                .Where( item => item.Person.Id == personId &&  item.DeletedAt == null )
-                .ToArray();
+                .Where( item => item.Person.Id == personId && item.DeletedAt == null );
         }
 
         public IEnumerable<ContactInformation>? GetAllContactInformation( Guid personId, int contactTypeId = 0){
