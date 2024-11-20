@@ -1,12 +1,25 @@
+using System;
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.Extensions.Options;
 using Minio;
 using Minio.DataModel.Args;
 using AuthApi.Data;
 using AuthApi.Helper;
 using AuthApi.Services;
 
-var builder = WebApplication.CreateBuilder(args);
+// Define the default culture and supported cultures
+var defaultCulture = new CultureInfo("es-MX");
+var supportedCultures = new[] {"es-MX","en-US"};
 
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    options.DefaultRequestCulture = new RequestCulture(defaultCulture);
+    options.SupportedCultures = supportedCultures.Select(c => new CultureInfo(c)).ToList();
+    options.SupportedUICultures = supportedCultures.Select(c => new CultureInfo(c)).ToList();
+});
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll",
@@ -55,6 +68,8 @@ builder.Services.AddMinio(client => client
 builder.Services.AddScoped<MinioService>();
 
 var app = builder.Build();
+var localizationOptions = app.Services.GetRequiredService<IOptions<RequestLocalizationOptions>>().Value;
+app.UseRequestLocalization(localizationOptions);
 app.UseCors("AllowAll");
 app.UseSwagger();
 app.UseSwaggerUI( c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "FGJTam Directory API") );
