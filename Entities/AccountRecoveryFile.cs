@@ -15,6 +15,7 @@ public class AccountRecoveryFile
     public string? FileType {get;set;}
     public long FileSize {get;set;}
     public AccountRecovery AccountRecovery {get;set;} = default!;
+    public DocumentType? DocumentType {get;set;} = default!;
 
     public DateTime CreatedAt {get;set;}
     public DateTime? DeletedAt {get;set;}

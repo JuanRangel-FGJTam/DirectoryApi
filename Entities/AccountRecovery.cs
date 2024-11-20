@@ -9,7 +9,7 @@ public class AccountRecovery
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-    public int Id {get;set;}
+    public Guid Id {get;set;}
     public Guid? PersonId {get;set;}
     public string Name {get;set;} = default!;
     public string? FirstName {get;set;}
@@ -17,9 +17,9 @@ public class AccountRecovery
 
     [DataType(DataType.Date)]
     public DateTime BirthDate {get;set;}
-    public Gender Gender {get;set;} = default!;
+    public Gender? Gender {get;set;} = default!;
     public string? Curp {get;set;}
-    public Nationality Nationality {get;set;} = default!;
+    public Nationality? Nationality {get;set;} = default!;
     public string? ContactEmail {get;set;}
     public string? ContactEmail2 {get;set;}
     public string? ContactPhone {get;set;}
