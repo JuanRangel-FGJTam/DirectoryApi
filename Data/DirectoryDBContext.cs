@@ -29,7 +29,9 @@ namespace AuthApi.Data
         public DbSet<DocumentType> DocumentTypes {get;set;}
         public DbSet<AccountRecoveryFile> AccountRecoveryFiles {get;set;}
         public DbSet<AccountRecovery> AccountRecoveryRequests {get;set;}
-
+        public DbSet<Role> Roles {get;set;}
+        public DbSet<UserRole> UserRoles {get;set;}
+        public DbSet<UserClaim> UserClaims {get;set;}
 
         private readonly ICryptographyService cryptographyService;
 
@@ -145,6 +147,47 @@ namespace AuthApi.Data
                 .HasDefaultValueSql("getDate()")
                 .HasColumnType("datetime")
                 .ValueGeneratedOnAddOrUpdate();
+            
+            // * Roles Entity
+            var roleEntity = modelBuilder.Entity<Role>( entity => {
+                entity.HasKey( r => r.Id);
+                entity.HasData(
+                    new Role{ Id = 1, Name = "Admin", Description = "Has access to all system features." },
+                    new Role{ Id = 2, Name = "User", Description = "Can view the people but not modify it" },
+                    new Role{ Id = 3, Name = "Manager", Description = "Can view and modify it the people." }
+                );
+            });
+
+
+            // * User Roles Entity
+            var userRoleEntity = modelBuilder.Entity<UserRole>( entity => {
+                entity.HasKey( ur => ur.Key);
+
+                entity.HasOne(ur => ur.User)
+                    .WithMany(u => u.UserRoles)
+                    .HasForeignKey(ur => ur.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                
+                entity.HasOne(ur => ur.Role)
+                    .WithMany(r => r.UserRoles)
+                    .HasForeignKey(ur => ur.RoleId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.Property( ur => ur.Key).IsRequired();
+            });
+
+
+            // * User Claim Entity
+            var userClaimEnity = modelBuilder.Entity<UserClaim>( entity => {
+                entity.HasKey( uc => uc.Id);
+
+                entity.HasOne(uc => uc.User)
+                    .WithMany(u => u.UserClaims)
+                    .HasForeignKey(uc => uc.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.Property( uc => uc.Id).IsRequired();
+            });
 
             // * Document Types
             var documentTypeEntity = modelBuilder.Entity<DocumentType>();

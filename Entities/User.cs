@@ -22,5 +22,9 @@ namespace AuthApi.Entities
         [JsonIgnore]
         public string Password { get; set; } = null!;
         public bool isActive { get; set; }
+
+        public virtual ICollection<UserRole>? UserRoles {get;set;}
+        public virtual ICollection<UserClaim>? UserClaims {get;set;}
+        
     }
 }
