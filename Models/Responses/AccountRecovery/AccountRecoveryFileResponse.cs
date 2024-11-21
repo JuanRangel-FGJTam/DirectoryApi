@@ -15,6 +15,9 @@ namespace AuthApi.Models
         public string? FileType {get;set;}
         public string? FileUrl {get;set;}
         public long FileSize {get;set;}
+        public int DocumentTypeId {get;set;}
+        public string? DocumentTypeName {get;set;}
+
         public DateTime CreatedAt {get;set;}
         public DateTime? DeletedAt {get;set;}
 
@@ -28,6 +31,10 @@ namespace AuthApi.Models
             resp.CreatedAt = model.CreatedAt;
             resp.DeletedAt = model.DeletedAt;
             resp.FileUrl = null;
+            if(model.DocumentType != null){
+                resp.DocumentTypeId = model.DocumentType.Id;
+                resp.DocumentTypeName = model.DocumentType.Name;
+            }
             return resp;
         }
 

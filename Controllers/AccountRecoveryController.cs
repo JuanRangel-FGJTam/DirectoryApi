@@ -23,11 +23,12 @@ namespace AuthApi.Controllers
     [Authorize]
     [ApiController]
     [Route("api/[Controller]")]
-    public class AccountRecoveryController(ILogger<AccountRecoveryController> logger, RecoveryAccountService ras, MinioService ms) : ControllerBase
+    public class AccountRecoveryController(ILogger<AccountRecoveryController> logger, RecoveryAccountService ras, MinioService ms, CatalogService cs) : ControllerBase
     {
         private readonly ILogger<AccountRecoveryController> _logger = logger;
         private readonly RecoveryAccountService recoveryAccountService = ras;
         private readonly MinioService minioService = ms;
+        private readonly CatalogService catalogService = cs;
 
         /// <summary>
         /// List the accounts recovery request
@@ -103,9 +104,22 @@ namespace AuthApi.Controllers
             }
         }
 
+
         /// <summary>
         /// Upload a file for the account recovery
         /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST /api/AccountRecovery/{accountRecoveryUUID}/file
+        ///     Content-Type: multipart/form-data
+        ///     Authorization: Bearer {auth-token}
+        ///
+        /// **Body Parameters:**
+        /// - **documentTypeId**: (int, required)
+        /// - **file**: (file, required)
+        ///
+        /// </remarks>
         /// <returns></returns>
         /// <response code="201">The file was uploaded</response>
         /// <response code="400">The request is not valid</response>
@@ -115,7 +129,7 @@ namespace AuthApi.Controllers
         [Consumes(MediaTypeNames.Multipart.FormData)]
         [Produces(MediaTypeNames.Application.Json)]
         [ProducesResponseType(typeof(AccountRecoveryFile), StatusCodes.Status201Created)]
-        public async Task<ActionResult<AccountRecoveryFileResponse>> UploadFile([FromRoute] string accountRecoveryUUID, [FromForm] IFormFile file)
+        public async Task<ActionResult<AccountRecoveryFileResponse>> UploadFile([FromRoute] string accountRecoveryUUID, [FromForm] IFormFile file, [FromForm] int documentTypeId)
         {
             var parseCorrect = Guid.TryParse(accountRecoveryUUID, out Guid requestUUID);
             if(!parseCorrect){
@@ -134,6 +148,25 @@ namespace AuthApi.Controllers
                 });
             }
 
+            // * get the documentType
+            DocumentType? documentType1 = null;
+            try
+            {
+                documentType1 = catalogService.GetDocumentTypes().FirstOrDefault(item => item.Id == documentTypeId);
+                if(documentType1 == null){
+                    var errors = new Dictionary<string,string> { {"documentTypeId", "No se encontro el tipo de documento"}};
+                    return UnprocessableEntity(new UnprocesableResponse(errors));
+                }
+            }
+            catch (Exception ex)
+            {
+                this._logger.LogError(ex, "Error at attempting to get the document types catalog: {message}", ex.Message);
+                return Conflict( new {
+                    Title = "Error al conectarse al servidor",
+                    Message = "Error al conectarse al servidor, " + ex.Message,
+                });
+            }
+
             // * upload the file
             string filePath = "";
             using(var stream = file.OpenReadStream()){
@@ -148,7 +181,8 @@ namespace AuthApi.Controllers
                 FileName = file.FileName,
                 FilePath = filePath,
                 FileType = file.ContentType,
-                FileSize = file.Length
+                FileSize = file.Length,
+                DocumentType = documentType1
             };
             this.recoveryAccountService.AttachFile(recoveryRequest, recoveryAccountFile);
 

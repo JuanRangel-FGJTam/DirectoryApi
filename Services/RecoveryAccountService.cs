@@ -21,12 +21,13 @@ namespace AuthApi.Services
         public async Task<IEnumerable<AccountRecoveryResponse>> GetAllRecords(){
 
             // get data raw
-            var records = this.directoryDBContext.AccountRecoveryRequests
-                .Where(item => item.DeletedAt == null)
-                .Include( p => p.Files)
-                .OrderBy(item => item.CreatedAt)
-                .Select( item => AccountRecoveryResponse.FromEntity(item) )
-                .ToList();
+                var records = directoryDBContext.AccountRecoveryRequests
+                    .Where(item => item.DeletedAt == null && item.Files != null)
+                    .Include( p => p.Files!)
+                        .ThenInclude( f => f.DocumentType)
+                    .OrderBy(item => item.CreatedAt)
+                    .Select( item => AccountRecoveryResponse.FromEntity(item) )
+                    .ToList();
             
             await Task.CompletedTask;
 
@@ -44,7 +45,13 @@ namespace AuthApi.Services
                 return null;
             }
 
-            this.directoryDBContext.Entry(data).Collection(p => p.Files).Load();
+            this.directoryDBContext
+                .Entry(data)
+                .Collection(p => p.Files)
+                .Query()
+                .Include( f => f.DocumentType)
+                .Load();
+
             var response = AccountRecoveryResponse.FromEntity(data);
             
             // get the public path
@@ -63,7 +70,9 @@ namespace AuthApi.Services
                         FileSize = file.FileSize,
                         CreatedAt = file.CreatedAt,
                         FileUrl = fileUrl,
-                        DeletedAt = file.DeletedAt
+                        DeletedAt = file.DeletedAt,
+                        DocumentTypeId = file.DocumentTypeId,
+                        DocumentTypeName = file.DocumentTypeName
                     };
                 }).ToList();
                 
