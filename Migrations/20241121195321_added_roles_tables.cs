@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -7,7 +8,7 @@
 namespace AuthApi.Migrations
 {
     /// <inheritdoc />
-    public partial class added_role_tables : Migration
+    public partial class added_roles_tables : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -55,7 +56,7 @@ namespace AuthApi.Migrations
                 schema: "System",
                 columns: table => new
                 {
-                    key = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    key = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     userId = table.Column<int>(type: "int", nullable: false),
                     roleId = table.Column<int>(type: "int", nullable: false)
                 },

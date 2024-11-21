@@ -1043,8 +1043,9 @@ namespace AuthApi.Migrations
 
             modelBuilder.Entity("AuthApi.Entities.UserRole", b =>
                 {
-                    b.Property<string>("Key")
-                        .HasColumnType("nvarchar(450)")
+                    b.Property<Guid>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
                         .HasColumnName("key");
 
                     b.Property<int>("RoleId")

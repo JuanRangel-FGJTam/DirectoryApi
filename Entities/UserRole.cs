@@ -10,7 +10,9 @@ namespace AuthApi.Entities
     [Table("UserRoles", Schema = "System")]
     public class UserRole
     {
-        public string Key { get; set; } = Guid.NewGuid().ToString();
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public Guid Key { get; set; } = Guid.NewGuid();
         public required int UserId { get; set; }
         public required int RoleId { get; set; }
 

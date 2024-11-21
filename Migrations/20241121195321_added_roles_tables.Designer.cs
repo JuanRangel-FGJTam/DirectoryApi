@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AuthApi.Migrations
 {
     [DbContext(typeof(DirectoryDBContext))]
-    [Migration("20241121194226_added_role_tables")]
-    partial class added_role_tables
+    [Migration("20241121195321_added_roles_tables")]
+    partial class added_roles_tables
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -808,8 +808,9 @@ namespace AuthApi.Migrations
 
             modelBuilder.Entity("AuthApi.Entities.UserRole", b =>
                 {
-                    b.Property<string>("Key")
-                        .HasColumnType("nvarchar(450)")
+                    b.Property<Guid>("Key")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier")
                         .HasColumnName("key");
 
                     b.Property<int>("RoleId")

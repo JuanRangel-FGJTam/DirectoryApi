@@ -161,8 +161,6 @@ namespace AuthApi.Data
 
             // * User Roles Entity
             var userRoleEntity = modelBuilder.Entity<UserRole>( entity => {
-                entity.HasKey( ur => ur.Key);
-
                 entity.HasOne(ur => ur.User)
                     .WithMany(u => u.UserRoles)
                     .HasForeignKey(ur => ur.UserId)
