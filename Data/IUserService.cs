@@ -13,5 +13,11 @@ namespace AuthApi.Data
         Task<int?> CreateUser(UserRequest userRequest);
         Task<User?> UpdateUser(int userId, UserUpdateRequest userUpdateRequest);
         Task<User?> GetByEmail(string email);
+
+        Task<IEnumerable<Role>> GetRolesAvailables();
+        Task<int> AttachRoleToUser(User user, Role role);
+        Task<int> DetachRoleFromUser(User user, Role role);
+        Task<int> AttachClaimUser(User user, string claimType, string claimValue);
+        Task<int> DetachClaimUser(User user, string claimType);
     }
 }

@@ -147,6 +147,61 @@ namespace AuthApi.Services
         {
             return await db.Users.FirstOrDefaultAsync(x => x.Email.ToLower() == email.ToLower());
         }
+
+        public async Task<IEnumerable<Role>> GetRolesAvailables(){
+            await Task.CompletedTask;
+            return this.db.Roles.ToList();
+        }
+
+        public async Task<int> AttachRoleToUser(User user, Role role){
+            var userRole = db.UserRoles.FirstOrDefault( item => item.UserId == user.Id && item.RoleId == role.Id);
+            if(userRole != null){
+                return 0;
+            }
+            var newUserRole = new UserRole {
+                Key = Guid.NewGuid(),
+                UserId = user.Id,
+                RoleId = role.Id
+            };
+            this.db.UserRoles.Add(newUserRole);
+            return await db.SaveChangesAsync();
+        }
+
+        public async Task<int> DetachRoleFromUser(User user, Role role){
+            var userRole = db.UserRoles.FirstOrDefault( item => item.UserId == user.Id && item.RoleId == role.Id);
+            if(userRole != null){
+                this.db.UserRoles.Remove(userRole);
+                return await db.SaveChangesAsync();
+            }
+            return 0;
+        }
+
+        public async Task<int> AttachClaimUser(User user, string claimType, string claimValue){
+            var claimUser = db.UserClaims.FirstOrDefault( item => item.UserId == user.Id && item.ClaimType == claimType);
+            if(claimUser != null){
+                claimUser.ClaimValue = claimValue.Trim();
+                this.db.UserClaims.Update(claimUser);
+                return await db.SaveChangesAsync();
+            }
+
+            var newCalimUser = new UserClaim {
+                UserId = user.Id,
+                ClaimType = claimType.Trim(),
+                ClaimValue = claimValue.Trim(),
+            };
+            this.db.UserClaims.Add(newCalimUser);
+            return await db.SaveChangesAsync();
+
+        }
+
+        public async Task<int> DetachClaimUser(User user, string claimType){
+            var claimUser = db.UserClaims.FirstOrDefault( item => item.UserId == user.Id && item.ClaimType == claimType);
+            if(claimUser != null){
+                this.db.UserClaims.Remove(claimUser);
+                return await db.SaveChangesAsync();
+            }
+            return 0;
+        }
         
         
         #region Local Functions
