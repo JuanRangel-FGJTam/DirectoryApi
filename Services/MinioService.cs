@@ -28,10 +28,13 @@ namespace AuthApi.Services
             }
         }
 
-        public async Task<string> UploadFile(string originalName, Stream stream){
+        public async Task<string> UploadFile(string originalName, Stream stream, string path = ""){
             
             // * make file path
             var filePath = string.Format("{0}.{1}", Guid.NewGuid().ToString().Replace("-",""), originalName.Split(".").Last() );
+            if( !string.IsNullOrEmpty(path)){
+                filePath = Path.Join(path, filePath);
+            }
             
             // * upload the file
             var putObjectArgs = new PutObjectArgs()
