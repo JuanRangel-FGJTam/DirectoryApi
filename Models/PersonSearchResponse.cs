@@ -41,7 +41,8 @@ namespace AuthApi.Models
                 FullName = $"{person.Name} {person.FirstName} {person.LastName}",
                 Birthdate = person.Birthdate,
                 Email = person.Email,
-                Curp = person.Curp
+                Curp = person.Curp,
+                Rfc = person.Rfc
             };
 
             if (person.Gender != null){

@@ -22,6 +22,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Options;
 using System.Diagnostics;
 using System.Security.Claims;
+using AuthApi.Models.Responses;
 
 namespace AuthApi.Controllers
 {
@@ -319,10 +320,20 @@ namespace AuthApi.Controllers
         /// <param name="hiddenName"></param>
         /// <response code="200">Return the person related with the email</response>
         /// <response code="404">There is no person with the email searched</response>
+        /// <response code="422">The email to search is not valid</response>
         [HttpGet]
         [Route("search")]
         public IActionResult SearchPerson( [FromQuery] string email, [FromQuery] int hiddenName ){
-            var people =  this.personService.Search( email, null,null, PersonService.SearchMode.Equals );
+            IEnumerable<Person> people = [];
+            try
+            {
+                people = this.personService.Search(email, null,null, null, PersonService.SearchMode.Equals );
+            }
+            catch (ArgumentException ae)
+            {
+                var errors = new Dictionary<string, string> {{ ae.ParamName??"email", ae.Message}};
+                return UnprocessableEntity( new UnprocesableResponse (errors));
+            }
 
             var person = people.FirstOrDefault();
             if( person == null){
@@ -429,8 +440,15 @@ namespace AuthApi.Controllers
                 return BadRequest(ModelState);
             }
 
-            var _persons = this.personService.Search( authenticateRequest.Email!, null, null );
-            if( _persons.IsNullOrEmpty()){
+            try
+            {
+                var _persons = this.personService.Search( authenticateRequest.Email!, null, null, null );
+                if( _persons.IsNullOrEmpty()){
+                    throw new ArgumentException();
+                }
+            }
+            catch (ArgumentException)
+            {
                 return NotFound(new {
                     Message = "El correo no se encuentra registrado en la base de datos"
                 });
@@ -634,8 +652,16 @@ namespace AuthApi.Controllers
         public async Task<ActionResult<ContactResponse?>> SendEmailResetPassword( [FromBody] ResetPasswordEmailRequest resetPasswordEmailRequest )
         {
             // * Retrive person by the email
-            var person = this.personService.Search( resetPasswordEmailRequest.Email!, null, null ).FirstOrDefault();
-            if( person == null){
+            Person? person = null;
+            try
+            {
+                person = this.personService.Search( resetPasswordEmailRequest.Email!, null, null, null ).FirstOrDefault();
+                if( person == null){
+                    throw new ArgumentException();
+                }
+            }
+            catch (ArgumentException)
+            {
                 return NotFound( new {
                     Title="Email not found",
                     Message = $"The email {resetPasswordEmailRequest.Email} was not found on the database"
@@ -855,13 +881,28 @@ namespace AuthApi.Controllers
 
         }
         
-
+        /// <summary>
+        /// Search people by name, curp and rfc
+        /// </summary>
+        /// <param name="search"></param>
+        /// <returns code="200">List of people seached</returns>
+        /// <returns code="422">The search parameter is invalid</returns>/// 
+        /// <returns></returns>
         [HttpGet]
         [Route("search-people")]
         public ActionResult<IEnumerable<PersonSearchResponse>> SearchPeople([FromQuery] string? search ){
 
             // * search for the people
-            var peopleRaw = this.personService.Search(search);
+            IEnumerable<Person>? peopleRaw = [];
+            try
+            {
+                peopleRaw = this.personService.Search(search??"");
+            }
+            catch (ArgumentException ae)
+            {
+                var errors = new Dictionary<string, string> {{ ae.ParamName??"search", ae.Message}};
+                return UnprocessableEntity( new UnprocesableResponse (errors));
+            }
 
             // * process the data
             List<PersonSearchResponse> people = peopleRaw.Select( item => PersonSearchResponse.FromEntity(item)).ToList();

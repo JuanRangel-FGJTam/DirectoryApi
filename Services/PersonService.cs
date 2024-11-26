@@ -4,11 +4,11 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using AuthApi.Data;
 using AuthApi.Entities;
 using AuthApi.Models;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 
 namespace AuthApi.Services
 {
@@ -37,24 +37,51 @@ namespace AuthApi.Services
                 .AsQueryable();
         }
 
-        public IEnumerable<Person> Search( string email, string? curp, string? name, SearchMode searchMode = SearchMode.Equals ){
+        /// <summary>
+        ///  search the person by the parameters passsed
+        /// </summary>
+        /// <param name="email"></param>
+        /// <param name="curp"></param>
+        /// <param name="name"></param>
+        /// <param name="rfc"></param>
+        /// <param name="searchMode"></param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException">The email parameter is invalid</exception>
+        public IEnumerable<Person> Search( string email, string? curp, string? name, string? rfc, SearchMode searchMode = SearchMode.Equals ){
+            IQueryable<Person> peopleQuery = this.GetPeople();
 
-            var peopleQuery = this.GetPeople();
-
-            if( !string.IsNullOrEmpty( email)){
-                peopleQuery = peopleQuery.Where( p =>
-                    (searchMode == SearchMode.Equals)
-                        ? (p.Email??"").ToLower().Equals(email.ToLower())
-                        : p.Email != null && p.Email.Contains(email)
-                );
+            if(string.IsNullOrEmpty(email)){
+                throw new ArgumentException(message:"Email is required and not been empty", paramName:"email");
             }
 
-            if( !string.IsNullOrEmpty(curp)){
-                peopleQuery = peopleQuery.Where( p =>
-                    (searchMode == SearchMode.Equals)
-                        ? p.Curp.ToLower().Equals(curp.ToLower())
-                        : p.Curp.Contains(curp)
-                );
+            if(searchMode == SearchMode.Equals)
+            {
+                peopleQuery = peopleQuery.Where(p => (p.Email??"").ToLower().Equals(email.ToLower()));
+
+                if( !string.IsNullOrEmpty(curp))
+                {
+                    peopleQuery = peopleQuery.Where( p => p.Curp.ToLower().Equals(curp.ToLower()));
+                }
+
+                if( !string.IsNullOrEmpty(rfc))
+                {
+                    peopleQuery = peopleQuery.Where( p => (p.Rfc??"").ToLower().Equals(rfc.ToLower()));
+                }
+
+            }
+            else
+            {
+                peopleQuery = peopleQuery.Where(p => (p.Email??"").ToLower().Contains(email.ToLower()));
+
+                if( !string.IsNullOrEmpty(curp))
+                {
+                    peopleQuery = peopleQuery.Where( p => p.Curp.ToLower().Contains(curp.ToLower()));
+                }
+
+                if( !string.IsNullOrEmpty(rfc))
+                {
+                    peopleQuery = peopleQuery.Where( p => (p.Rfc??"").ToLower().Contains(rfc.ToLower()));
+                }
             }
 
             if( !string.IsNullOrEmpty(name)){
@@ -66,15 +93,26 @@ namespace AuthApi.Services
             }
 
             return peopleQuery.ToArray();
-
         }
 
+        /// <summary>
+        /// search the person if the curp is equal to the search string OR if the email contains the search string
+        /// </summary>
+        /// <param name="search">Text to search</param>
+        /// <returns></returns>
+        /// <exception cref="ArgumentException">The email parameter is invalid</exception>
         public IEnumerable<Person> Search(string search){
+            if(string.IsNullOrEmpty(search)){
+                throw new ArgumentException(message:"The parameter is not valid", paramName:"search");
+            }
             var peopleQuery = this.GetPeople().ToList();
-            return peopleQuery.Where(
-                item => item.Curp.ToLower().Equals(search.ToLower() ) ||
-                (item.Email??"").ToLower().Contains(search.ToLower())
+            var data = peopleQuery.Where(
+                item => item.FullName.ToLower().Contains(search.ToLower()) ||
+                  (item.Email??"").ToLower().Contains(search.ToLower()) ||
+                  (item.Curp??"").ToLower().Contains(search.ToLower()) ||
+                  (item.Rfc??"").ToLower().Contains(search.ToLower())
             );
+            return data;
         }
 
         /// <summary>
@@ -201,7 +239,6 @@ namespace AuthApi.Services
             return this.dbContext.People.Find(_person.Id);
         }
 
-
         /// <summary>
         /// Set a new password for the person
         /// </summary>
@@ -268,7 +305,7 @@ namespace AuthApi.Services
             this.SetPassword( _person.Id, newPassword);
         }
 
-    }  
+    }
 
-    
+
 }
