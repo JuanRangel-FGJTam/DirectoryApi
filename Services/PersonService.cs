@@ -108,6 +108,7 @@ namespace AuthApi.Services
             var peopleQuery = this.GetPeople().ToList();
             var data = peopleQuery.Where(
                 item => item.FullName.ToLower().Contains(search.ToLower()) ||
+                  (item.Email??"").ToLower().Contains(search.ToLower()) ||
                   (item.Curp??"").ToLower().Contains(search.ToLower()) ||
                   (item.Rfc??"").ToLower().Contains(search.ToLower())
             );
