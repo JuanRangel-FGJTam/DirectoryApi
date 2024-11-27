@@ -14,6 +14,7 @@ var defaultCulture = new CultureInfo("es-MX");
 var supportedCultures = new[] {"es-MX","en-US"};
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.ConfigureSerilog();
 builder.Services.Configure<RequestLocalizationOptions>(options =>
 {
     options.DefaultRequestCulture = new RequestCulture(defaultCulture);
@@ -79,5 +80,4 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-
 app.Run();
