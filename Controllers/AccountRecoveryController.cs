@@ -129,6 +129,7 @@ namespace AuthApi.Controllers
         [Consumes(MediaTypeNames.Multipart.FormData)]
         [Produces(MediaTypeNames.Application.Json)]
         [ProducesResponseType(typeof(AccountRecoveryFile), StatusCodes.Status201Created)]
+        [RequestSizeLimit(10 * 1024 * 1024)] // 10 MB
         public async Task<ActionResult<AccountRecoveryFileResponse>> UploadFile([FromRoute] string accountRecoveryUUID, [FromForm] AccountRecoveryFileRequest fileRequest)
         {
             var parseCorrect = Guid.TryParse(accountRecoveryUUID, out Guid requestUUID);
