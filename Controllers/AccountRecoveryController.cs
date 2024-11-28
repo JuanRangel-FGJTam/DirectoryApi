@@ -117,7 +117,7 @@ namespace AuthApi.Controllers
         ///
         /// **Body Parameters:**
         /// - **documentTypeId**: (int, required)
-        /// - **file**: (file, required)
+        /// - **file**: (file, required, size:max:10MB, content-type:pdf,jpg,png)
         ///
         /// </remarks>
         /// <returns></returns>
