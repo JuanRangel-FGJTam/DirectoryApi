@@ -129,7 +129,7 @@ namespace AuthApi.Controllers
         [Consumes(MediaTypeNames.Multipart.FormData)]
         [Produces(MediaTypeNames.Application.Json)]
         [ProducesResponseType(typeof(AccountRecoveryFile), StatusCodes.Status201Created)]
-        public async Task<ActionResult<AccountRecoveryFileResponse>> UploadFile([FromRoute] string accountRecoveryUUID, [FromForm] IFormFile file, [FromForm] int documentTypeId)
+        public async Task<ActionResult<AccountRecoveryFileResponse>> UploadFile([FromRoute] string accountRecoveryUUID, [FromForm] AccountRecoveryFileRequest fileRequest)
         {
             var parseCorrect = Guid.TryParse(accountRecoveryUUID, out Guid requestUUID);
             if(!parseCorrect){
@@ -139,9 +139,20 @@ namespace AuthApi.Controllers
                 });
             }
 
+            // * validate the file
+            var validator = new AccountRecoveryUploadFileValidator().Validate(fileRequest);
+            if(!validator.IsValid)
+            {
+                return UnprocessableEntity(
+                    new UnprocesableResponse(validator.Errors)
+                );
+            }
+
+
             // * attempt to get the recovery request
             var recoveryRequest = this.recoveryAccountService.GetByID(requestUUID);
-            if(recoveryRequest == null){
+            if(recoveryRequest == null)
+            {
                 return NotFound(new {
                     Title = "No se econtro el registro en la base de datos.",
                     Message = "No se econtro el registro en la base de datos."
@@ -152,7 +163,7 @@ namespace AuthApi.Controllers
             DocumentType? documentType1 = null;
             try
             {
-                documentType1 = catalogService.GetDocumentTypes().FirstOrDefault(item => item.Id == documentTypeId);
+                documentType1 = catalogService.GetDocumentTypes().FirstOrDefault(item => item.Id == fileRequest.DocumentTypeId);
                 if(documentType1 == null){
                     var errors = new Dictionary<string,string> { {"documentTypeId", "No se encontro el tipo de documento"}};
                     return UnprocessableEntity(new UnprocesableResponse(errors));
@@ -168,20 +179,25 @@ namespace AuthApi.Controllers
             }
 
             // * upload the file
+            var uuidFile = Guid.NewGuid();
             string filePath = "";
-            using(var stream = file.OpenReadStream()){
-                filePath = await minioService.UploadFile( file.FileName, stream, $"accountRecoveryFiles/{accountRecoveryUUID}/");
+            using(var stream = fileRequest.File!.OpenReadStream())
+            {
+                filePath = await minioService.UploadFile( fileRequest.File!.FileName, stream, uuidFile, $"accountRecoveryFiles/{accountRecoveryUUID.ToLower()}/");
             }
-            if(string.IsNullOrEmpty(filePath)){
+            if(string.IsNullOrEmpty(filePath))
+            {
                 throw new Exception("Fail at uplaod the file");
             }
 
             // * make the file record
-            var recoveryAccountFile = new AccountRecoveryFile(){
-                FileName = file.FileName,
+            var recoveryAccountFile = new AccountRecoveryFile()
+            {
+                Id = uuidFile,
+                FileName = fileRequest.File!.FileName,
                 FilePath = filePath,
-                FileType = file.ContentType,
-                FileSize = file.Length,
+                FileType = fileRequest.File!.ContentType,
+                FileSize = fileRequest.File!.Length,
                 DocumentType = documentType1
             };
             this.recoveryAccountService.AttachFile(recoveryRequest, recoveryAccountFile);
