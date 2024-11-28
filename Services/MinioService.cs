@@ -31,7 +31,7 @@ namespace AuthApi.Services
         public async Task<string> UploadFile(string originalName, Stream stream, string path = ""){
             
             // * make file path
-            var filePath = string.Format("{0}.{1}", Guid.NewGuid().ToString().Replace("-",""), originalName.Split(".").Last() );
+            var filePath = string.Format("{0}.{1}", Guid.NewGuid().ToString(), originalName.Split(".").Last() );
             if( !string.IsNullOrEmpty(path)){
                 filePath = Path.Join(path, filePath);
             }
@@ -47,7 +47,27 @@ namespace AuthApi.Services
 
             return response.ObjectName;
         }
-        
+
+        public async Task<string> UploadFile(string originalName, Stream stream, Guid guid, string path = ""){
+            
+            // * make file path
+            var filePath = string.Format("{0}.{1}", guid.ToString(), originalName.Split(".").Last() );
+            if( !string.IsNullOrEmpty(path)){
+                filePath = Path.Join(path, filePath);
+            }
+            
+            // * upload the file
+            var putObjectArgs = new PutObjectArgs()
+                .WithBucket( configuration["MinioSettings:BucketName"] )
+                .WithObject(filePath)
+                .WithStreamData(stream)
+                .WithObjectSize(stream.Length)
+                .WithContentType("application/octet-stream");
+            var response = await minioClient.PutObjectAsync(putObjectArgs);
+
+            return response.ObjectName;
+        }
+
         public async Task<string?> MakeTemporalUrl(string fileName, string mimmeType){
 
             // URL expiration time (in seconds)
