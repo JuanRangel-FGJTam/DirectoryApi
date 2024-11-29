@@ -5,9 +5,9 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.IdentityModel.Tokens;
 using AuthApi.Data;
 using AuthApi.Entities;
-using Microsoft.IdentityModel.Tokens;
 
 namespace AuthApi.Helper
 {
@@ -18,18 +18,24 @@ namespace AuthApi.Helper
         {
             var TokenLifetime = TimeSpan.FromDays( jwtSettings.LifeTimeDays);
 
-            //Generate token that is valid for 7 days
+            // Generate token that is valid for 7 days
             var tokenHandler = new JwtSecurityTokenHandler();
             var token = await Task.Run(() =>
             {
+                var tokenKey = Encoding.ASCII.GetBytes(jwtSettings.Key);
 
-                var tokenKey = Encoding.ASCII.GetBytes( jwtSettings.Key );
-
+                // add user-specify claims
                 var claims = new List<Claim>{
                     new("userId", user.Id.ToString()),
                     new( JwtRegisteredClaimNames.Email, user.Email),
                     new( JwtRegisteredClaimNames.Name, string.Join(" ", new []{user.FirstName, user.LastName} ) )
                 };
+
+                // Add user roles as claims
+                if (user.UserRoles != null && user.UserRoles.Any())
+                {
+                    claims.AddRange(user.UserRoles.Select( userRole => new Claim(ClaimTypes.Role, userRole.Role!.Name)));
+                }
 
                 var tokenDescriptor = new SecurityTokenDescriptor{
                     Subject = new ClaimsIdentity(claims),

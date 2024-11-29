@@ -47,7 +47,8 @@ namespace AuthApi.Controllers
             if( !ModelState.IsValid){
                 // Process errors
                 var _errorsMessages = new List<KeyValuePair<string,string>>();
-                foreach( var error in ModelState  ){
+                foreach( var error in ModelState)
+                {
                     _errorsMessages.Add( new KeyValuePair<string, string>( error.Key, error.Value.Errors.First().ErrorMessage ) );
                 }
                 
@@ -59,7 +60,7 @@ namespace AuthApi.Controllers
                 }  );
             }
 
-            var response = await userService.Authenticate( model );
+            var response = await userService.Authenticate(model);
 
             if (response == null){
                 return BadRequest(new { message = "Username or password is incorrect" });

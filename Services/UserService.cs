@@ -121,7 +121,10 @@ namespace AuthApi.Services
 
         public async Task<AuthenticateResponse?> Authenticate(AuthenticateRequest model)
         {
-            var user = await db.Users.SingleOrDefaultAsync(x => x.Email == model.Email && x.Password == cryptographyService.HashData(model.Password!));
+            var user = await db.Users
+                .Include( item => item.UserRoles!)
+                    .ThenInclude( ur => ur.Role)
+                .SingleOrDefaultAsync(x => x.Email == model.Email && x.Password == cryptographyService.HashData(model.Password!));
 
             // return null if user not found
             if (user == null) return null;
