@@ -19,5 +19,10 @@ namespace AuthApi.Entities
 
         [JsonIgnore]
         public virtual ICollection<UserRole> UserRoles {get;set;} = default!;
+
+        public override string ToString()
+        {
+            return string.Format("[{0}|{1}]", Id, Name);
+        }
     }
 }

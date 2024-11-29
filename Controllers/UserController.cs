@@ -257,7 +257,7 @@ namespace AuthApi.Controllers
         /// Add a role to the user
         /// </summary>
         /// <param name="userID"></param>
-        /// <param name="userUpdateRequest"></param>
+        /// <param name="userRoleRequest"></param>
         /// <returns></returns>
         /// <response code="200">User udpated or stored</response>
         /// <response code="400">The request is not valid</response>
@@ -313,6 +313,75 @@ namespace AuthApi.Controllers
                 return Conflict( new {
                     Title = "Request validations fail",
                     Message = $"Error al tratar de asignar el rol '{userRoleRequest.RoleId}' al usuario: {ex.Message}",
+                });
+            }
+
+        }
+
+
+        /// <summary>
+        /// Remove the role of the user
+        /// </summary>
+        /// <param name="userID"></param>
+        /// <param name="userRoleRequest"></param>
+        /// <returns></returns>
+        /// <response code="200">User udpated or stored</response>
+        /// <response code="400">The request is not valid</response>
+        /// <response code="401">Auth token is not valid or is not present</response>
+        /// <response code="404">The user is not found</response>
+        /// <response code="422">Parameter are missing or are invalid</response>
+        [Authorize]
+        [HttpDelete("{userID}/role")]
+        [Consumes(MediaTypeNames.Application.Json)]
+        [Produces(MediaTypeNames.Application.Json)]
+        [ProducesResponseType(typeof(UnprocesableResponse), StatusCodes.Status422UnprocessableEntity)]
+        public async Task<IActionResult> RemoveRole( [FromRoute] int userID, [FromBody] UserRoleRequest userRoleRequest)
+        {
+            
+            User? user = await this.userService.GetById(userID);
+            if(user == null)
+            {
+                return NotFound( new {
+                    Title = "El usuario no se encuentra registrado",
+                    Message = $"El usuario con id {userID} no se encuentra registrado en el sistema",
+                });
+            }
+
+            // TODO: Validate if the current user has enough permission to add roles to another user.
+
+            // Validate request
+            var validationResults = new UserRoleValidator().Validate(userRoleRequest);
+            if(!validationResults.IsValid)
+            {
+                return UnprocessableEntity( new UnprocesableResponse(validationResults.Errors));
+            }
+
+            var targetRole = (await this.userService.GetRolesAvailables()).FirstOrDefault( item => item.Id == userRoleRequest.RoleId);
+            if(targetRole == null)
+            {
+                return UnprocessableEntity( new UnprocesableResponse( new Dictionary<string,string>
+                {
+                    {"RoleId", "El rol no existe o no esta disponible"}
+                }));
+            }
+
+
+            // * remove the role from the user
+            try
+            {
+                var results = await userService.DetachRoleFromUser(user, targetRole!);
+                this._logger.LogInformation( "Removed the role {role} of the user {user}", targetRole.ToString(), user.ToString());
+                return Ok( new {
+                    Title = "Rol eliminado del usuario",
+                    Messge = $"El rol '{targetRole}' se removio del usuario '{user}'"
+                });
+            }
+            catch (Exception ex)
+            {
+                this._logger.LogError(ex, "Fail at attempting to assign the role '{role}' to the user '{user}': {message}", userRoleRequest, user, ex.Message );
+                return Conflict( new {
+                    Title = "Request validations fail",
+                    Message = $"Error al tratar de remover el rol '{userRoleRequest}' al usuario {user}: {ex.Message}",
                 });
             }
 

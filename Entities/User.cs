@@ -25,6 +25,11 @@ namespace AuthApi.Entities
 
         public virtual ICollection<UserRole>? UserRoles {get;set;}
         public virtual ICollection<UserClaim>? UserClaims {get;set;}
-        
+
+        public override string ToString()
+        {
+            return string.Format("[{0}|{1}|{2}]", Id, $"{FirstName} {LastName}", Email);
+        }
+
     }
 }
