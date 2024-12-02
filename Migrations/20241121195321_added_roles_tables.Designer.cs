@@ -4,6 +4,7 @@ using AuthApi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AuthApi.Migrations
 {
     [DbContext(typeof(DirectoryDBContext))]
-    partial class DirectoryDBContextModelSnapshot : ModelSnapshot
+    [Migration("20241121195321_added_roles_tables")]
+    partial class added_roles_tables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,147 +24,6 @@ namespace AuthApi.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("AuthApi.Entities.AccountRecovery", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("id");
-
-                    b.Property<DateTime?>("AttendingAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("attendingAt");
-
-                    b.Property<DateTime>("BirthDate")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("birthDate");
-
-                    b.Property<string>("ContactEmail")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("contactEmail");
-
-                    b.Property<string>("ContactEmail2")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("contactEmail2");
-
-                    b.Property<string>("ContactPhone")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("contactPhone");
-
-                    b.Property<string>("ContactPhone2")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("contactPhone2");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasColumnName("createdAt")
-                        .HasDefaultValueSql("getDate()");
-
-                    b.Property<string>("Curp")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("curp");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("deletedAt");
-
-                    b.Property<DateTime?>("FinishedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("finishedAt");
-
-                    b.Property<string>("FirstName")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("firstName");
-
-                    b.Property<int?>("GenderId")
-                        .HasColumnType("int")
-                        .HasColumnName("genderId");
-
-                    b.Property<string>("LastName")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("lastName");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("name");
-
-                    b.Property<int?>("NationalityId")
-                        .HasColumnType("int")
-                        .HasColumnName("nationalityId");
-
-                    b.Property<Guid?>("PersonId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("personId");
-
-                    b.Property<string>("RequestComments")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("requestComments");
-
-                    b.Property<string>("ResponseComments")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("responseComments");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GenderId");
-
-                    b.HasIndex("NationalityId");
-
-                    b.ToTable("AccountRecovery", "Recv");
-                });
-
-            modelBuilder.Entity("AuthApi.Entities.AccountRecoveryFile", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("id");
-
-                    b.Property<Guid>("AccountRecoveryId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("accountRecoveryId");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasColumnName("createdAt")
-                        .HasDefaultValueSql("getDate()");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("deletedAt");
-
-                    b.Property<int?>("DocumentTypeId")
-                        .HasColumnType("int")
-                        .HasColumnName("documentTypeId");
-
-                    b.Property<string>("FileName")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("fileName");
-
-                    b.Property<string>("FilePath")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("filePath");
-
-                    b.Property<long>("FileSize")
-                        .HasColumnType("bigint")
-                        .HasColumnName("fileSize");
-
-                    b.Property<string>("FileType")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("fileType");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AccountRecoveryId");
-
-                    b.HasIndex("DocumentTypeId");
-
-                    b.ToTable("AccountRecoveryFiles", "Recv");
-                });
 
             modelBuilder.Entity("AuthApi.Entities.Address", b =>
                 {
@@ -382,71 +244,6 @@ namespace AuthApi.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Countries");
-                });
-
-            modelBuilder.Entity("AuthApi.Entities.DocumentType", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasColumnName("createdAt")
-                        .HasDefaultValueSql("getDate()");
-
-                    b.Property<DateTime?>("DeletedAt")
-                        .HasColumnType("datetime2")
-                        .HasColumnName("deletedAt");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("name");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasColumnName("updatedAt")
-                        .HasDefaultValueSql("getDate()");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("DocumentTypes");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "INE",
-                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            Id = 2,
-                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "CURP",
-                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            Id = 3,
-                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Acta de nacimiento",
-                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        },
-                        new
-                        {
-                            Id = 4,
-                            CreatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Name = "Pasaporte",
-                            UpdatedAt = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified)
-                        });
                 });
 
             modelBuilder.Entity("AuthApi.Entities.Gender", b =>
@@ -979,38 +776,6 @@ namespace AuthApi.Migrations
                         });
                 });
 
-            modelBuilder.Entity("AuthApi.Entities.AccountRecovery", b =>
-                {
-                    b.HasOne("AuthApi.Entities.Gender", "Gender")
-                        .WithMany()
-                        .HasForeignKey("GenderId");
-
-                    b.HasOne("AuthApi.Entities.Nationality", "Nationality")
-                        .WithMany()
-                        .HasForeignKey("NationalityId");
-
-                    b.Navigation("Gender");
-
-                    b.Navigation("Nationality");
-                });
-
-            modelBuilder.Entity("AuthApi.Entities.AccountRecoveryFile", b =>
-                {
-                    b.HasOne("AuthApi.Entities.AccountRecovery", "AccountRecovery")
-                        .WithMany("Files")
-                        .HasForeignKey("AccountRecoveryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("AuthApi.Entities.DocumentType", "DocumentType")
-                        .WithMany()
-                        .HasForeignKey("DocumentTypeId");
-
-                    b.Navigation("AccountRecovery");
-
-                    b.Navigation("DocumentType");
-            });
-
             modelBuilder.Entity("AuthApi.Entities.UserClaim", b =>
                 {
                     b.Property<int>("Id")
@@ -1214,11 +979,6 @@ namespace AuthApi.Migrations
                         .HasForeignKey("CountryId");
 
                     b.Navigation("Country");
-                });
-
-            modelBuilder.Entity("AuthApi.Entities.AccountRecovery", b =>
-                {
-                    b.Navigation("Files");
                 });
 
             modelBuilder.Entity("AuthApi.Entities.UserClaim", b =>

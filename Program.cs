@@ -40,9 +40,13 @@ builder.Services.Configure<WelcomeEmailSources>( builder.Configuration.GetSectio
 builder.Services.AddJwtAuthentication( builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>()! );
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-builder.Services.AddControllers().AddJsonOptions( o => {
-    o.JsonSerializerOptions.AllowTrailingCommas = true;
-});
+builder.Services.AddControllers()
+    .AddJsonOptions( o => {
+        o.JsonSerializerOptions.AllowTrailingCommas = true;
+        o.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    });
+    
+
 builder.Services.AddDbContext<DirectoryDBContext>( options=>{
     options.UseSqlServer( builder.Configuration.GetConnectionString("AuthApi") );
 });
