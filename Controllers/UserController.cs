@@ -212,10 +212,9 @@ namespace AuthApi.Controllers
                 string ordering = ascending ? $"{orderBy} asc" : $"{orderBy} desc";
 
                 // * get data
-                // TODO: Fix infinity loop of relations (UserRoles, UserClaims) at serialice the response on json
                 var users = await this.directoryDBContext.Users
-                    // .Include( u => u.UserRoles)
-                    // .Include( u => u.UserClaims)
+                    .Include( u => u.UserRoles)
+                    .Include( u => u.UserClaims)
                     .OrderBy(ordering)
                     .Skip(offset)
                     .Take(take)
