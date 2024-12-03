@@ -23,12 +23,13 @@ namespace AuthApi.Controllers
     [Authorize]
     [ApiController]
     [Route("api/[Controller]")]
-    public class AccountRecoveryController(ILogger<AccountRecoveryController> logger, RecoveryAccountService ras, MinioService ms, CatalogService cs) : ControllerBase
+    public class AccountRecoveryController(ILogger<AccountRecoveryController> logger, RecoveryAccountService ras, MinioService ms, CatalogService cs, DirectoryDBContext c) : ControllerBase
     {
         private readonly ILogger<AccountRecoveryController> _logger = logger;
         private readonly RecoveryAccountService recoveryAccountService = ras;
         private readonly MinioService minioService = ms;
         private readonly CatalogService catalogService = cs;
+        private readonly DirectoryDBContext context = c;
 
         /// <summary>
         /// List the accounts recovery request
@@ -205,6 +206,104 @@ namespace AuthApi.Controllers
 
             // * return response
             return StatusCode(201, AccountRecoveryFileResponse.FromEntity(recoveryAccountFile));
+        }
+
+
+        /// <summary>
+        /// updated the request and set the AttendingAt datetime
+        /// </summary>
+        /// <param name="accountRecoveryUUID"></param>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        /// <response code="20">Request updated</response>
+        /// <response code="400">The request is not valid</response>
+        /// <response code="401">Auth token is not valid or is not present</response>
+        /// <response code="404">The request id was not found on the system</response>
+        /// <response code="409">Internal error</response>S
+        [HttpPatch("{accountRecoveryUUID}")]
+        public IActionResult UpdateRequest([FromRoute] string accountRecoveryUUID, [FromForm] AccountRecoveryUpdateRequest request)
+        {
+            var parseCorrect = Guid.TryParse(accountRecoveryUUID, out Guid requestUUID);
+            if(!parseCorrect){
+                return BadRequest( new {
+                    Title = "El formato del accountRecoveryUUID es incorrecto",
+                    Message = "El formato del accountRecoveryUUID es incorrecto, se espera un UUID"
+                });
+            }
+
+            // * attempt to get the recovery request
+            var recoveryRequest = this.recoveryAccountService.GetByID(requestUUID);
+            if(recoveryRequest == null)
+            {
+                return NotFound(new {
+                    Title = "No se econtro el registro en la base de datos.",
+                    Message = "No se econtro el registro en la base de datos."
+                });
+            }
+
+            try
+            {
+                recoveryRequest.ResponseComments = request.ResponseComments;
+                recoveryRequest.AttendingAt = DateTime.Now;
+                context.AccountRecoveryRequests.Update(recoveryRequest);
+                context.SaveChanges();
+                return Ok();
+            }
+            catch (System.Exception err)
+            {
+                return Conflict(new {
+                    Message = err.Message
+                });
+            }
+        }
+
+
+        /// <summary>
+        /// delete the request by a solfdelete
+        /// </summary>
+        /// <param name="accountRecoveryUUID"></param>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        /// <response code="20">Request updated</response>
+        /// <response code="400">The request is not valid</response>
+        /// <response code="401">Auth token is not valid or is not present</response>
+        /// <response code="404">The request id was not found on the system</response>
+        /// <response code="409">Internal error</response>S
+        [HttpDelete("{accountRecoveryUUID}")]
+        public IActionResult DeleteRequest([FromRoute] string accountRecoveryUUID, [FromForm] AccountRecoveryUpdateRequest request)
+        {
+            var parseCorrect = Guid.TryParse(accountRecoveryUUID, out Guid requestUUID);
+            if(!parseCorrect){
+                return BadRequest( new {
+                    Title = "El formato del accountRecoveryUUID es incorrecto",
+                    Message = "El formato del accountRecoveryUUID es incorrecto, se espera un UUID"
+                });
+            }
+
+            // * attempt to get the recovery request
+            var recoveryRequest = this.recoveryAccountService.GetByID(requestUUID);
+            if(recoveryRequest == null)
+            {
+                return NotFound(new {
+                    Title = "No se econtro el registro en la base de datos.",
+                    Message = "No se econtro el registro en la base de datos."
+                });
+            }
+            
+            try
+            {
+                recoveryRequest.ResponseComments = request.ResponseComments;
+                recoveryRequest.DeletedAt = DateTime.Now;
+                context.AccountRecoveryRequests.Update(recoveryRequest);
+                context.SaveChanges();
+                return Ok();
+            }
+            catch (System.Exception err)
+            {
+                return Conflict(new {
+                    Message = err.Message
+                });
+            }
         }
 
     }
