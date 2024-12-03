@@ -221,7 +221,7 @@ namespace AuthApi.Controllers
         /// <response code="404">The request id was not found on the system</response>
         /// <response code="409">Internal error</response>S
         [HttpPatch("{accountRecoveryUUID}")]
-        public IActionResult UpdateRequest([FromRoute] string accountRecoveryUUID, [FromForm] AccountRecoveryUpdateRequest request)
+        public IActionResult UpdateRequest([FromRoute] string accountRecoveryUUID, [FromBody] AccountRecoveryUpdateRequest request)
         {
             var parseCorrect = Guid.TryParse(accountRecoveryUUID, out Guid requestUUID);
             if(!parseCorrect){
@@ -270,7 +270,7 @@ namespace AuthApi.Controllers
         /// <response code="404">The request id was not found on the system</response>
         /// <response code="409">Internal error</response>S
         [HttpDelete("{accountRecoveryUUID}")]
-        public IActionResult DeleteRequest([FromRoute] string accountRecoveryUUID, [FromForm] AccountRecoveryUpdateRequest request)
+        public IActionResult DeleteRequest([FromRoute] string accountRecoveryUUID, [FromBody] AccountRecoveryUpdateRequest request)
         {
             var parseCorrect = Guid.TryParse(accountRecoveryUUID, out Guid requestUUID);
             if(!parseCorrect){
