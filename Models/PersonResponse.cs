@@ -66,6 +66,24 @@ namespace AuthApi.Models
             }
         }
 
+        public int? Age
+        {
+            get {
+                if (!Birthdate.HasValue)
+                {
+                    return null;
+                }
+
+                var today = DateOnly.FromDateTime(DateTime.Now.Date);
+                int age = today.Year - Birthdate.Value.Year;
+                if (today < Birthdate.Value.AddYears(age))
+                {
+                    age--;
+                }
+                return age;
+            }
+        }
+
         public AddressResponse? Address {get; set;}
         public IEnumerable<ContactResponse> ContactInformation {get; set;} = [];
 
