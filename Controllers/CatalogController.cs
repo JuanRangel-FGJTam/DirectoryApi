@@ -1,16 +1,16 @@
+#pragma warning disable CS8602 
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using AuthApi.Data;
 using AuthApi.Entities;
 using AuthApi.Helper;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc.RazorPages.Infrastructure;
-using Microsoft.Identity.Client;
-using Microsoft.AspNetCore.Components.Web;
+using AuthApi.Models;
+using AuthApi.Models.Responses;
 
 namespace AuthApi.Controllers
 {
@@ -106,6 +106,45 @@ namespace AuthApi.Controllers
         }
 
         /// <summary>
+        ///  Store a new state
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpPost("states")]
+        public ActionResult<IEnumerable<State>> StoreStates(NewStateRequest request)
+        {
+            if(!ModelState.IsValid)
+            {
+                return UnprocessableEntity(ModelState);
+            }
+
+            var country = dbContext.Countries.FirstOrDefault(item =>item.Id == request.CountryId);
+            if(country == null)
+            {
+                var errors = new Dictionary<string,string>{{"countryId", "The country was not found"}};
+                return UnprocessableEntity( new UnprocesableResponse(errors));
+            }
+
+            try
+            {
+                var newState = new State {
+                    Country = country,
+                    Name = request.Name!.Trim().ToUpper()
+                };
+                this.dbContext.States.Add( newState);
+                this.dbContext.SaveChanges();
+                return Ok();
+            }
+            catch (System.Exception err)
+            {
+                this._logger.LogError(err, "Fail at store the new state");
+                return Conflict( new {
+                    err.Message
+                });
+            }
+        }
+
+        /// <summary>
         ///  Get municipalities catalog
         /// </summary>
         /// <returns></returns>
@@ -119,6 +158,52 @@ namespace AuthApi.Controllers
                 .OrderBy( item => item.Name)
                 .ToArray()
             );
+        }
+
+        /// <summary>
+        ///  Store a new municipality
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpPost("municipalities")]
+        public ActionResult<IEnumerable<State>> StoreMunicipality(NewMunicipalityRequest request)
+        {
+            if(!ModelState.IsValid)
+            {
+                return UnprocessableEntity(ModelState);
+            }
+
+            var country = dbContext.Countries.FirstOrDefault(item =>item.Id == request.CountryId);
+            if(country == null)
+            {
+                var errors = new Dictionary<string,string>{{"countryId", "The country was not found"}};
+                return UnprocessableEntity( new UnprocesableResponse(errors));
+            }
+
+            var state = dbContext.States.FirstOrDefault(item =>item.Id == request.StateId);
+            if(state == null)
+            {
+                var errors = new Dictionary<string,string>{{"StateId", "The state was not found"}};
+                return UnprocessableEntity( new UnprocesableResponse(errors));
+            }
+
+            try
+            {
+                var newModel = new Municipality {
+                    State = state,
+                    Name = request.Name!.Trim().ToUpper()
+                };
+                this.dbContext.Municipalities.Add(newModel);
+                this.dbContext.SaveChanges();
+                return Ok();
+            }
+            catch (System.Exception err)
+            {
+                this._logger.LogError(err, "Fail at store the new municipality");
+                return Conflict( new {
+                    err.Message
+                });
+            }
         }
         
         /// <summary>
@@ -137,6 +222,59 @@ namespace AuthApi.Controllers
             );
         }
 
+        /// <summary>
+        ///  Store a new colony
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpPost("colonies")]
+        public ActionResult<IEnumerable<State>> StoreColony(NewColonyRequest request)
+        {
+            if(!ModelState.IsValid)
+            {
+                return UnprocessableEntity(ModelState);
+            }
+
+            var country = dbContext.Countries.FirstOrDefault(item =>item.Id == request.CountryId);
+            if(country == null)
+            {
+                var errors = new Dictionary<string,string>{{"countryId", "The country was not found"}};
+                return UnprocessableEntity( new UnprocesableResponse(errors));
+            }
+
+            var state = dbContext.States.FirstOrDefault(item =>item.Id == request.StateId);
+            if(state == null)
+            {
+                var errors = new Dictionary<string,string>{{"StateId", "The state was not found"}};
+                return UnprocessableEntity( new UnprocesableResponse(errors));
+            }
+
+            var municipality = dbContext.Municipalities.FirstOrDefault(item =>item.Id == request.MunicipalityId);
+            if(municipality == null)
+            {
+                var errors = new Dictionary<string,string>{{"MunicipalityId", "The municipality was not found"}};
+                return UnprocessableEntity( new UnprocesableResponse(errors));
+            }
+
+            try
+            {
+                var newModel = new Colony {
+                    Municipality = municipality,
+                    Name = request.Name!.Trim().ToUpper(),
+                    ZipCode = request.ZipCode ?? "0"
+                };
+                this.dbContext.Colonies.Add(newModel);
+                this.dbContext.SaveChanges();
+                return Ok();
+            }
+            catch (System.Exception err)
+            {
+                this._logger.LogError(err, "Fail at store the new colony");
+                return Conflict( new {
+                    err.Message
+                });
+            }
+        }
 
 
         /// <summary>
@@ -210,3 +348,4 @@ namespace AuthApi.Controllers
 
     }
 }
+#pragma warning restore CS8602
