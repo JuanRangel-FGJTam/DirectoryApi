@@ -22,15 +22,14 @@ namespace AuthApi.Models
         public string? Name {get;set;}
         
         public string? FirstName {get;set;}
-       
+
         public string? LastName {get;set;}
         
         public string? Email {get;set;}
         
-        [DataType(DataType.Date)]
-        [JsonProperty("birthdate")]
-        [JsonConverter(typeof(CustomDateConverter))]
-        public DateTime? Birthdate {get;set;}
+        // [DataType(DataType.Date)]
+        // public DateTime? Birthdate {get;set;}
+        public DateOnly? Birthdate {get;set;}
 
         public int? GenderId {get; set;}
         public string? GenderName {get; set;}
@@ -89,7 +88,7 @@ namespace AuthApi.Models
                 FirstName = person.FirstName,
                 LastName = person.LastName,
                 Email = person.Email,
-                Birthdate = person.Birthdate,
+                Birthdate = DateOnly.FromDateTime(person.Birthdate),
                 AppName = person.AppOwner
             };
 
