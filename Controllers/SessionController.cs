@@ -76,7 +76,7 @@ namespace AuthApi.Controllers
             // * Create a session record
             try{
                 // * Make the session
-                var SessionToken = sessionService.StartPersonSession( person, authenticateRequest.IpAddress, authenticateRequest.UserAgent );
+                var SessionToken = sessionService.StartPersonSession(person, authenticateRequest.IpAddress, authenticateRequest.UserAgent);
 
                 // * Set the cookie for the response
                 Response.Cookies.Append( cookieName, SessionToken, new CookieOptions
@@ -312,8 +312,8 @@ namespace AuthApi.Controllers
                 }
             }
 
-            try {
-                
+            try
+            {
                 // * Get data
                 var dataQuery = this.directoryDBContext.Sessions
                     .OrderByDescending( item => item.BegginAt)
@@ -345,7 +345,8 @@ namespace AuthApi.Controllers
                 });
 
             }
-            catch (System.Exception ex) {
+            catch (System.Exception ex)
+            {
                 this._logger.LogError(ex, "Fail to retrive the data");
                 return Conflict(new{
                     Message = "Error no controlado al tratar de obtener las sesiones."
