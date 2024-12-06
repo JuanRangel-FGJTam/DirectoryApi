@@ -339,10 +339,12 @@ namespace AuthApi.Controllers
                 }
             }
 
-            try {
+            try
+            {
                 
                 // * Get data
                 var dataQuery = this.directoryDBContext.Sessions
+                    .Where( item => item.DeletedAt == null)
                     .OrderByDescending( item => item.BegginAt)
                     .Where( item => item.Person.Id == (string.IsNullOrEmpty(personId) ?item.Person.Id :personID) )
                     .AsQueryable();
@@ -372,7 +374,8 @@ namespace AuthApi.Controllers
                 });
 
             }
-            catch (System.Exception ex) {
+            catch (System.Exception ex)
+            {
                 this._logger.LogError(ex, "Fail to retrive the data");
                 return Conflict(new{
                     Message = "Error no controlado al tratar de obtener las sesiones."
