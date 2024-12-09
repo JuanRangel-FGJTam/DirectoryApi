@@ -46,23 +46,18 @@ namespace AuthApi.Services
                     .FirstOrDefault();
 
                 // If a session with the same data exist, return them
-                if(oldSession != null){
+                if(oldSession != null)
+                {
+                    CloseAllTheSessions(person.Id, oldSession.SessionID);
+
                     oldSession.EndAt = DateTime.Now.Add( this.sessionLifeTime);
                     directoryDBContext.Sessions.Update( oldSession);
                     directoryDBContext.SaveChanges();
                     return oldSession.Token;
                 }
-
-            }else{
-                // Close all the sessions of the user
-                var sessionsToUpdate = directoryDBContext.Sessions
-                    .Where(s => s.Person.Id == person.Id && s.DeletedAt == null)
-                    .ToList();
-                foreach (var session in sessionsToUpdate) {
-                    session.DeletedAt = DateTime.Now;
-                }
-                directoryDBContext.SaveChanges();
             }
+            
+            CloseAllTheSessions(person.Id);
             
             // Generate token
             var _tokenPayload = $"{person.Id}{ipAddress}{userAgent}{_now.ToString("yyyyMMddHHmmss")}";
@@ -145,6 +140,21 @@ namespace AuthApi.Services
             }
         }
 
+
+        private void CloseAllTheSessions(Guid personId, string sessionToSkip = "" )
+        {
+            // Close all the sessions of the user
+            var sessionsToUpdate = directoryDBContext.Sessions
+                .Where(s => s.Person.Id == personId && s.DeletedAt == null)
+                .Where(s => s.SessionID != sessionToSkip)
+                .ToList();
+
+            foreach(var session in sessionsToUpdate)
+            {
+                session.DeletedAt = DateTime.Now;
+            }
+            directoryDBContext.SaveChanges();
+        }
     }
 
     public class SessionNotValid : Exception {

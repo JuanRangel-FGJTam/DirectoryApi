@@ -3,24 +3,20 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using AuthApi.Data;
-using AuthApi.Models;
-using AuthApi.Helper;
-using AuthApi.Entities;
-using AuthApi.Data.Exceptions;
-using System.Net.Http.Headers;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
-using AuthApi.Services;
-using System.ComponentModel.DataAnnotations;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using CommunityToolkit.HighPerformance.Helpers;
+using AuthApi.Data;
+using AuthApi.Models;
+using AuthApi.Helper;
+using AuthApi.Services;
+using AuthApi.Models.Responses;
 
 namespace AuthApi.Controllers
 {
@@ -77,7 +73,7 @@ namespace AuthApi.Controllers
             // * Create a session record
             try{
                 // * Make the session
-                var SessionToken = sessionService.StartPersonSession( person, authenticateRequest.IpAddress, authenticateRequest.UserAgent );
+                var SessionToken = sessionService.StartPersonSession(person, authenticateRequest.IpAddress, authenticateRequest.UserAgent);
 
                 // * Set the cookie for the response
                 Response.Cookies.Append( cookieName, SessionToken, new CookieOptions
@@ -325,7 +321,7 @@ namespace AuthApi.Controllers
         /// <response code="422">pesonId format is invalid, UUID required</response>
         [HttpGet]
         [Route("")]
-        public IActionResult GetAllSessions( [FromQuery] string? personId, [FromQuery] int take = 25, [FromQuery] int skip = 0)
+        public ActionResult<SessionResponse> GetAllSessions( [FromQuery] string? personId, [FromQuery] int take = 25, [FromQuery] int skip = 0)
         {
             Guid personID = Guid.Empty;
             if( !string.IsNullOrEmpty(personId) ){
@@ -340,8 +336,7 @@ namespace AuthApi.Controllers
             }
 
             try
-            {
-                
+            {   
                 // * Get data
                 var dataQuery = this.directoryDBContext.Sessions
                     .Where( item => item.DeletedAt == null)
@@ -355,14 +350,15 @@ namespace AuthApi.Controllers
             
                 // * get data 
 
-                var data = Array.Empty<Session>();
+                IEnumerable<SessionResponse> data = [];
                 if(take > 0){
                     data = dataQuery
                     .Take(take)
                     .Skip(skip)
+                    .Select( s => SessionResponse.FromEntity(s))
                     .ToArray();
                 }else {
-                    data = dataQuery.ToArray();
+                    data = dataQuery.Select(s => SessionResponse.FromEntity(s)).ToArray();
                 }
             
                 // * Return the data

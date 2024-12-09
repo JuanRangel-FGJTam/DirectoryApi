@@ -44,7 +44,7 @@ namespace AuthApi.Controllers
         public async Task<IActionResult> Authenticate([FromBody] AuthenticateRequest model)
         {
             // Validate request
-            if( !ModelState.IsValid){
+            if(!ModelState.IsValid){
                 // Process errors
                 var _errorsMessages = new List<KeyValuePair<string,string>>();
                 foreach( var error in ModelState)
