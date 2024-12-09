@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using Microsoft.AspNetCore.Http.HttpResults;
+using CommunityToolkit.HighPerformance.Helpers;
 using AuthApi.Data;
 using AuthApi.Models;
 using AuthApi.Helper;
@@ -279,7 +281,33 @@ namespace AuthApi.Controllers
             } 
         }
 
-    
+        /// <summary>
+        /// Performs a soft delete on the session identified by the ID.
+        /// </summary>
+        /// <param name="sessionId"></param>
+        /// <returns></returns>
+        /// <response code="200">The session was deleted</response>
+        /// <response code="403">The session token is not valid or expired</response>
+        /// <response code="404">The session was not found or is delted already</response>
+        [HttpDelete]
+        [Route("{sessionId}")]
+        public IActionResult DeleteSession([FromRoute] string? sessionId)
+        {
+            var session = this.directoryDBContext.Sessions.FirstOrDefault(p => p.SessionID == sessionId && p.DeletedAt == null);
+            if(session == null)
+            {
+                return NotFound( new {
+                    Title = "No se encontro la sesion especificada",
+                    Message = $"No se encontro la sesion especificada con id '{sessionId}'",
+                });
+            }
+
+            session.DeletedAt = DateTime.Now;
+            this.directoryDBContext.Sessions.Update(session);
+            this.directoryDBContext.SaveChanges();
+            return Ok();
+        }
+
 
         /// <summary>
         /// Get all the session ordered indescending by date.
@@ -308,9 +336,10 @@ namespace AuthApi.Controllers
             }
 
             try
-            {
+            {   
                 // * Get data
                 var dataQuery = this.directoryDBContext.Sessions
+                    .Where( item => item.DeletedAt == null)
                     .OrderByDescending( item => item.BegginAt)
                     .Where( item => item.Person.Id == (string.IsNullOrEmpty(personId) ?item.Person.Id :personID) )
                     .AsQueryable();
