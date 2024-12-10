@@ -159,7 +159,8 @@ namespace AuthApi.Controllers
         /// <response code="201">The person is updated</response>
         /// <response code="400">The request is not valid</response>
         /// <response code="401">Auth token is not valid or is not present</response>
-        /// <response code="409">Fail to to update the user password</response>/// 
+        /// <response code="409">Fail to to update the user password</response>
+        /// <response code="422">The validation fails</response>
         [HttpPatch]
         [Route ("{personID}")]
         public IActionResult UpdatePerson( string personID, [FromBody] UpdatePersonRequest personRequest  )
@@ -219,9 +220,18 @@ namespace AuthApi.Controllers
                 person.Curp = personRequest.Curp;
             }
 
+            if(!string.IsNullOrEmpty(personRequest.Email))
+            {
+                var curpStored =  dbContext.People.Where(p => p.DeletedAt == null && p.Email == personRequest.Email && p.Id != _personID ).Count();
+                if(curpStored > 0){
+                    errorsRelations.Add( "email", new string[]{ "El correo ya se encuentra en uso."} );
+                }
+                person.Email = personRequest.Email;
+            }
+
             if( errorsRelations.Values.Count > 0)
             {
-                return BadRequest(new {
+                return UnprocessableEntity( new {
                     Title = "One or more relations are not found",
                     Errors = errorsRelations
                 });
