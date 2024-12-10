@@ -3,20 +3,22 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using AuthApi.Data;
 using AuthApi.Data.Exceptions;
 using AuthApi.Entities;
+using AuthApi.Helper;
 using AuthApi.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace AuthApi.Services
 {
-    public class RecoveryAccountService(ILogger<RecoveryAccountService> logger, DirectoryDBContext directoryDBContext, PersonService personService, MinioService ms)
+    public class RecoveryAccountService(ILogger<RecoveryAccountService> logger, DirectoryDBContext directoryDBContext, PersonService personService, MinioService ms, IEmailProvider emailProvider)
     {
         private readonly ILogger<RecoveryAccountService> logger = logger;
         private readonly DirectoryDBContext directoryDBContext = directoryDBContext;
         private readonly PersonService personService = personService;
         private readonly MinioService minioService = ms;
+        private readonly IEmailProvider emailProvider = emailProvider;
 
         public async Task<IEnumerable<AccountRecoveryResponse>> GetAllRecords(){
 
@@ -163,6 +165,60 @@ namespace AuthApi.Services
             this.directoryDBContext.AccountRecoveryFiles.Add(accountRecoveryFile);
             return this.directoryDBContext.SaveChanges();
         }
-        
+
+        public async Task<string?> SendSuccessEmail(string personFullName, string email)
+        {
+            // * prepare the parameters
+            var _subject = "Actualización de Correo Electrónico";
+
+            // * Make html body
+            var _htmlBody = EmailTemplates.RecoveryAccountCompleted(personFullName, email);
+
+            // * Send email
+            try
+            {
+                var emailID = await Task.Run<string>( async ()=>{
+                    return await this.emailProvider.SendEmail(
+                        emailDestination: email,
+                        subject: _subject,
+                        data: _htmlBody
+                    );
+                });
+                logger.LogInformation( "Email ID:{emailID} sending", emailID);
+                return emailID;
+            }
+            catch(Exception err)
+            {
+                logger.LogError(err, "Error at attempting to send Email for validation to email {mail}; {message}", email, err.Message);
+                return null;
+            }
+        }
+        public async Task<string?> SendFailEmail(string personFullName, string email, string comments)
+        {
+            // * prepare the parameters
+            var _subject = "Solicitud de Recuperación de Cuenta Incompleta";
+
+            // * Make html body
+            var _htmlBody = EmailTemplates.RecoveryAccountInCompleted(personFullName, comments);
+
+            // * Send email
+            try
+            {
+                var emailID = await Task.Run<string>( async ()=>{
+                    return await this.emailProvider.SendEmail(
+                        emailDestination: email,
+                        subject: _subject,
+                        data: _htmlBody
+                    );
+                });
+                logger.LogInformation("Email ID:{emailID} sending", emailID);
+                return emailID;
+            }
+            catch(Exception err)
+            {
+                logger.LogError(err, "Error at attempting to send Email for validation to email {mail}; {message}", email, err.Message);
+                return null;
+            }
+        }
     }
 }

@@ -221,7 +221,7 @@ namespace AuthApi.Controllers
         /// <response code="404">The request id was not found on the system</response>
         /// <response code="409">Internal error</response>S
         [HttpPatch("{accountRecoveryUUID}")]
-        public IActionResult UpdateRequest([FromRoute] string accountRecoveryUUID, [FromBody] AccountRecoveryUpdateRequest request)
+        public async Task<IActionResult> UpdateRequest([FromRoute] string accountRecoveryUUID, [FromBody] AccountRecoveryUpdateRequest request)
         {
             var parseCorrect = Guid.TryParse(accountRecoveryUUID, out Guid requestUUID);
             if(!parseCorrect){
@@ -247,6 +247,17 @@ namespace AuthApi.Controllers
                 recoveryRequest.AttendingAt = DateTime.Now;
                 context.AccountRecoveryRequests.Update(recoveryRequest);
                 context.SaveChanges();
+
+                // * attemp to send the email
+                if(request.NotifyEmail == 1)
+                {
+                    var personName = string.Join(" ", [recoveryRequest.Name, recoveryRequest.FirstName, recoveryRequest.LastName]);
+                    if(recoveryRequest.ContactEmail != null)
+                    {
+                        var response = await this.recoveryAccountService.SendSuccessEmail(personName, recoveryRequest.ContactEmail.Trim());
+                    }
+                }
+
                 return Ok();
             }
             catch (System.Exception err)
@@ -270,7 +281,7 @@ namespace AuthApi.Controllers
         /// <response code="404">The request id was not found on the system</response>
         /// <response code="409">Internal error</response>S
         [HttpDelete("{accountRecoveryUUID}")]
-        public IActionResult DeleteRequest([FromRoute] string accountRecoveryUUID, [FromBody] AccountRecoveryUpdateRequest request)
+        public async Task<IActionResult> DeleteRequest([FromRoute] string accountRecoveryUUID, [FromBody] AccountRecoveryUpdateRequest request)
         {
             var parseCorrect = Guid.TryParse(accountRecoveryUUID, out Guid requestUUID);
             if(!parseCorrect){
@@ -296,6 +307,17 @@ namespace AuthApi.Controllers
                 recoveryRequest.DeletedAt = DateTime.Now;
                 context.AccountRecoveryRequests.Update(recoveryRequest);
                 context.SaveChanges();
+
+                // * attemp to send the email
+                if(request.NotifyEmail == 1)
+                {
+                    var personName = string.Join(" ", [recoveryRequest.Name, recoveryRequest.FirstName, recoveryRequest.LastName]);
+                    if(recoveryRequest.ContactEmail != null)
+                    {
+                        var response = await this.recoveryAccountService.SendFailEmail(personName, recoveryRequest.ContactEmail.Trim(), request.ResponseComments ?? "");
+                    }
+                }
+
                 return Ok();
             }
             catch (System.Exception err)

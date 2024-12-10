@@ -75,5 +75,75 @@ namespace AuthApi.Helper
             <b style='padding-top:0.2rem;text-align:center;'>Fiscalía General de Justicia del Estado de Tamaulipas</b>
             </body>".Replace("{code}", code).Replace("{time}", time);
         }
+
+        public static string RecoveryAccountCompleted(string personFullName, string email){
+            return @"
+            <body>
+            <table style='margin:0 auto;border-collapse:collapse;' class='content' width='600' border='0' cellspacing='0' cellpadding='0'>
+            <tr>
+            <td class='body' style='padding:2px 40px;text-align:left;font-size:16px;line-height:1.6;'>
+            <p>Estimado/a <b>{personName}</b></p>
+            <p>Hemos recibido y procesado su solicitud para restablecer su cuenta en la Fiscalía Digital.</p>
+            <p>Tras validar los datos proporcionados (CURP, nombre, fecha de nacimiento, entre otros), hemos actualizado el correo electrónico asociado a su llave digital en el sistema.</p>
+            </td>
+            </tr>
+            <tr>
+            <td class='body' style='padding:2px 40px;text-align:left;font-size:16px;line-height:1.6;'>
+            <b>Próximo paso:</b>
+            <p>Para completar el proceso y garantizar la seguridad de su cuenta, es necesario que restablezca su contraseña. Por favor, siga estos pasos:
+            <ol>
+            <li>Acceda al portal de Fiscalía Digital en fiscaliadigital.fgjtam.gob.mx.</li>
+            <li>Seleccione la opción 'Restablecer contraseña' fiscaliadigital.fgjtam.gob.mx/restablecer-cuenta.</li>
+            <li>Ingrese el nuevo correo electrónico asociado a su cuenta: <b>{email}</b>, recibirá un código de verificación en su correo electrónico.</li>
+            <li>Introduzca el código de verificación en el portal junto con su nueva contraseña.</li>
+            </ol>
+            <p>Una vez realizado este proceso, podrá iniciar sesión utilizando su nuevo correo electrónico y la contraseña que haya establecido.</p>
+            <p>Gracias por su confianza y colaboración.</p>
+            </td>
+            </tr>
+            <tr>
+            <td class='body' style='padding:2px 40px;text-align:left;font-size:16px;line-height:1.6;'>
+            <div style='margin-top:2rem;text-align:center;'>Atentamente</div>
+            <div style='padding-top:0.2rem;text-align:center;font-weight:bold;'>Fiscalía General de Justicia del Estado de Tamaulipas</div>
+            </td>
+            </tr>
+            </table>
+            </body>".Replace("{personName}", personFullName).Replace("{email}", email);
+        }
+
+        public static string RecoveryAccountInCompleted(string personFullName, string comments){
+            return @"
+            <body>
+            <table style='margin:0 auto;border-collapse:collapse;' class='content' width='600' border='0' cellspacing='0' cellpadding='0'>
+            <tr>
+            <td class='body' style='padding:2px 40px;text-align:left;font-size:16px;line-height:1.6;'>
+            <p>Estimado/a <b>{personName}</b></p>
+            <p>Hemos recibido su solicitud para restablecer su cuenta en la Fiscalía Digital. Sin embargo, tras revisar los datos proporcionados, no hemos podido confirmar que la cuenta le pertenece debido a la insuficiencia de información.</p>
+            <p>{comments}</p>
+            <p>Para garantizar la protección de sus datos y proceder con la recuperación de su cuenta, le pedimos que genere una nueva solicitud siguiendo estas indicaciones:</p>
+            </td>
+            </tr>
+            <tr>
+            <td class='body' style='padding:2px 40px;text-align:left;font-size:16px;line-height:1.6;'>
+            <b>Pasos a seguir:</b>
+            <ol>
+            <li>Acceda al portal de Fiscalía Digital en <a href='https://fiscaliadigital.fgjtam.gob.mx/recuperar-cuenta'>https://fiscaliadigital.fgjtam.gob.mx/recuperar-cuenta</a></li>
+            <li>Complete el formulario de recuperación de cuenta, asegurándose de ingresar toda su información personal (CURP, nombre completo, fecha de nacimiento, etc.).</li>
+            <li>Anexe una fotografía o un documento PDF de su identificación oficial (INE, pasaporte, o cualquier documento oficial válido).</li>
+            </ol>
+            <p>Entre más datos proporcione, mejor podremos asegurar la protección de su información y agilizar el proceso de recuperación.</p>
+            <p>Agradecemos su comprensión y colaboración.</p>
+            </td>
+            </tr>
+            <tr>
+            <td class='body' style='padding:2px 40px;text-align:left;font-size:16px;line-height:1.6;'>
+            <div style='margin-top:2rem;text-align:center;'>Atentamente</div>
+            <div style='padding-top:0.2rem;text-align:center;font-weight:bold;'>Fiscalía General de Justicia del Estado de Tamaulipas</div>
+            </td>
+            </tr>
+            </table>
+            </body>".Replace("{personName}", personFullName).Replace("{comments}", comments);
+        }
+
     }
 }
