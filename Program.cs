@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.Extensions.Options;
 using Minio;
-using Minio.DataModel.Args;
+using Serilog;
 using AuthApi.Data;
 using AuthApi.Helper;
 using AuthApi.Services;
@@ -14,7 +14,12 @@ var defaultCulture = new CultureInfo("es-MX");
 var supportedCultures = new[] {"es-MX","en-US"};
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.ConfigureSerilog();
+
+// * configure logger
+var serilogConfiguration = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
+Log.Logger = new LoggerConfiguration().ReadFrom.Configuration(serilogConfiguration).CreateLogger();
+builder.Host.UseSerilog();
+
 builder.Services.Configure<RequestLocalizationOptions>(options =>
 {
     options.DefaultRequestCulture = new RequestCulture(defaultCulture);
@@ -45,7 +50,7 @@ builder.Services.AddControllers()
         o.JsonSerializerOptions.AllowTrailingCommas = true;
         o.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
-    
+
 
 builder.Services.AddDbContext<DirectoryDBContext>( options=>{
     options.UseSqlServer( builder.Configuration.GetConnectionString("AuthApi") );
@@ -84,4 +89,5 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.UseMiddleware<UserLoggingMiddleware>();
 app.Run();
