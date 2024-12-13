@@ -30,8 +30,11 @@ namespace AuthApi.Models
 
         public DateTime CreatedAt {get;set;} = default!;
         public DateTime? AttendingAt {get;set;}
-        public DateTime? FinishedAt {get;set;}
         public DateTime? DeletedAt {get;set;}
+        public string? UserAttended {get;set;}
+        public int? UserAttendedId {get;set;}
+        public string? UserDeleted {get;set;}
+        public int? UserDeletedId {get;set;}
         public int TotalDocuments {get;set;}
 
         public IEnumerable<AccountRecoveryFileResponse> Files {get;set;} = Array.Empty<AccountRecoveryFileResponse>();
@@ -53,8 +56,7 @@ namespace AuthApi.Models
                 ResponseComments = p.ResponseComments,
                 CreatedAt = p.CreatedAt,
                 AttendingAt = p.AttendingAt,
-                FinishedAt = p.AttendingAt,
-                DeletedAt = p.AttendingAt,
+                DeletedAt = p.AttendingAt
             };
 
             if( p.Files != null){
@@ -72,6 +74,18 @@ namespace AuthApi.Models
             if(p.Nationality != null){
                 item.NationalityName = p.Nationality.Name;
                 item.NationalityId = p.Nationality.Id;
+            }
+
+            if(p.UserAttended != null)
+            {
+                item.UserAttended = p.UserAttended.FirstName + " " + p.UserAttended.LastName;
+                item.UserAttendedId = p.UserAttended.Id;
+            }
+
+            if(p.UserDeleted != null)
+            {
+                item.UserDeleted = p.UserDeleted.FirstName + " " + p.UserDeleted.LastName;
+                item.UserDeletedId = p.UserDeleted.Id;
             }
             
             return item;

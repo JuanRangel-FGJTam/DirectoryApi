@@ -381,7 +381,7 @@ namespace AuthApi.Controllers
         /// <param name="orderBy"> propertie name used for ordering by default 'createdAt' posibles ["id", "name", "folio", "denunciaId","status","area", "createdAt"] </param>
         /// <param name="ascending"></param>
         /// <param name="take"></param>
-        /// /// <param name="offset"></param>
+        /// <param name="offset"></param>
         /// <response code="200">return the data</response>
         /// <response code="400">The request is not valid ore some error are present</response>
         /// <response code="404">The person is not found</response>

@@ -34,15 +34,46 @@ namespace AuthApi.Controllers
         /// <summary>
         /// List the accounts recovery request
         /// </summary>
+        /// <param name="orderBy"> propertie name used for ordering by default 'createdAt' posibles ["id", "name", "folio", "denunciaId","status","area", "createdAt"] </param>
+        /// <param name="ascending">Ordering mode</param>
+        /// <param name="excludeConcluded">Ignore the request finished</param>
+        /// <param name="excludeDeleted">Ignore the request deleted</param>
+        /// <param name="take">Ammount of record to return</param>
+        /// <param name="offset"></param>
         /// <returns></returns>
         /// <response code="200">Get the list of recovery request</response>
         [HttpGet]
         [Produces(MediaTypeNames.Application.Json)]
-        public async Task<ActionResult<IEnumerable<AccountRecoveryResponse>>> ListAccountRecoveryRequest()
+        public async Task<IActionResult> ListAccountRecoveryRequest(
+            [FromQuery] string orderBy = "createdAt",
+            [FromQuery] bool ascending = false,
+            [FromQuery] bool excludeConcluded = false,
+            [FromQuery] bool excludeDeleted = false,
+            [FromQuery] int take = 5,
+            [FromQuery] int offset = 0
+        )
         {
             // * get data
-            var data = await this.recoveryAccountService.GetAllRecords();
-            return data.ToList();
+            var records = this.recoveryAccountService.GetAllRecords(out int totalRecords, take, offset, orderBy, ascending, excludeConcluded, excludeDeleted);
+
+            // * make pagination
+            var paginator = new
+            {
+                Total = totalRecords,
+                Data = records,
+                Filters = new
+                {
+                    Take = take,
+                    Offset = offset,
+                    OrderBy = orderBy,
+                    Ascending = ascending,
+                    ExcludeConcluded = excludeConcluded,
+                    ExcludeDeleted = excludeDeleted,
+                }
+            };
+
+            await Task.CompletedTask;
+            return Ok(paginator);
         }
 
 
