@@ -67,7 +67,10 @@ namespace AuthApi.Services
         }
 
         public AccountRecovery? GetByID(Guid requestId){
-            return this.directoryDBContext.AccountRecoveryRequests.Where(item=> item.DeletedAt == null).FirstOrDefault( item => item.Id == requestId);
+            return this.directoryDBContext.AccountRecoveryRequests
+                .Include( item => item.UserAttended)
+                .Include( item => item.UserDeleted)
+                .FirstOrDefault( item => item.Id == requestId);
         }
 
         public async Task<AccountRecoveryResponse?> GetRequestWithFiles(Guid requestId){
