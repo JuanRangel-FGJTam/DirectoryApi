@@ -56,7 +56,7 @@ namespace AuthApi.Models
                 ResponseComments = p.ResponseComments,
                 CreatedAt = p.CreatedAt,
                 AttendingAt = p.AttendingAt,
-                DeletedAt = p.AttendingAt
+                DeletedAt = p.DeletedAt
             };
 
             if( p.Files != null){
