@@ -29,7 +29,11 @@ public class AccountRecovery
 
     public DateTime CreatedAt {get;set;} = DateTime.Now;
     public DateTime? AttendingAt {get;set;}
-    public DateTime? FinishedAt {get;set;}
     public DateTime? DeletedAt {get;set;}
+    public int? AttendingBy {get;set;}
+    public int? DeletedBy {get;set;}
+    
     public virtual ICollection<AccountRecoveryFile>? Files { get; set; }
+    public virtual User? UserAttended {get;set;}
+    public virtual User? UserDeleted  {get;set;}
 }
