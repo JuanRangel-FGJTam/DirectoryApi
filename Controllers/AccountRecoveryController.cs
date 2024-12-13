@@ -243,8 +243,10 @@ namespace AuthApi.Controllers
 
             try
             {
+                var authenticatedUser = this.GetCurrentUser();
                 recoveryRequest.ResponseComments = request.ResponseComments;
                 recoveryRequest.AttendingAt = DateTime.Now;
+                recoveryRequest.AttendingBy = authenticatedUser.Id;
                 context.AccountRecoveryRequests.Update(recoveryRequest);
                 context.SaveChanges();
 
@@ -259,6 +261,22 @@ namespace AuthApi.Controllers
                 }
 
                 return Ok();
+            }
+            catch(ArgumentNullException ane)
+            {
+                if( ane.ParamName == "userId" || ane.ParamName == "user")
+                {
+                    return Unauthorized(
+                        new {
+                            Message = $"Cant access to the authenticated user: {ane.Message}"
+                        }
+                    );
+                }
+
+                return Conflict( new
+                {
+                    Message = ane.Message
+                });
             }
             catch (System.Exception err)
             {
@@ -303,8 +321,10 @@ namespace AuthApi.Controllers
             
             try
             {
+                var authenticatedUser = this.GetCurrentUser();
                 recoveryRequest.ResponseComments = request.ResponseComments;
                 recoveryRequest.DeletedAt = DateTime.Now;
+                recoveryRequest.DeletedBy = authenticatedUser.Id;
                 context.AccountRecoveryRequests.Update(recoveryRequest);
                 context.SaveChanges();
 
@@ -320,6 +340,22 @@ namespace AuthApi.Controllers
 
                 return Ok();
             }
+            catch(ArgumentNullException ane)
+            {
+                if( ane.ParamName == "userId" || ane.ParamName == "user")
+                {
+                    return Unauthorized(
+                        new {
+                            Message = $"Cant access to the authenticated user: {ane.Message}"
+                        }
+                    );
+                }
+
+                return Conflict( new
+                {
+                    Message = ane.Message
+                });
+            }
             catch (System.Exception err)
             {
                 return Conflict(new {
@@ -327,6 +363,19 @@ namespace AuthApi.Controllers
                 });
             }
         }
+
+        #region Private functions
+        /// <summary>
+        /// returns the current user authenticated
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException">Can find the userId or the user itself</exception>
+        private User GetCurrentUser()
+        {
+            var userIdValue = (HttpContext.User?.FindFirst("userId")?.Value) ?? throw new ArgumentNullException("userId", "UserId value of the authenticated user not found.");
+            return context.Users.FirstOrDefault(item => item.Id == Convert.ToInt32(userIdValue)) ?? throw new ArgumentNullException("user", "User not foun on the system.");
+        }
+        #endregion
 
     }
 }
