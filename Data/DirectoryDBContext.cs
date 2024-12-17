@@ -7,31 +7,31 @@ namespace AuthApi.Data
 {
     
     public class DirectoryDBContext : DbContext {
-        public DbSet<Preregistration> Preregistrations { get; set; }
-        public DbSet<Person> People { get; set; }
-        public DbSet<Gender> Gender { get; set; }
-        public DbSet<MaritalStatus> MaritalStatus { get; set; }
-        public DbSet<Nationality> Nationality { get; set; }
-        public DbSet<Occupation> Occupation { get; set; }
-        public DbSet<ContactType> ContactTypes { get; set; }
-        public DbSet<Colony> Colonies { get; set; }
-        public DbSet<Municipality> Municipalities { get; set; }
-        public DbSet<State> States { get; set; }
-        public DbSet<Country> Countries { get; set; }
-        public DbSet<Address> Addresses { get; set; }
-        public DbSet<ContactInformation> ContactInformations { get; set; }
-        public DbSet<User> Users {get;set;}
-        public DbSet<Session> Sessions {get;set;}
-        public DbSet<Area> Area {get;set;}
-        public DbSet<ProceedingStatus> ProceedingStatus {get;set;}
-        public DbSet<Proceeding> Proceeding {get;set;}
-        public DbSet<ProceedingFile> ProceedingFiles {get;set;}
-        public DbSet<DocumentType> DocumentTypes {get;set;}
-        public DbSet<AccountRecoveryFile> AccountRecoveryFiles {get;set;}
-        public DbSet<AccountRecovery> AccountRecoveryRequests {get;set;}
-        public DbSet<Role> Roles {get;set;}
-        public DbSet<UserRole> UserRoles {get;set;}
-        public DbSet<UserClaim> UserClaims {get;set;}
+        public DbSet<Preregistration> Preregistrations { get; set; } = default!;
+        public DbSet<Person> People { get; set; } = default!;
+        public DbSet<Gender> Gender { get; set; } = default!;
+        public DbSet<MaritalStatus> MaritalStatus { get; set; } = default!;
+        public DbSet<Nationality> Nationality { get; set; } = default!;
+        public DbSet<Occupation> Occupation { get; set; } = default!;
+        public DbSet<ContactType> ContactTypes { get; set; } = default!;
+        public DbSet<Colony> Colonies { get; set; } = default!;
+        public DbSet<Municipality> Municipalities { get; set; } = default!;
+        public DbSet<State> States { get; set; } = default!;
+        public DbSet<Country> Countries { get; set; } = default!;
+        public DbSet<Address> Addresses { get; set; } = default!;
+        public DbSet<ContactInformation> ContactInformations { get; set; } = default!;
+        public DbSet<User> Users {get;set;} = default!;
+        public DbSet<Session> Sessions {get;set;} = default!;
+        public DbSet<Area> Area {get;set;} = default!;
+        public DbSet<ProceedingStatus> ProceedingStatus {get;set;} = default!;
+        public DbSet<Proceeding> Proceeding {get;set;} = default!;
+        public DbSet<ProceedingFile> ProceedingFiles {get;set;} = default!;
+        public DbSet<DocumentType> DocumentTypes {get;set;} = default!;
+        public DbSet<AccountRecoveryFile> AccountRecoveryFiles {get;set;} = default!;
+        public DbSet<AccountRecovery> AccountRecoveryRequests {get;set;} = default!;
+        public DbSet<Role> Roles {get;set;} = default!;
+        public DbSet<UserRole> UserRoles {get;set;} = default!;
+        public DbSet<UserClaim> UserClaims {get;set;} = default!;
 
         private readonly ICryptographyService cryptographyService;
 
@@ -213,6 +213,14 @@ namespace AuthApi.Data
             accountRecovery.Property(b => b.CreatedAt)
                 .HasDefaultValueSql("getDate()")
                 .HasColumnType("datetime2");
+            accountRecovery.HasOne(ar => ar.UserAttended)
+                .WithMany()
+                .HasForeignKey( ar => ar.AttendingBy)
+                .OnDelete(DeleteBehavior.Restrict);
+            accountRecovery.HasOne(ar => ar.UserDeleted)
+                .WithMany()
+                .HasForeignKey( ar => ar.DeletedBy)
+                .OnDelete(DeleteBehavior.Restrict);
 
 
             // * Seed DB

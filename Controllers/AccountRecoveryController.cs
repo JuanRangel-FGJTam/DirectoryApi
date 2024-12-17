@@ -34,15 +34,46 @@ namespace AuthApi.Controllers
         /// <summary>
         /// List the accounts recovery request
         /// </summary>
+        /// <param name="orderBy"> propertie name used for ordering by default 'createdAt' posibles ["id", "name", "folio", "denunciaId","status","area", "createdAt"] </param>
+        /// <param name="ascending">Ordering mode</param>
+        /// <param name="excludeConcluded">Ignore the request finished</param>
+        /// <param name="excludeDeleted">Ignore the request deleted</param>
+        /// <param name="take">Ammount of record to return</param>
+        /// <param name="offset"></param>
         /// <returns></returns>
         /// <response code="200">Get the list of recovery request</response>
         [HttpGet]
         [Produces(MediaTypeNames.Application.Json)]
-        public async Task<ActionResult<IEnumerable<AccountRecoveryResponse>>> ListAccountRecoveryRequest()
+        public async Task<IActionResult> ListAccountRecoveryRequest(
+            [FromQuery] string orderBy = "createdAt",
+            [FromQuery] bool ascending = false,
+            [FromQuery] bool excludeConcluded = false,
+            [FromQuery] bool excludeDeleted = false,
+            [FromQuery] int take = 5,
+            [FromQuery] int offset = 0
+        )
         {
             // * get data
-            var data = await this.recoveryAccountService.GetAllRecords();
-            return data.ToList();
+            var records = this.recoveryAccountService.GetAllRecords(out int totalRecords, take, offset, orderBy, ascending, excludeConcluded, excludeDeleted);
+
+            // * make pagination
+            var paginator = new
+            {
+                Total = totalRecords,
+                Data = records,
+                Filters = new
+                {
+                    Take = take,
+                    Offset = offset,
+                    OrderBy = orderBy,
+                    Ascending = ascending,
+                    ExcludeConcluded = excludeConcluded,
+                    ExcludeDeleted = excludeDeleted,
+                }
+            };
+
+            await Task.CompletedTask;
+            return Ok(paginator);
         }
 
 
@@ -243,8 +274,10 @@ namespace AuthApi.Controllers
 
             try
             {
+                var authenticatedUser = this.GetCurrentUser();
                 recoveryRequest.ResponseComments = request.ResponseComments;
                 recoveryRequest.AttendingAt = DateTime.Now;
+                recoveryRequest.AttendingBy = authenticatedUser.Id;
                 context.AccountRecoveryRequests.Update(recoveryRequest);
                 context.SaveChanges();
 
@@ -259,6 +292,22 @@ namespace AuthApi.Controllers
                 }
 
                 return Ok();
+            }
+            catch(ArgumentNullException ane)
+            {
+                if( ane.ParamName == "userId" || ane.ParamName == "user")
+                {
+                    return Unauthorized(
+                        new {
+                            Message = $"Cant access to the authenticated user: {ane.Message}"
+                        }
+                    );
+                }
+
+                return Conflict( new
+                {
+                    Message = ane.Message
+                });
             }
             catch (System.Exception err)
             {
@@ -303,8 +352,10 @@ namespace AuthApi.Controllers
             
             try
             {
+                var authenticatedUser = this.GetCurrentUser();
                 recoveryRequest.ResponseComments = request.ResponseComments;
                 recoveryRequest.DeletedAt = DateTime.Now;
+                recoveryRequest.DeletedBy = authenticatedUser.Id;
                 context.AccountRecoveryRequests.Update(recoveryRequest);
                 context.SaveChanges();
 
@@ -320,6 +371,22 @@ namespace AuthApi.Controllers
 
                 return Ok();
             }
+            catch(ArgumentNullException ane)
+            {
+                if( ane.ParamName == "userId" || ane.ParamName == "user")
+                {
+                    return Unauthorized(
+                        new {
+                            Message = $"Cant access to the authenticated user: {ane.Message}"
+                        }
+                    );
+                }
+
+                return Conflict( new
+                {
+                    Message = ane.Message
+                });
+            }
             catch (System.Exception err)
             {
                 return Conflict(new {
@@ -327,6 +394,19 @@ namespace AuthApi.Controllers
                 });
             }
         }
+
+        #region Private functions
+        /// <summary>
+        /// returns the current user authenticated
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="ArgumentNullException">Can find the userId or the user itself</exception>
+        private User GetCurrentUser()
+        {
+            var userIdValue = (HttpContext.User?.FindFirst("userId")?.Value) ?? throw new ArgumentNullException("userId", "UserId value of the authenticated user not found.");
+            return context.Users.FirstOrDefault(item => item.Id == Convert.ToInt32(userIdValue)) ?? throw new ArgumentNullException("user", "User not foun on the system.");
+        }
+        #endregion
 
     }
 }

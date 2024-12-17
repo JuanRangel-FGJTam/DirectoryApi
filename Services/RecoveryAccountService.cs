@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using AuthApi.Data;
@@ -20,25 +21,56 @@ namespace AuthApi.Services
         private readonly MinioService minioService = ms;
         private readonly IEmailProvider emailProvider = emailProvider;
 
-        public async Task<IEnumerable<AccountRecoveryResponse>> GetAllRecords(){
-
+        public IEnumerable<AccountRecoveryResponse> GetAllRecords()
+        {
             // get data raw
-                var records = directoryDBContext.AccountRecoveryRequests
-                    .Where(item => item.DeletedAt == null && item.Files != null)
-                    .Include( p => p.Files!)
-                        .ThenInclude( f => f.DocumentType)
-                    .OrderBy(item => item.CreatedAt)
-                    .Select( item => AccountRecoveryResponse.FromEntity(item) )
-                    .ToList();
-            
-            await Task.CompletedTask;
+            var records = directoryDBContext.AccountRecoveryRequests
+                .Where(item => item.DeletedAt == null && item.Files != null)
+                .Include( p => p.Files!)
+                    .ThenInclude( f => f.DocumentType)
+                .OrderBy(item => item.CreatedAt)
+                .Select( item => AccountRecoveryResponse.FromEntity(item) )
+                .ToList();
 
             return records;
+        }
 
+        public IEnumerable<AccountRecoveryResponse> GetAllRecords(out int totalRecords, int take = 5, int offset = 0, string orderBy = "createdAt", bool ascending = false, bool excludeConcluded = false, bool excludeDeleted = false)
+        {
+            // * get data raw
+            var recordsQuery = directoryDBContext.AccountRecoveryRequests
+                .Where(item => item.Files != null)
+                .Include( p => p.Files!)
+                    .ThenInclude( f => f.DocumentType)
+                .Include(p => p.UserDeleted)
+                .Include(p => p.UserAttended)
+                .AsQueryable();
+
+            if(excludeConcluded)
+            {
+                recordsQuery = recordsQuery.Where( item => item.AttendingAt == null);
+            }
+
+            if(excludeDeleted)
+            {
+                recordsQuery = recordsQuery.Where( item => item.DeletedAt == null);
+            }
+
+            // * get total Records
+            totalRecords = recordsQuery.Count();
+
+            // * ordering the data
+            string ordering = ascending ? $"{orderBy} asc" : $"{orderBy} desc";
+            recordsQuery = recordsQuery.OrderBy(ordering).Skip(offset).Take(take);
+            
+            return recordsQuery.ToList().Select(item => AccountRecoveryResponse.FromEntity(item));
         }
 
         public AccountRecovery? GetByID(Guid requestId){
-            return this.directoryDBContext.AccountRecoveryRequests.Where(item=> item.DeletedAt == null).FirstOrDefault( item => item.Id == requestId);
+            return this.directoryDBContext.AccountRecoveryRequests
+                .Include( item => item.UserAttended)
+                .Include( item => item.UserDeleted)
+                .FirstOrDefault( item => item.Id == requestId);
         }
 
         public async Task<AccountRecoveryResponse?> GetRequestWithFiles(Guid requestId){
