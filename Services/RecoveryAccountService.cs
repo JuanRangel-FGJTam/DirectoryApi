@@ -35,7 +35,7 @@ namespace AuthApi.Services
             return records;
         }
 
-        public IEnumerable<AccountRecoveryResponse> GetAllRecords(out int totalRecords, int take = 5, int offset = 0, string orderBy = "createdAt", bool ascending = false, bool excludeConcluded = false, bool excludeDeleted = false)
+        public IEnumerable<AccountRecoveryResponse> GetAllRecords(out int totalRecords, int take = 5, int offset = 0, string orderBy = "createdAt", bool ascending = false, bool excludeConcluded = false, bool excludeDeleted = false, bool excludePending = false)
         {
             // * get data raw
             var recordsQuery = directoryDBContext.AccountRecoveryRequests
@@ -46,14 +46,37 @@ namespace AuthApi.Services
                 .Include(p => p.UserAttended)
                 .AsQueryable();
 
-            if(excludeConcluded)
+            if(excludePending)
             {
-                recordsQuery = recordsQuery.Where( item => item.AttendingAt == null);
+                if(!excludeConcluded)
+                {
+                    recordsQuery = recordsQuery.Where( item => item.AttendingAt != null);
+                    this.logger.LogDebug("Exclude oncluded");
+                }
+                else if (!excludeDeleted)
+                {
+                    recordsQuery = recordsQuery.Where( item => item.DeletedAt != null);
+                    this.logger.LogDebug("Exclude deleted");
+                }
+                else
+                {
+                    recordsQuery = recordsQuery.Where(item => item.AttendingAt != null && item.DeletedAt != null);
+                }
+                this.logger.LogDebug("Exclude pending");
             }
-
-            if(excludeDeleted)
+            else
             {
-                recordsQuery = recordsQuery.Where( item => item.DeletedAt == null);
+                if(excludeConcluded)
+                {
+                    recordsQuery = recordsQuery.Where( item => item.AttendingAt == null);
+                    this.logger.LogDebug("Exclude oncluded");
+                }
+
+                if(excludeDeleted)
+                {
+                    recordsQuery = recordsQuery.Where( item => item.DeletedAt == null);
+                    this.logger.LogDebug("Exclude deleted");
+                }
             }
 
             // * get total Records
@@ -225,6 +248,7 @@ namespace AuthApi.Services
                 return null;
             }
         }
+
         public async Task<string?> SendFailEmail(string personFullName, string email, string comments)
         {
             // * prepare the parameters

@@ -38,6 +38,7 @@ namespace AuthApi.Controllers
         /// <param name="ascending">Ordering mode</param>
         /// <param name="excludeConcluded">Ignore the request finished</param>
         /// <param name="excludeDeleted">Ignore the request deleted</param>
+        /// <param name="excludePending">Ignore the request pending</param>
         /// <param name="take">Ammount of record to return</param>
         /// <param name="offset"></param>
         /// <returns></returns>
@@ -49,12 +50,13 @@ namespace AuthApi.Controllers
             [FromQuery] bool ascending = false,
             [FromQuery] bool excludeConcluded = false,
             [FromQuery] bool excludeDeleted = false,
+            [FromQuery] bool excludePending = false,
             [FromQuery] int take = 5,
             [FromQuery] int offset = 0
         )
         {
             // * get data
-            var records = this.recoveryAccountService.GetAllRecords(out int totalRecords, take, offset, orderBy, ascending, excludeConcluded, excludeDeleted);
+            var records = this.recoveryAccountService.GetAllRecords(out int totalRecords, take, offset, orderBy, ascending, excludeConcluded, excludeDeleted, excludePending);
 
             // * make pagination
             var paginator = new
@@ -69,6 +71,7 @@ namespace AuthApi.Controllers
                     Ascending = ascending,
                     ExcludeConcluded = excludeConcluded,
                     ExcludeDeleted = excludeDeleted,
+                    ExcludePending = excludePending
                 }
             };
 
@@ -96,8 +99,8 @@ namespace AuthApi.Controllers
             }
 
             // * get data
-            return await this.recoveryAccountService.GetRequestWithFiles(requestUUID);
-            
+            var cdata = await this.recoveryAccountService.GetRequestWithFiles(requestUUID);
+            return cdata!;
         }
 
 
