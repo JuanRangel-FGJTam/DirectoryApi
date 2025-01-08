@@ -9,6 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 using AuthApi.Data;
 using AuthApi.Entities;
 using AuthApi.Models;
+using AuthApi.Helper;
 
 namespace AuthApi.Services
 {
@@ -105,9 +106,11 @@ namespace AuthApi.Services
             if(string.IsNullOrEmpty(search)){
                 throw new ArgumentException(message:"The parameter is not valid", paramName:"search");
             }
+
             var peopleQuery = this.GetPeople().ToList();
+            var seachParamWithoutAccents = StringHelper.RemoveAccents(search.ToLower());
             var data = peopleQuery.Where(
-                item => item.FullName.ToLower().Contains(search.ToLower()) ||
+                item => StringHelper.RemoveAccents(item.FullName.ToLower()).Contains(seachParamWithoutAccents) ||
                   (item.Email??"").ToLower().Contains(search.ToLower()) ||
                   (item.Curp??"").ToLower().Contains(search.ToLower()) ||
                   (item.Rfc??"").ToLower().Contains(search.ToLower())
@@ -306,6 +309,5 @@ namespace AuthApi.Services
         }
 
     }
-
 
 }
