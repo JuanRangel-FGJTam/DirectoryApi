@@ -65,8 +65,6 @@ namespace AuthApi.Controllers
         [Route("")]
         public IActionResult StoreContact( ContactRequest contactRequest )
         {
-
-            
             // Validate request
             if (!ModelState.IsValid)
             {
@@ -108,11 +106,9 @@ namespace AuthApi.Controllers
                 });
             }
 
-            // Validate and prevent if the value is already stored
-            var _contactIsStored = dbContext.ContactInformations
-             .Where( item => item.DeletedAt == null)
-             .Where( item => item.Value == contactRequest.Value).Any();
-            if(_contactIsStored) {  
+            // * Validate and prevent if the value is already stored only if the contact is a 'Personal Phone'
+            if(CheckContactIsStored(contactRequest,contactType!))
+            {
                 return StatusCode( StatusCodes.Status422UnprocessableEntity, new {
                     Title = "El telefono o correo ya se encuentra registrado"
                 });
@@ -200,7 +196,14 @@ namespace AuthApi.Controllers
                 });
             }
 
-            
+            // * Validate and prevent if the value is already stored'
+            if(CheckContactIsStored(contactRequest,contactType!))
+            {
+                return StatusCode( StatusCodes.Status422UnprocessableEntity, new {
+                    Title = "El telefono o correo ya se encuentra registrado"
+                });
+            }
+
             // * Update address model
             currentContact!.ContactType = contactType;
             currentContact.Value = contactRequest.Value!;
@@ -214,6 +217,26 @@ namespace AuthApi.Controllers
 
         }
 
+        private bool CheckContactIsStored(ContactRequest contactRequest, ContactType contactType)
+        {
+            // * Validate and prevent if the value is already stored
+            var _contactIsStored = false;
+            if(contactType!.Name.ToLower() == "telefono celular" || contactType!.Name.ToLower() == "telefono personal" || contactType!.Id == 1)
+            {
+                _contactIsStored = dbContext.ContactInformations
+                    .Where( item => item.DeletedAt == null)
+                    .Where( item => item.Value == contactRequest.Value && item.ContactType.Id == contactType!.Id)
+                    .Any();
+            }
+            else
+            {
+                _contactIsStored = dbContext.ContactInformations
+                    .Where( item => item.DeletedAt == null)
+                    .Where( item => item.Value == contactRequest.Value && item.Person.Id.ToString() == contactRequest.PersonID)
+                    .Any();
+            }
+            return _contactIsStored;
+        }
 
     }
 }
