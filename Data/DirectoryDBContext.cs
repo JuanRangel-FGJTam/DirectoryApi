@@ -32,6 +32,7 @@ namespace AuthApi.Data
         public DbSet<Role> Roles {get;set;} = default!;
         public DbSet<UserRole> UserRoles {get;set;} = default!;
         public DbSet<UserClaim> UserClaims {get;set;} = default!;
+        public DbSet<PersonFile> PersonFiles {get;set;} = default!;
 
         private readonly ICryptographyService cryptographyService;
 
@@ -222,7 +223,6 @@ namespace AuthApi.Data
                 .HasForeignKey( ar => ar.DeletedBy)
                 .OnDelete(DeleteBehavior.Restrict);
 
-
             // * Seed DB
             modelBuilder.Entity<User>().HasData(
                 new User
@@ -234,8 +234,28 @@ namespace AuthApi.Data
                     Password = cryptographyService.HashData("system")
                 }
             );
+
+            modelBuilder.Entity<PersonFile>(entity => {
+                entity.HasOne(pf => pf.Person)
+                    .WithMany()
+                    .HasForeignKey(pf => pf.PersonId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(pf => pf.DocumentType)
+                    .WithMany()
+                    .HasForeignKey(pf => pf.DocumentTypeId)
+                    .OnDelete(DeleteBehavior.Cascade);
+                
+                entity.Property(pf => pf.CreatedAt)
+                    .HasDefaultValueSql("getDate()")
+                    .HasColumnType("datetime2");
+                
+                entity.Property(pf => pf.Validation)
+                    .HasColumnType("date");
+            });
+
             base.OnModelCreating(modelBuilder);
-            
+
         }
 
     }
