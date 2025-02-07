@@ -28,6 +28,23 @@ namespace AuthApi.Services
             }
         }
 
+        
+        public async Task<string> UploadFile(string filePath, Stream stream)
+        {
+            // * upload the file
+            var putObjectArgs = new PutObjectArgs()
+                .WithBucket( configuration["MinioSettings:BucketName"] )
+                .WithObject(filePath)
+                .WithStreamData(stream)
+                .WithObjectSize(stream.Length)
+                .WithContentType("application/octet-stream");
+            Console.WriteLine("Size: " + stream.Length);
+            var response = await minioClient.PutObjectAsync(putObjectArgs);
+            Console.WriteLine("Resp: " + response);
+
+            return response.ObjectName;
+        }
+
         public async Task<string> UploadFile(string originalName, Stream stream, string path = ""){
             
             // * make file path

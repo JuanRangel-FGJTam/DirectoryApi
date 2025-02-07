@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace AuthApi.Entities;
 
@@ -23,6 +24,7 @@ public class PersonFile
     public DateTime? DeletedAt {get;set;}
 
     // Navigation property with ForeignKey attribute
+    [JsonIgnore]
     [ForeignKey("PersonId")]
     public virtual Person? Person { get; set; }
 
