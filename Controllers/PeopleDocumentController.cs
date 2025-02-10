@@ -7,17 +7,14 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Minio;
+using Minio.DataModel.Args;
 using AuthApi.Data;
 using AuthApi.Entities;
 using AuthApi.Models;
 using AuthApi.Helper;
 using AuthApi.Services;
-using Azure.Core;
-using Minio;
-using Minio.DataModel.Args;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Server.HttpSys;
-using System.Net;
+using Minio.DataModel;
 
 
 namespace AuthApi.Controllers
@@ -33,6 +30,8 @@ namespace AuthApi.Controllers
         private readonly DirectoryDBContext dbContext = context;
         private readonly MinioService minioService = minioService;
         #endregion
+
+        private string FolderName {get;} = "personal_documents";
 
 
         /// <summary>
@@ -85,13 +84,21 @@ namespace AuthApi.Controllers
                 return NotFound(new { Message = "The person is not found" });
             }
 
-            // TODO: validate if the file is note already stored
-
             // TODO: delete (softdelete) the previous file if exist a document with the same document type
 
             // * find the documentType
             DocumentType? documentType = dbContext.DocumentTypes.FirstOrDefault( item => item.Id == request.DocumentTypeId)
                 ?? throw new ArgumentNullException("documentTypeId", "The document type is not found");
+
+
+            // * validate if the file is note already stored by comparing the file size and the mime type
+            if(CheckIfDocumentExist(_personID, documentType.Id, request.File!.First()))
+            {
+                return UnprocessableEntity( new {
+                    Title = "Uno o mas campos tienen error.",
+                    Errors = new Dictionary<string, object> {{"file", "El documento ya se encuentra registrado."}}
+                });
+            }
 
             
             // * store the file and create the record
@@ -117,16 +124,18 @@ namespace AuthApi.Controllers
                 using(Stream stream = request.File!.First().OpenReadStream())
                 {
                     // * make the file name
-                    var fileName = string.Format("personalDocuments/{0}/{1}-{2}.{3}",
+                    var fileName = string.Format("0/{1}/{2}-{3}.{4}",
+                        this.FolderName,
                         _personID.ToString(),
                         documentType.Name.ToLower().Trim().Replace(" ", "_"),
                         DateTime.Now.Ticks,
                         _file.FileName.Split(".").Last()
                     );
-                    newPersonFile.FilePath = await minioService.UploadFile( request.File!.First().FileName, stream, "/personaDocs");
+
                     // * store the file and retrive the path
-                    // newPersonFile.FilePath = await minioService.UploadFile(fileName, stream);
+                    newPersonFile.FilePath = await minioService.UploadFile(fileName, stream);
                 }
+
 
                 // * insert the record on the db
                 dbContext.PersonFiles.Add(newPersonFile);
@@ -140,9 +149,11 @@ namespace AuthApi.Controllers
                 });
             }
 
-            this._logger.LogCritical("H");
-
-            return Created();
+            // * return the data stored
+            return StatusCode(201, new {
+                PersonID = personId,
+                Document = newPersonFile
+            });
         }
 
 
@@ -175,16 +186,15 @@ namespace AuthApi.Controllers
                 return NotFound(new { Message = "The person is not found" });
             }
             // * validate the person
-            if( !this.dbContext.People.Where(item => item.Id == _personID).Any()){
-                return NotFound( new {
-                    Message = "The person is not found"
-                });
+            if(!this.dbContext.People.Where(item => item.Id == _personID).Any())
+            {
+                return NotFound(new { Message = "The person is not found" });
             }
 
 
             // * get files data
             var personFiles = this.dbContext.PersonFiles
-                .Where(item=> item.PersonId == _personID)
+                .Where(item=> item.PersonId == _personID && item.DeletedAt == null)
                 .OrderBy(item => item.CreatedAt)
                 .Include(p=>p.DocumentType)
                 .Skip(offset)
@@ -221,6 +231,62 @@ namespace AuthApi.Controllers
             return personFilesResponse;
         }
 
+
+        /// <summary>
+        /// Delete the document of the person by  matching the document id and the document name
+        /// </summary>
+        /// <param name="personId"></param>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        /// <response code="200">return the data</response>
+        /// <response code="404">Document not found</response>
+        [HttpDelete]
+        [Route("/api/people/{personId}/documents")]
+        public async Task<ActionResult<IEnumerable<PersonDocumentResponse>>> DeletePersonDocument([FromRoute] string personId, [FromBody] PersonDocumentDeleteRequest request)
+        {
+            // * Validate person
+            Guid _personID = Guid.Empty;
+            try
+            {
+                _personID = ValidatePerson(personId);
+            }
+            catch(ArgumentException)
+            {
+                return BadRequest(new { message = $"Person id has formatted not valid" });
+            }
+            catch(KeyNotFoundException)
+            {
+                return NotFound(new { Message = "The person is not found" });
+            }
+            // * validate the person
+            if(!this.dbContext.People.Where(item => item.Id == _personID).Any())
+            {
+                return NotFound(new { Message = "The person is not found" });
+            }
+
+            try
+            {
+                // * get file data
+                var personFile = this.dbContext.PersonFiles
+                    .FirstOrDefault(item=> item.PersonId == _personID && item.DeletedAt == null && item.Id == request.DocumentId && item.FileName == request.DocumentName)
+                    ?? throw new KeyNotFoundException("The document is not found");
+                
+                personFile.DeletedAt = DateTime.Now;
+
+                this.dbContext.PersonFiles.Update(personFile);
+                await this.dbContext.SaveChangesAsync();
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound(new {
+                    Message = "El documento no se encuentra registrado."
+                });
+            }
+            
+            return Ok();
+        }
+
+
         #region Private methods
         /// <summary>
         /// Validate the person id and if exist
@@ -247,6 +313,21 @@ namespace AuthApi.Controllers
                 throw new KeyNotFoundException("The person is not found");
             }
             return _personID;
+        }
+
+        private bool CheckIfDocumentExist(Guid personId, int documentTypeId, IFormFile file)
+        {
+            var exist = false;
+            var personDocuments = this.dbContext.PersonFiles.Where(item => item.DocumentTypeId == documentTypeId && item.PersonId == personId && item.DeletedAt == null).ToList();
+            foreach(var pd in personDocuments)
+            {
+                if(pd.FileSize == file.Length && pd.MimmeType == file.ContentType)
+                {
+                    exist = true;
+                    break;
+                }
+            }
+            return exist;
         }
 
         #endregion
