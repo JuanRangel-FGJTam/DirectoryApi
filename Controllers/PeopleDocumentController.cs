@@ -156,7 +156,6 @@ namespace AuthApi.Controllers
             });
         }
 
-
         /// <summary>
         /// Retorna el listado de documentos personales de la persona.
         /// </summary>
@@ -231,7 +230,6 @@ namespace AuthApi.Controllers
             return personFilesResponse;
         }
 
-
         /// <summary>
         /// Delete the document of the person by  matching the document id and the document name
         /// </summary>
@@ -286,6 +284,65 @@ namespace AuthApi.Controllers
             return Ok();
         }
 
+        /// <summary>
+        /// Retrive the las document of the person by documentType
+        /// </summary>
+        /// <param name="personId"> identificador de la person in formato GUID</param>
+        /// <param name="documentTypeId"></param>
+        /// <response code="200">return the data</response>
+        /// <response code="400">The request is not valid ore some error are present</response>
+        /// <response code="404">The person or the document is not found</response>
+        [HttpGet]
+        [Route("/api/people/{personId}/document/{documentTypeId}")]
+        public async Task<ActionResult<PersonDocumentResponse>> GetPersonDocumentByDocummentType([FromRoute] string personId, [FromRoute] int documentTypeId)
+        {
+            // * Validate person
+            Guid _personID = Guid.Empty;
+            try
+            {
+                _personID = ValidatePerson(personId);
+            }
+            catch(ArgumentException)
+            {
+                return BadRequest(new { message = $"Person id has formatted not valid" });
+            }
+            catch(KeyNotFoundException)
+            {
+                return NotFound(new { Message = "The person is not found" });
+            }
+            // * validate the person
+            if(!this.dbContext.People.Where(item => item.Id == _personID).Any())
+            {
+                return NotFound(new { Message = "The person is not found" });
+            }
+
+            try
+            {
+                // * validate doccument type
+                DocumentType? documentType = dbContext.DocumentTypes.FirstOrDefault( item => item.Id == documentTypeId) 
+                    ?? throw new ArgumentNullException("documentTypeId", "The document type is not found");
+
+                // * get files data
+                var personFile = await this.dbContext.PersonFiles.FirstOrDefaultAsync(item=> item.PersonId == _personID && item.DeletedAt == null && item.DocumentTypeId == documentTypeId)
+                    ?? throw new KeyNotFoundException("The document is not found");
+
+                return PersonDocumentResponse.FromEnity(personFile);
+            }
+
+            catch (ArgumentNullException)
+            {
+                return UnprocessableEntity(new {
+                    Title = "Uno o mas campos tienen error.",
+                    Errors = new Dictionary<string, object> {{"documentTypeId", "El tipo de documento no es válido."}}
+                });
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound( new {
+                    Message = "El documento no se encuentra registrado."
+                });
+            }
+        }
 
         #region Private methods
         /// <summary>
