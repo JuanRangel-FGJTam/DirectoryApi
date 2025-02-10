@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using AuthApi.Models;
@@ -64,10 +65,23 @@ namespace AuthApi.Controllers
         /// <summary>
         /// Retrive all the preregisters stored
         /// </summary>
+        /// <param name="orderBy"> propertie name used for ordering by default 'createdAt' posibles ["id", "mail", "createdAt", "validTo"] </param>
+        /// <param name="ascending"></param>
+        /// <param name="take"></param>
+        /// <param name="offset"></param>
         [HttpGet]
-        public ActionResult<IEnumerable<Preregistration>?> GetAllPreregisters()
+        public ActionResult<IEnumerable<Preregistration>?> GetAllPreregisters([FromQuery] string orderBy = "createdAt", [FromQuery] bool ascending = false, [FromQuery] int take = 25, [FromQuery] int offset = 0)
         {
-            return Ok( dbContext.Preregistrations.ToArray() );
+            var peopleQuery = this.dbContext.Preregistrations.AsQueryable();
+
+            // * ordering the data
+            string ordering = ascending ? $"{orderBy} asc" : $"{orderBy} desc";
+            var dataPreregisters = peopleQuery
+                .OrderBy(ordering)
+                .Skip(offset)
+                .Take(take)
+                .ToArray();
+            return Ok(dataPreregisters);
         }
 
         /// <summary>
@@ -189,7 +203,6 @@ namespace AuthApi.Controllers
                     Message = ex.Message
                 });
             }
-            
         }
 
     }
