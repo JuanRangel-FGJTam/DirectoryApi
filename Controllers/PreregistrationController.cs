@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using AuthApi.Models;
@@ -64,11 +65,93 @@ namespace AuthApi.Controllers
         /// <summary>
         /// Retrive all the preregisters stored
         /// </summary>
+        /// <param name="orderBy"> propertie name used for ordering by default 'createdAt' posibles ["id", "mail", "createdAt", "validTo"] </param>
+        /// <param name="ascending"></param>
+        /// <param name="take"></param>
+        /// <param name="offset"></param>
         [HttpGet]
-        public ActionResult<IEnumerable<Preregistration>?> GetAllPreregisters()
+        public ActionResult<IEnumerable<Preregistration>?> GetAllPreregisters([FromQuery] string orderBy = "createdAt", [FromQuery] bool ascending = false, [FromQuery] int take = 25, [FromQuery] int offset = 0)
         {
-            return Ok( dbContext.Preregistrations.ToArray() );
+            var peopleQuery = this.dbContext.Preregistrations.AsQueryable();
+
+            var totalRecords = peopleQuery.Count();
+
+            // * ordering the data
+            string ordering = ascending ? $"{orderBy} asc" : $"{orderBy} desc";
+            var records = peopleQuery
+                .OrderBy(ordering)
+                .Skip(offset)
+                .Take(take)
+                .ToArray();
+
+
+            // * make pagination
+            var paginator = new
+            {
+                Total = totalRecords,
+                Data = records,
+                Filters = new
+                {
+                    Take = take,
+                    Offset = offset,
+                    OrderBy = orderBy,
+                    Ascending = ascending
+                }
+            };
+
+            return Ok(paginator);
         }
+
+
+        /// <summary>
+        /// Find the preregister record by id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpGet("{id}")]
+        public IActionResult GetPreregisterById([FromRoute] Guid id)
+        {
+
+            Console.WriteLine(">> ID :" + id.ToString());
+            try
+            {
+                var data = this.dbContext.Preregistrations.FirstOrDefault( item => item.Id == id ) ?? throw new KeyNotFoundException("The preregister record was not found");
+                return Ok(data);
+            }
+            catch (KeyNotFoundException)
+            {
+
+                return NotFound( new {
+                    Title = "No se encontró el registro",
+                    Message = "No se encontró el registro de prerregistro"
+                });
+            }
+        }
+
+
+        /// <summary>
+        /// Delete the preregister record by id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpDelete("{id}")]
+        public IActionResult DeletePreregister([FromRoute] Guid id)
+        {
+            // * get the records
+            var record = this.dbContext.Preregistrations.FirstOrDefault(item => item.Id == id);
+            if(record == null)
+            {
+                return NotFound( new {
+                    Title = "No se encontró el registro",
+                    Message = "No se encontró el registro de prerregistro"
+                });
+            }
+
+            this.dbContext.Preregistrations.Remove(record);
+            this.dbContext.SaveChanges();
+            return Ok();
+        }
+        
 
         /// <summary>
         /// Store the new person using the pre-register record for retriving the email and password
@@ -189,7 +272,6 @@ namespace AuthApi.Controllers
                     Message = ex.Message
                 });
             }
-            
         }
 
     }
