@@ -18,6 +18,7 @@ namespace AuthApi.Models
         public long FileSize {get;set;}
         public int DocumentTypeId {get;set;}
         public string? DocumentTypeName {get;set;}
+        public string? Valid {get;set;}
         public DateTime CreatedAt {get;set;}
         public DateTime? DeletedAt {get;set;}
 
@@ -33,6 +34,7 @@ namespace AuthApi.Models
             response.DeletedAt = pf.DeletedAt;
             response.DocumentTypeId = pf.DocumentType!.Id;
             response.DocumentTypeName = pf.DocumentType?.Name;
+            response.Valid = pf.Validation.ToString("yyyy-MM-dd");
             response.FileUrl = null;
             return response;
         }
