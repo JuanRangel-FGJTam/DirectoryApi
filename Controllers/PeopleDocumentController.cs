@@ -221,6 +221,7 @@ namespace AuthApi.Controllers
                         DocumentTypeName = pf.DocumentTypeName,
                         CreatedAt = pf.CreatedAt,
                         DeletedAt = pf.DeletedAt,
+                        Valid = pf.Valid,
                         FileUrl = fileUrl
                     }
                 );
