@@ -18,6 +18,9 @@ namespace AuthApi.Models
         [StringLength(200, ErrorMessage = "The {0} value cannot exceed {1} characters.")]
         public string? Observations {get;set;}
 
+        [StringLength(200, ErrorMessage = "The {0} value cannot exceed {1} characters.")]
+        public string? OfficeLocation {get;set;}
+
         public IFormFileCollection? File { get; set; }
 
     }
