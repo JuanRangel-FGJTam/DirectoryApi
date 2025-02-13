@@ -124,7 +124,7 @@ namespace AuthApi.Controllers
                 using(Stream stream = request.File!.First().OpenReadStream())
                 {
                     // * make the file name
-                    var fileName = string.Format("0/{1}/{2}-{3}.{4}",
+                    var fileName = string.Format("{0}/{1}/{2}-{3}.{4}",
                         this.FolderName,
                         _personID.ToString(),
                         documentType.Name.ToLower().Trim().Replace(" ", "_"),
