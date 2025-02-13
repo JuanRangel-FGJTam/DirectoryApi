@@ -46,7 +46,8 @@ namespace AuthApi.Controllers
         ///         name: string [required, max:120],
         ///         observations: string|null [max:200],
         ///         denunciaId: string|null [max:100],
-        ///         created_at: string|null [format('yyyy-MM-dd HH:mm')]
+        ///         created_at: string|null [format('yyyy-MM-dd HH:mm')],
+        ///         officeLocation: string|null,
         ///     }
         ///
         /// </remarks>
@@ -83,25 +84,15 @@ namespace AuthApi.Controllers
                 });
             }
 
-
-            // * validate if the folio is already stored
-            var exist = this.dbContext.Proceeding.Where( item => item.PersonId == _personID && item.Folio == request.Folio ).Any();
-            if(exist){
+            // * validate if the folio is already stored with the same status
+            var exist = this.dbContext.Proceeding.Where(item => item.PersonId == _personID && item.Folio == request.Folio).Any();
+            if(ValidateDuplicatedRecord(_personID, request, out string message))
+            {
                 return UnprocessableEntity(new {
                     Title = "Uno o mas campos tienen error",
-                    Errors = new { Folio = "El folio ya se encuentra registrado en esta persona." }
+                    Errors = new { Folio = message }
                 });
             }
-
-            // * validate if the denuncia id is already stored
-            exist = this.dbContext.Proceeding.Where( item => item.PersonId == _personID && item.DenunciaId == request.DenunciaId && item.DenunciaId != null ).Any();
-            if(exist){
-                return UnprocessableEntity(new {
-                    Title = "Uno o mas campos tienen error",
-                    Errors = new { Folio = "El ID de la denuncia ya se encuentra registrado en esta persona." }
-                });
-            }
-
 
             // * find the status or create a new one
             ProceedingStatus? proceedingStatus = null;
@@ -152,7 +143,8 @@ namespace AuthApi.Controllers
                 Area = area,
                 DenunciaId = request.DenunciaId!=null ? request.DenunciaId!.Trim() :null,
                 Observations = request.Observations!=null ?request.Observations!.Trim() :null,
-                CreatedAt = datetime ?? DateTime.Now
+                CreatedAt = datetime ?? DateTime.Now,
+                OfficeLocation = request.OfficeLocation
             };
 
             // * insert into db
@@ -182,6 +174,7 @@ namespace AuthApi.Controllers
         /// - **observations**: (string, optional, max length: 200)
         /// - **denunciaId**: (string, optional, max length: 100)
         /// - **created_at**: (string, optional, format: "yyyy-MM-dd HH:mm")
+        /// - **officeLocation**: (string, optional)
         /// - **file**: (Filea, required) Multiple files can be uploaded with keys as `file1`, `file2`, `fileN`.
         ///
         /// </remarks>
@@ -221,21 +214,13 @@ namespace AuthApi.Controllers
             }
 
 
-            // * validate if the folio is already stored
-            var exist = this.dbContext.Proceeding.Where( item => item.PersonId == _personID && item.Folio == request.Folio ).Any();
-            if(exist){
+            // * validate if the folio is already stored with the same status
+            var exist = this.dbContext.Proceeding.Where(item => item.PersonId == _personID && item.Folio == request.Folio).Any();
+            if(ValidateDuplicatedRecord(_personID, request, out string message))
+            {
                 return UnprocessableEntity(new {
                     Title = "Uno o mas campos tienen error",
-                    Errors = new { Folio = "El folio ya se encuentra registrado en esta persona." }
-                });
-            }
-
-            // * validate if the denuncia id is already stored
-            exist = this.dbContext.Proceeding.Where( item => item.PersonId == _personID && item.DenunciaId == request.DenunciaId && item.DenunciaId != null ).Any();
-            if(exist){
-                return UnprocessableEntity(new {
-                    Title = "Uno o mas campos tienen error",
-                    Errors = new { Folio = "El ID de la denuncia ya se encuentra registrado en esta persona." }
+                    Errors = new { Folio = message }
                 });
             }
 
@@ -536,6 +521,7 @@ namespace AuthApi.Controllers
         /// **Body Parameters:**
         /// - **status**: (string, required, max length: 24)
         /// - **observations**: (string, optional, max length: 200)
+        /// - **officeLocation**: (string, optional, max length: 200)
         /// - **file**: (File, required) Multiple files can be uploaded with keys as `file1`, `file2`, `fileN`.
         ///
         /// </remarks>
@@ -681,7 +667,8 @@ namespace AuthApi.Controllers
         ///     {
         ///         status: string [required, max:24],
         ///         observations: string|null [max:200],
-        ///         denunciaId: string|null [max:100]
+        ///         denunciaId: string|null [max:100],
+        ///         officeLocation: string|null [max:200]
         ///     }
         /// </remarks>
         /// <param name="procedingId">procedding id</param>
@@ -720,6 +707,8 @@ namespace AuthApi.Controllers
 
         }
 
+
+        #region Private methods
         private void UpdateProceding(Proceeding proceeding, UpdateProceedingRequest request, bool updateDenunciaId = true){
             
             // * find the status or create a new one
@@ -738,19 +727,55 @@ namespace AuthApi.Controllers
             // * update the procceding
             proceeding.Status = proceedingStatus;
 
-            if( !string.IsNullOrEmpty(request.DenunciaId) && updateDenunciaId ){
-                // TODO: validate it the denuncia-id is already stored
+            if(!string.IsNullOrEmpty(request.DenunciaId) && updateDenunciaId)
+            {
                 proceeding.DenunciaId = request.DenunciaId.Trim();
             }
 
-            if( !string.IsNullOrEmpty(request.Observations) ){
+            if(!string.IsNullOrEmpty(request.Observations))
+            {
                 proceeding.Observations = request.Observations.Trim();
+            }
+
+            if(!string.IsNullOrEmpty(request.OfficeLocation))
+            {
+                proceeding.OfficeLocation = request.OfficeLocation?.Trim();
             }
 
             dbContext.Proceeding.Update(proceeding);
             dbContext.SaveChanges();
-
         }
 
+        private bool ValidateDuplicatedRecord(Guid personId, NewProceedingRequest request, out string message )
+        {
+            message = string.Empty;
+
+            // * validate if the folio is already stored with the same status
+            var exist = this.dbContext.Proceeding.Where(item => item.PersonId == personId && item.Folio == request.Folio).Any();
+            if(exist)
+            {
+                var lastRecord = this.dbContext.Proceeding
+                    .OrderByDescending( item => item.CreatedAt)
+                    .First( item => item.PersonId == personId && item.Folio == request.Folio);
+                
+                if( lastRecord.Status?.Name == request.Status)
+                {
+                    message = "El folio ya se encuentra registrado en esta persona con el mismo estatus.";
+                    return true;
+                }
+            }
+
+            return false;
+
+            // // * validate if the denuncia id is already stored
+            // exist = this.dbContext.Proceeding.Where( item => item.PersonId == _personID && item.DenunciaId == request.DenunciaId && item.DenunciaId != null ).Any();
+            // if(exist){
+            //     return UnprocessableEntity(new {
+            //         Title = "Uno o mas campos tienen error",
+            //         Errors = new { Folio = "El ID de la denuncia ya se encuentra registrado en esta persona." }
+            //     });
+            // }
+        }
+        #endregion
     }
 }

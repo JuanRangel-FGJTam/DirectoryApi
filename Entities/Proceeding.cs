@@ -17,6 +17,7 @@ public class Proceeding
     public Area? Area {get;set;}
     public string? DenunciaId {get;set;}
     public string? Observations {get;set;}
+    public string? OfficeLocation {get;set;}
     public DateTime CreatedAt {get;set;}
     public DateTime UpdatedAt {get;set;}
     
