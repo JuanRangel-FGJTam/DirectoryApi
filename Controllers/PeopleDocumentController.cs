@@ -327,7 +327,9 @@ namespace AuthApi.Controllers
                 var personFile = await this.dbContext.PersonFiles.FirstOrDefaultAsync(item=> item.PersonId == _personID && item.DeletedAt == null && item.DocumentTypeId == documentTypeId)
                     ?? throw new KeyNotFoundException("The document is not found");
 
-                return PersonDocumentResponse.FromEnity(personFile);
+                var personDocument = PersonDocumentResponse.FromEnity(personFile);
+                personDocument.FileUrl = await minioService.MakeTemporalUrl(personDocument.FilePath!, personDocument.MimmeType!);
+                return personDocument;
             }
 
             catch (ArgumentNullException)
