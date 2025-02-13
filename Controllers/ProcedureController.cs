@@ -155,7 +155,6 @@ namespace AuthApi.Controllers
             return Created("Proceeding stored", newProceeding);
         }
 
-
         /// <summary>
         /// Almacena los datos de los trámites que realiza el ciudadano a través de las diversas aplicaciones junto con los archivos
         /// </summary>
@@ -198,7 +197,8 @@ namespace AuthApi.Controllers
 
             // * validate person id
             Guid _personID = Guid.Empty;
-            try{
+            try
+            {
                 _personID = Guid.Parse( personId );
             }catch(Exception){
                 return BadRequest( new {
@@ -708,6 +708,108 @@ namespace AuthApi.Controllers
         }
 
 
+        /// <summary>
+        /// Retorna el listado de tramites almacenados de la persona agrupados por folio
+        /// </summary>
+        /// <param name="personId"> identificador de la person in formato GUID</param>
+        /// <param name="take"></param>
+        /// <param name="offset"></param>
+        /// <response code="200">return the data</response>
+        /// <response code="400">The request is not valid ore some error are present</response>
+        /// <response code="404">The person is not found</response>
+        [HttpGet]
+        [Route("/api/people/{personId}/procedures-folio")]
+        public async Task<ActionResult<IEnumerable<ProceedingGroupResponse>>> GetPersonProcedingsFolio([FromRoute] string personId, [FromQuery] int take = 5, [FromQuery] int offset = 0)
+        {
+            // * Validate person id
+            Guid _personID = Guid.Empty;
+            try{
+                _personID = Guid.Parse( personId );
+            }catch(Exception){
+                return BadRequest( new {
+                    message = $"Person id has formatted not valid"
+                });
+            }
+
+            // * validate the person
+            if( !this.dbContext.People.Where(item => item.Id == _personID).Any()){
+                return NotFound( new {
+                    Message = "The person is not found"
+                });
+            }
+
+
+            // * get the proceedings grouped
+            var responseList = new List<ProceedingGroupResponse>();
+            responseList = this.dbContext.Proceeding
+                .Where(item=>item.PersonId == _personID)
+                .GroupBy(item=> item.Folio)
+                .Select( g => new ProceedingGroupResponse
+                    {
+                        Folio = g.Key!,
+                        Name = string.Join(", ", g.GroupBy(p=>p.Name).Select(g => g.Key).ToArray()),
+                        FirtRegister = g.OrderBy(item => item.CreatedAt).First().CreatedAt,
+                        LastModification = g.OrderByDescending(item => item.CreatedAt).First().CreatedAt
+                    }
+                )
+                .ToList<ProceedingGroupResponse>()
+                .OrderByDescending(item => item.LastModification)
+                .Skip(offset)
+                .Take(take)
+                .ToList();
+
+
+            foreach( var groupedFolio in responseList)
+            {
+                // * get the procedings of the folio
+                var proccedings = this.dbContext.Proceeding
+                    .Where(item=> item.PersonId == _personID && item.Folio == groupedFolio.Folio)
+                    .OrderBy(item => item.CreatedAt)
+                    .Include(p=>p.Files)
+                    .Include(p => p.Status)
+                    .Include(p => p.Area)
+                    .Select( item => ProceedingResponse.FromIdentity(item))
+                    .ToList<ProceedingResponse>();
+
+                // * make temporal url for files
+                foreach( var p in proccedings)
+                {
+                    if(!p.Files.Any())
+                    {
+                        continue;
+                    }
+
+                    // * override the proceding file with the temporally url
+                    var fileTasks = p.Files.Select(async file => {
+                        if( file.DeletedAt != null || string.IsNullOrEmpty(file.FilePath)){
+                            return file;
+                        }
+                        var fileUrl = await minioService.MakeTemporalUrl(file.FilePath!, file.FileType??"application/pdf");
+                        return new ProceedingFileResponse {
+                            Id = file.Id,
+                            FileName = file.FileName,
+                            FilePath = file.FilePath,
+                            FileType = file.FileType,
+                            FileSize = file.FileSize,
+                            CreatedAt = file.CreatedAt,
+                            UpdatedAt = file.UpdatedAt,
+                            FileUrl = fileUrl,
+                            DeletedAt = file.DeletedAt
+                        };
+                    }).ToList();
+                    
+                    p.Files = await Task.WhenAll(fileTasks);
+                }
+
+
+                groupedFolio.Proceedings = proccedings;
+
+            }
+
+            // * return the data
+            return responseList;
+        }
+
         #region Private methods
         private void UpdateProceding(Proceeding proceeding, UpdateProceedingRequest request, bool updateDenunciaId = true){
             
@@ -756,7 +858,10 @@ namespace AuthApi.Controllers
             {
                 var lastRecord = this.dbContext.Proceeding
                     .OrderByDescending( item => item.CreatedAt)
+                    .Include( item => item.Status)
                     .First( item => item.PersonId == personId && item.Folio == request.Folio);
+
+                Console.WriteLine($"{lastRecord.Folio}, {lastRecord.Status?.Name} {request.Status}");
                 
                 if( lastRecord.Status?.Name == request.Status)
                 {
