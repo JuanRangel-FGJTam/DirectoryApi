@@ -9,8 +9,6 @@ namespace AuthApi.Models
     public class NewPersonDocumentRequest
     {
 
-        [Required]
-        [StringLength(250, ErrorMessage = "The {0} value cannot exceed {1} characters.")]
         public string? Name {get;set;}
 
         public int? DocumentTypeId {get;set;}

@@ -124,7 +124,7 @@ namespace AuthApi.Controllers
                 using(Stream stream = request.File!.First().OpenReadStream())
                 {
                     // * make the file name
-                    var fileName = string.Format("0/{1}/{2}-{3}.{4}",
+                    var fileName = string.Format("{0}/{1}/{2}-{3}.{4}",
                         this.FolderName,
                         _personID.ToString(),
                         documentType.Name.ToLower().Trim().Replace(" ", "_"),
@@ -327,7 +327,9 @@ namespace AuthApi.Controllers
                 var personFile = await this.dbContext.PersonFiles.FirstOrDefaultAsync(item=> item.PersonId == _personID && item.DeletedAt == null && item.DocumentTypeId == documentTypeId)
                     ?? throw new KeyNotFoundException("The document is not found");
 
-                return PersonDocumentResponse.FromEnity(personFile);
+                var personDocument = PersonDocumentResponse.FromEnity(personFile);
+                personDocument.FileUrl = await minioService.MakeTemporalUrl(personDocument.FilePath!, personDocument.MimmeType!);
+                return personDocument;
             }
 
             catch (ArgumentNullException)
