@@ -44,13 +44,18 @@ namespace AuthApi.Services
                 throw new SimpleValidationException("Can't stored the pre-register", errors);
             }
 
+            // * prepare the validation code and the lifetime
+            string validationCode = PreregisterToken.GenerateCode();
+            var lifeTime = TimeSpan.FromSeconds(resetPasswordSettings.TokenLifeTimeSeconds);
+            var codeLifeTime = DateTime.Now.Add(lifeTime);
+
+
             // * Verify if a same preregistration is already stored in the database
             Preregistration? preRegister = dbContext.Preregistrations
                 .Where(p => p.Mail!.ToLower() == request.Mail.ToLower())
-                .OrderByDescending( p => p.CreatedAt )
+                .OrderByDescending(p => p.CreatedAt)
                 .FirstOrDefault();
 
-            
             if(preRegister != null)
             {
                 // * Update the password if are diferent
@@ -58,8 +63,21 @@ namespace AuthApi.Services
                 {
                     preRegister.Password = request.Password;
                     dbContext.Preregistrations.Update(preRegister);
-                    dbContext.SaveChanges();
                 }
+
+                // * use the same code if the request is not expired
+                if(preRegister.ValidTo >= DateTime.Now)
+                {
+                    validationCode = preRegister.Token;
+                }
+                else
+                {
+                    preRegister.Token = validationCode;
+                }
+
+                preRegister.ValidTo = codeLifeTime;
+                preRegister.UpdatedAt = DateTime.Now;
+                dbContext.SaveChanges();
             }
             else
             {
@@ -67,7 +85,10 @@ namespace AuthApi.Services
                 preRegister = new Preregistration()
                 {
                     Mail = request.Mail,
-                    Password = request.Password
+                    Password = request.Password,
+                    Token = validationCode,
+                    ValidTo = codeLifeTime,
+                    UpdatedAt = DateTime.Now
                 };
 
                 // * Insert record into db
@@ -75,17 +96,6 @@ namespace AuthApi.Services
                 dbContext.SaveChanges();
             }
 
-            // * set the code lifetime
-            var lifeTime = TimeSpan.FromSeconds(resetPasswordSettings.TokenLifeTimeSeconds);
-            var codeLifeTime = DateTime.Now.Add(lifeTime);
-
-            // * Update the token
-            var validationCode = PreregisterToken.GenerateCode();
-            preRegister.Token = validationCode;
-            preRegister.UpdatedAt = DateTime.Now;
-            preRegister.ValidTo = codeLifeTime;
-            dbContext.Preregistrations.Update(preRegister);
-            dbContext.SaveChanges();
 
             // * Sende the email with the code
             var response = await SendEmailCode(preRegister, validationCode, codeLifeTime)
