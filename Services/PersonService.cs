@@ -154,11 +154,7 @@ namespace AuthApi.Services
                 }
 
                 if( string.IsNullOrEmpty(personRequest.FirstName) ){
-                    errorsRelations.Add( "firstName", new string[]{ "El apellido materno es requerido."} );
-                }
-
-                if( string.IsNullOrEmpty(personRequest.LastName) ){
-                    errorsRelations.Add( "lastName", new string[]{ "El apellido paterno es requerido."} );
+                    errorsRelations.Add( "firstName", new string[]{ "El apellido paterno es requerido."} );
                 }
             }
 
