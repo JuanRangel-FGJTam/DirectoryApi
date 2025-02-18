@@ -163,7 +163,7 @@ namespace AuthApi.Controllers
         /// <response code="422">The validation fails</response>
         [HttpPatch]
         [Route ("{personID}")]
-        public IActionResult UpdatePerson( string personID, [FromBody] UpdatePersonRequest personRequest  )
+        public IActionResult UpdatePerson(string personID, [FromBody] UpdatePersonRequest personRequest)
         {
             // Validate ID
             Guid _personID = Guid.Empty;
@@ -200,6 +200,10 @@ namespace AuthApi.Controllers
             if(!string.IsNullOrEmpty(personRequest.LastName))
             {
                 person.LastName = personRequest.LastName.Trim();
+            }
+            else
+            {
+                person.LastName = String.Empty;
             }
 
             if(!string.IsNullOrEmpty(personRequest.Rfc))
