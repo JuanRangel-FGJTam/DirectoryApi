@@ -315,13 +315,14 @@ namespace AuthApi.Controllers
         /// <param name="personId"> Person id in UUID format</param>
         /// <param name="take"> Elements to take, if its 0 then return all the data, otherwise return the n elements. </param>
         /// <param name="skip"></param>
+        /// <param name="withTrashed">Retrove or not the records deleted</param>
         /// <response code="200">Get all the session</response>
         /// <response code="401">No authenticated</response>
         /// <response code="409">Error al retrive the session, verify the logs.</response>
         /// <response code="422">pesonId format is invalid, UUID required</response>
         [HttpGet]
         [Route("")]
-        public ActionResult<SessionResponse> GetAllSessions( [FromQuery] string? personId, [FromQuery] int take = 25, [FromQuery] int skip = 0)
+        public ActionResult<SessionResponse> GetAllSessions( [FromQuery] string? personId, [FromQuery] int take = 25, [FromQuery] int skip = 0, [FromQuery] int withTrashed = 0)
         {
             Guid personID = Guid.Empty;
             if( !string.IsNullOrEmpty(personId) ){
@@ -336,20 +337,22 @@ namespace AuthApi.Controllers
             }
 
             try
-            {   
+            {
                 // * Get data
                 var dataQuery = this.directoryDBContext.Sessions
-                    .Where( item => item.DeletedAt == null)
                     .OrderByDescending( item => item.BegginAt)
                     .Where( item => item.Person.Id == (string.IsNullOrEmpty(personId) ?item.Person.Id :personID) )
                     .AsQueryable();
-                    
+                
+                if(withTrashed == 0)
+                {
+                    dataQuery = dataQuery.Where(item => item.DeletedAt == null);
+                }
 
                 // * get the total sessions
                 var total = dataQuery.Count();
             
-                // * get data 
-
+                // * get data
                 IEnumerable<SessionResponse> data = [];
                 if(take > 0){
                     data = dataQuery
