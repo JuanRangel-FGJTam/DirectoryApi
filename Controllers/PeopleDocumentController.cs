@@ -324,7 +324,7 @@ namespace AuthApi.Controllers
                     ?? throw new ArgumentNullException("documentTypeId", "The document type is not found");
 
                 // * get files data
-                var personFile = await this.dbContext.PersonFiles.FirstOrDefaultAsync(item=> item.PersonId == _personID && item.DeletedAt == null && item.DocumentTypeId == documentTypeId)
+                var personFile = await this.dbContext.PersonFiles.OrderByDescending(item=>item.CreatedAt).FirstOrDefaultAsync(item=> item.PersonId == _personID && item.DeletedAt == null && item.DocumentTypeId == documentTypeId)
                     ?? throw new KeyNotFoundException("The document is not found");
 
                 var personDocument = PersonDocumentResponse.FromEnity(personFile);
