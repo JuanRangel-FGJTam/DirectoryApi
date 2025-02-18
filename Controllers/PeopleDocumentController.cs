@@ -116,7 +116,8 @@ namespace AuthApi.Controllers
                     MimmeType = _file.ContentType,
                     FileSize = _file.Length,
                     Validation = request.Validation,
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.Now,
+                    Folio = request.Folio
                 };
 
 
@@ -222,6 +223,7 @@ namespace AuthApi.Controllers
                         CreatedAt = pf.CreatedAt,
                         DeletedAt = pf.DeletedAt,
                         Valid = pf.Valid,
+                        Folio = pf.Folio,
                         FileUrl = fileUrl
                     }
                 );
@@ -257,6 +259,7 @@ namespace AuthApi.Controllers
             {
                 return NotFound(new { Message = "The person is not found" });
             }
+
             // * validate the person
             if(!this.dbContext.People.Where(item => item.Id == _personID).Any())
             {

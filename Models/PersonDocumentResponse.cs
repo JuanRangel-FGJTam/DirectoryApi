@@ -19,6 +19,7 @@ namespace AuthApi.Models
         public int DocumentTypeId {get;set;}
         public string? DocumentTypeName {get;set;}
         public string? Valid {get;set;}
+        public string? Folio {get;set;}
         public DateTime CreatedAt {get;set;}
         public DateTime? DeletedAt {get;set;}
 
@@ -35,6 +36,7 @@ namespace AuthApi.Models
             response.DocumentTypeId = pf.DocumentType!.Id;
             response.DocumentTypeName = pf.DocumentType?.Name;
             response.Valid = pf.Validation.ToString("yyyy-MM-dd");
+            response.Folio = pf.Folio;
             response.FileUrl = null;
             return response;
         }

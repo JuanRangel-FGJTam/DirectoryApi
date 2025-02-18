@@ -8,7 +8,6 @@ namespace AuthApi.Models
 {
     public class NewPersonDocumentRequest
     {
-
         public string? Name {get;set;}
 
         public int? DocumentTypeId {get;set;}
@@ -18,5 +17,6 @@ namespace AuthApi.Models
 
         public IFormFileCollection? File { get; set; }
 
+        public string? Folio { get; set; }
     }
 }
