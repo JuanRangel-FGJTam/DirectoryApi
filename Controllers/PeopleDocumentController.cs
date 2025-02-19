@@ -116,7 +116,8 @@ namespace AuthApi.Controllers
                     MimmeType = _file.ContentType,
                     FileSize = _file.Length,
                     Validation = request.Validation,
-                    CreatedAt = DateTime.Now
+                    CreatedAt = DateTime.Now,
+                    Folio = request.Folio
                 };
 
 
@@ -222,6 +223,7 @@ namespace AuthApi.Controllers
                         CreatedAt = pf.CreatedAt,
                         DeletedAt = pf.DeletedAt,
                         Valid = pf.Valid,
+                        Folio = pf.Folio,
                         FileUrl = fileUrl
                     }
                 );
@@ -257,6 +259,7 @@ namespace AuthApi.Controllers
             {
                 return NotFound(new { Message = "The person is not found" });
             }
+
             // * validate the person
             if(!this.dbContext.People.Where(item => item.Id == _personID).Any())
             {
@@ -324,7 +327,7 @@ namespace AuthApi.Controllers
                     ?? throw new ArgumentNullException("documentTypeId", "The document type is not found");
 
                 // * get files data
-                var personFile = await this.dbContext.PersonFiles.FirstOrDefaultAsync(item=> item.PersonId == _personID && item.DeletedAt == null && item.DocumentTypeId == documentTypeId)
+                var personFile = await this.dbContext.PersonFiles.OrderByDescending(item=>item.CreatedAt).FirstOrDefaultAsync(item=> item.PersonId == _personID && item.DeletedAt == null && item.DocumentTypeId == documentTypeId)
                     ?? throw new KeyNotFoundException("The document is not found");
 
                 var personDocument = PersonDocumentResponse.FromEnity(personFile);
