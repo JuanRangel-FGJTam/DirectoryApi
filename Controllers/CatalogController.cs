@@ -23,6 +23,8 @@ namespace AuthApi.Controllers
         private readonly ILogger<CatalogController> _logger = logger;
         private readonly DirectoryDBContext dbContext = context;
 
+        private readonly int mexicoCountryId = 138;
+
         /// <summary>
         ///  Get ocupations catalog
         /// </summary>
@@ -281,69 +283,119 @@ namespace AuthApi.Controllers
         ///  Return the colonies by zipcode
         /// </summary>
         /// <param name="zipcode"></param>
+        /// <param name="country_id"></param>
         /// <returns></returns>
         /// <response code="200">Return the colonies and citys</response>
         /// <response code="404">The zipcode was not found</response>
+        /// <response code="406">The country selected has no data</response>
         /// <response code="401">Auth token is not valid or is not present</response>
         [HttpGet]
         [Route("/api/zipcode/{zipcode}")]
-        public ActionResult<Object> GetColoniesByZipCode(string zipcode)
+        public ActionResult<Object> GetColoniesByZipCode(string zipcode, [FromQuery] string? country_id)
         {
 
-            if( !dbContext.Colonies.Where( item => item.ZipCode == zipcode).Any()){
+            if(!dbContext.Colonies.Where( item => item.ZipCode == zipcode).Any())
+            {
                 return NotFound( new {
                     Title = $"Zip code {zipcode} not found",
                     Message = $"Colonies with zip code {zipcode} not found",
                 });
             }
 
-            var colonies = dbContext.Colonies
-            .Where( c => c.ZipCode == zipcode)
-            .OrderBy( item => item.Name)
-            .Select( c => new { 
-                c.Id,
-                c.Name,
-                c.ZipCode})
-            .ToArray();
-
-            var defaultColony = dbContext.Colonies
-                .Include( c => c.Municipality.State.Country)
-                .Where( c => c.Id == colonies.First().Id)
-                .First();
-
-            var defaultCountry =  defaultColony.Municipality.State.Country;
-
-            var states = dbContext.States
-                .Where( s => s.Country.Id == defaultCountry.Id)
-                .Select( s => new {
-                    s.Id,
-                    s.Name,
-                    Default = s.Id == defaultColony.Municipality.State.Id ?1 :0
-                })
-                .OrderBy( item => item.Name)
-                .ToArray();
-
-            var municipalities = dbContext.Municipalities
-                .Where( m => m.State.Id == defaultColony.Municipality.State.Id)
-                .Select( m => new {
-                    m.Id,
-                    m.Name,
-                    Default = m.Id == defaultColony.Municipality.Id ?1 :0
-                })
-                .OrderBy( item => item.Name)
-                .ToArray();
-
-            return new {
-                Zipcode = zipcode,
-                colonies,
-                municipalities,
-                states,
-                Country = new {
-                    defaultCountry.Id,
-                    defaultCountry.Name,
-                    defaultCountry.ISO
+            try
+            {
+                // * get the country
+                int countryId = int.TryParse(country_id, out int _countryId) ? _countryId : mexicoCountryId;
+                var currentCountry = dbContext.Countries.FirstOrDefault(item => item.Id == countryId);
+                if(currentCountry == null)
+                {
+                    return NotFound( new {
+                        Title = $"Coutnry '{country_id}' not found",
+                        Message = $"The country id '{country_id}' is not found",
+                    });
                 }
-            };
+                
+                int[] statesId = dbContext.States
+                    .Where(item => item.Country.Id == currentCountry.Id)
+                    .Select(s => s.Id)
+                    .ToArray();
+
+                int[] municipalitiesId = dbContext.Municipalities
+                    .Where(item => statesId.Contains(item.State.Id))
+                    .Select( mun => mun.Id)
+                    .ToArray();
+                
+                // * Validate if the country has data
+                if( !statesId.Any() || !municipalitiesId.Any() )
+                {
+                    return StatusCode(406, new {
+                        Message = "The Country selected has not states or municipalities"
+                    });
+                }
+
+                // * get the colonies catalog
+                var colonies = dbContext.Colonies
+                    .Where( c => c.ZipCode == zipcode && municipalitiesId.Contains(c.Municipality.Id) )
+                    .OrderBy( item => item.Name)
+                    .Select( c => new {
+                        c.Id,
+                        c.Name,
+                        c.ZipCode})
+                    .ToArray();
+
+                // * get the defatul colony
+                var defaultColonyId = colonies.First().Id;
+                var defaultColony = dbContext.Colonies
+                    .Include(c => c.Municipality)
+                        .ThenInclude(m => m.State)
+                    .FirstOrDefault(c => c.Id == defaultColonyId && c.Municipality != null);
+
+                var defaultMunicipalityId = defaultColony.Municipality?.Id ?? 0;
+                var defaultStateId = defaultColony.Municipality?.State?.Id ?? 0;
+
+                // * get the municipalities catalog
+                var municipalities = dbContext.Municipalities
+                    .Where(m => m.State.Id == defaultStateId)
+                    .Select( m => new {
+                        m.Id,
+                        m.Name,
+                        Default = m.Id == defaultMunicipalityId
+                    })
+                    .OrderBy( item => item.Name)
+                    .ToArray();
+
+                // * get the states catalog
+                var states = dbContext.States
+                    .Where( s => s.Country.Id == countryId)
+                    .Select( s => new {
+                        s.Id,
+                        s.Name,
+                        Default = s.Id == defaultStateId
+                    })
+                    .OrderBy( item => item.Name)
+                    .ToArray();
+
+                // * return the data
+                return new {
+                    Zipcode = zipcode,
+                    colonies,
+                    municipalities,
+                    states,
+                    Country = new {
+                        currentCountry.Id,
+                        currentCountry.Name,
+                        currentCountry.ISO
+                    }
+                };
+            }
+            catch(Exception err)
+            {
+                this._logger.LogError(err, "Fail at get the colonies by zipcode: {message}", err.Message);
+                return Conflict( new {
+                    err.Message
+                });
+            }
+
         }
 
     }
