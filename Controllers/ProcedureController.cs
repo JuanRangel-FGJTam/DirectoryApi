@@ -441,6 +441,84 @@ namespace AuthApi.Controllers
         }
 
         /// <summary>
+        /// Retorna el listado de tramites almacenados de la persona
+        /// </summary>
+        /// <param name="personId"> identificador de la person in formato GUID</param>
+        /// <param name="procedingId"> id of the proceding</param>
+        /// <response code="200">return the data</response>
+        /// <response code="400">The request is not valid ore some error are present</response>
+        /// <response code="404">The person is not found</response>
+        [HttpGet]
+        [Route("/api/people/{personId}/procedures/{procedingId}")]
+        public async Task<ActionResult<ProceedingResponse>> GetPersonProcedingById([FromRoute] string personId, [FromRoute] int procedingId)
+        {
+            
+            // * Validate person id
+            Guid _personID = Guid.Empty;
+            try{
+                _personID = Guid.Parse( personId );
+            }catch(Exception){
+                return BadRequest( new {
+                    message = $"Person id has formatted not valid"
+                });
+            }
+
+            // * validate the person
+            if( !this.dbContext.People.Where(item => item.Id == _personID).Any()){
+                return NotFound( new {
+                    Message = "The person is not found"
+                });
+            }
+
+            // * get data
+            var proceedingRaw = this.dbContext.Proceeding
+                .Include(p=>p.Files)
+                .Include(p => p.Status)
+                .Include(p => p.Area)
+                .FirstOrDefault(item=> item.Id == procedingId);
+            
+            if(proceedingRaw == null)
+            {
+                return NotFound( new {
+                    Message = "The proceeding was not found"
+                });
+            }
+
+            var procceding = ProceedingResponse.FromIdentity(proceedingRaw);
+
+            // * make temporal url for the files
+            if(!procceding.Files!.Any())
+            {
+                return Ok(procceding);
+            }
+
+            // * override the proceding file with the temporally url
+            var fileTasks = procceding.Files!.Select(async file => {
+                if( file.DeletedAt != null || string.IsNullOrEmpty(file.FilePath)){
+                    return file;
+                }
+                var fileUrl = await minioService.MakeTemporalUrl(file.FilePath!, file.FileType??"application/pdf");
+                return new ProceedingFileResponse {
+                    Id = file.Id,
+                    FileName = file.FileName,
+                    FilePath = file.FilePath,
+                    FileType = file.FileType,
+                    FileSize = file.FileSize,
+                    CreatedAt = file.CreatedAt,
+                    UpdatedAt = file.UpdatedAt,
+                    FileUrl = fileUrl,
+                    DeletedAt = file.DeletedAt
+                };
+            }).ToList();
+            
+            procceding.Files = await Task.WhenAll(fileTasks);
+
+            // * return the data
+            return Ok(procceding);
+        }
+
+
+        /// <summary>
         ///  Actualiza el estatus y observación del procedimiento almacenado que coincida con la denunciaId y el personId
         /// </summary>
         /// <remarks>
