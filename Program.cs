@@ -79,6 +79,7 @@ builder.Services.AddMinio(client => client
 );
 builder.Services.AddScoped<MinioService>();
 builder.Services.ConfigureQuartz();
+builder.Services.AddUbicanosServices(builder.Configuration);
 
 var app = builder.Build();
 var localizationOptions = app.Services.GetRequiredService<IOptions<RequestLocalizationOptions>>().Value;
