@@ -14,7 +14,6 @@ using AuthApi.Models.Responses;
 
 namespace AuthApi.Controllers
 {
-    
     [Authorize]
     [ApiController]
     [Route("api/catalog")]
@@ -278,6 +277,91 @@ namespace AuthApi.Controllers
             }
         }
 
+        [HttpGet("/api/zipcode/search")]
+        public ActionResult<Object> SearchZipCode([FromQuery] string zipcode)
+        {
+            // * search the data on the db
+            var resultsList = new List<ZipcodeSearchResult>();
+            try
+            {
+                using( var connection = dbContext.Database.GetDbConnection())
+                {
+                    connection.Open();
+
+                    using var command = connection.CreateCommand();
+                    command.CommandText = @"
+                        Select top 100
+                            c.zipCode,
+                            cc.id as countryId,
+                            cc.[name] as countryName,
+                            s.id as stateId,
+                            s.[name] as [state],
+                            m.id as [municipalityId],
+                            m.[name] as municipality,
+                            c.id as colonyId,
+                            c.[name] as colonyName
+                        From [dbo].[Colonies] c
+                        Inner Join [dbo].[Municipalities] m on c.municipalityId = m.id
+                        Inner Join [dbo].[States] s on s.id = m.stateId
+                        Inner Join [dbo].[Countries] cc on cc.id = s.countryId
+                        Where zipCode like @zipcodeSearch
+                        Order by cc.[name], s.[name], m.[name], c.[name]";
+                    command.CommandType = System.Data.CommandType.Text;
+                    var param = command.CreateParameter();
+                    param.ParameterName = "@zipcodeSearch";
+                    param.Value = "%" + zipcode + "%";
+                    param.DbType = System.Data.DbType.String;
+                    command.Parameters.Add(param);
+
+                    using(var reader = command.ExecuteReader())
+                    {
+                        while(reader.Read())
+                        {
+                            resultsList.Add(ZipcodeSearchResult.FromDataReader(reader));
+                        }
+                    }
+                    connection.Close();
+                }
+            }
+            catch(Exception err)
+            {
+                this._logger.LogError(err, "Fail at search the zipcode: {message}", err.Message);
+                return Conflict( new {
+                    err.Message
+                });
+            }
+
+            if(!resultsList.Any())
+            {
+                return NotFound( new {
+                    Title = $"Zip code {zipcode} not found",
+                    Message = $"Colonies with zip code {zipcode} not found",
+                });
+            }
+
+            // * group the data
+            var groupedData = resultsList
+            // .GroupBy(c => new { c.ZipCode, c.CountryId, c.CountryName, c.StateId, c.State })
+            .GroupBy(c => new { c.CountryId, c.CountryName })
+            .Select(group => new
+            {
+                CountryId = group.Key.CountryId,
+                CountryName = group.Key.CountryName,
+                States = group.GroupBy( d => new {d.StateId, d.State})
+                    .Select(groupd => new {
+                        StateId = groupd.Key.StateId,
+                        StateName = groupd.Key.State,
+                        Data = groupd.ToArray()
+                    }).ToArray()
+            })
+            .ToList();
+
+            // * return the data
+            return new {
+                Zipcode = zipcode,
+                results = groupedData
+            };
+        }
 
         /// <summary>
         ///  Return the colonies by zipcode
@@ -395,7 +479,6 @@ namespace AuthApi.Controllers
                     err.Message
                 });
             }
-
         }
 
     }
