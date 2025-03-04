@@ -38,7 +38,7 @@ namespace AuthApi.Models
 
         public string? AppName {get;set;}
         
-        [Required (ErrorMessage = "El token de pre-registro es requerido")]
+        [Required (ErrorMessage = "El codigo de pre-registro es requerido")]
         public string? Token {get;set;}
 
     }
