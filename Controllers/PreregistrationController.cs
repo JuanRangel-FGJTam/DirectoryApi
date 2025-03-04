@@ -35,7 +35,7 @@ namespace AuthApi.Controllers
         /// <response code="400">The request is not valid ore some error are present</response>
         /// <response code="422">Some request params are not valid</response>
         [HttpPost]
-        public async Task<IActionResult> RegisterUser( PreregistrationRequest request )
+        public async Task<IActionResult> RegisterUser(PreregistrationRequest request)
         {
             // Validate request
             if (!ModelState.IsValid)
@@ -183,6 +183,8 @@ namespace AuthApi.Controllers
         /// <response code="201">Succsessfull stored the person</response>
         /// <response code="400">The request is not valid or are parameters missing</response>
         /// <response code="404">The preregister record was not found by matching the token passed by the request</response>
+        /// <response code="409">Internal error at attempt to generate the person.</response>
+        /// <response code="410">The code is expired.</response>
         /// <response code="422">Some request params are not valid</response>
         [Route("validate")]
         [HttpPost]
@@ -191,17 +193,25 @@ namespace AuthApi.Controllers
 
                 // * Validate token 
                 var preregister =  this.preregisterService.GetPreregistrationByToken(request.Token!);
-                if( preregister == null){
+                if(preregister == null)
+                {
                     return NotFound( new {
                         Title = "El código de prerregistro no es válido.",
                         Message = $"No se encontró registro que corresponda al código '{request.Token!}'."
                     });
                 }
 
+                // * validate the lifetime of the code
+                if(preregister.ValidTo < DateTime.Now)
+                {
+                    return StatusCode(StatusCodes.Status410Gone, new { message = "El código ha caducado y ya no es válido." });
+                }
+
                 // * Store the person data 
-                var newPerson = this.preregisterService.ValidateRegister( preregister.Id, request );
-                if( newPerson == null){
-                    return BadRequest( new {
+                var newPerson = this.preregisterService.ValidateRegister(preregister.Id, request);
+                if( newPerson == null)
+                {
+                    return Conflict( new {
                         Title = "No se puede registrar la persona.",
                         Message = "No se puede registrar la persona, el registro no se encuentra."
                     });
