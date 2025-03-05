@@ -197,39 +197,48 @@ namespace AuthApi.Controllers
                 person.FirstName = personRequest.FirstName.Trim();
             }
 
-            if(!string.IsNullOrEmpty(personRequest.LastName))
+            if(personRequest.LastName != null)
             {
-                person.LastName = personRequest.LastName.Trim();
-            }
-            else
-            {
-                person.LastName = String.Empty;
+                if(!string.IsNullOrEmpty(personRequest.LastName))
+                {
+                    person.LastName = personRequest.LastName.Trim();
+                }
+                else
+                {
+                    person.LastName = String.Empty;
+                }
             }
 
-            if(!string.IsNullOrEmpty(personRequest.Rfc))
+            if(personRequest.Rfc != null)
             {
-                var rfcStored = dbContext.People.Where( p => p.DeletedAt == null && p.Rfc == personRequest.Rfc.Trim() && p.Id != _personID ).Count();
-                if(rfcStored > 0){
-                    errorsRelations.Add( "rfc", new string[]{ "El RFC ingresado ya está registrado en nuestro sistema."} );
+                if(!string.IsNullOrEmpty(personRequest.Rfc))
+                {
+                    var rfcStored = dbContext.People.Where( p => p.DeletedAt == null && p.Rfc == personRequest.Rfc.Trim() && p.Id != _personID ).Count();
+                    if(rfcStored > 0){
+                        errorsRelations.Add( "rfc", new string[]{ "El RFC ingresado ya está registrado en nuestro sistema."} );
+                    }
+                    person.Rfc = personRequest.Rfc.Trim();
                 }
-                person.Rfc = personRequest.Rfc.Trim();
-            }
-            else
-            {
-                person.Rfc = String.Empty;
+                else
+                {
+                    person.Rfc = String.Empty;
+                }
             }
 
-            if(!string.IsNullOrEmpty(personRequest.Curp))
+            if(personRequest.Curp != null)
             {
-                var curpStored = dbContext.People.Where( p => p.DeletedAt == null && p.Curp == personRequest.Curp.Trim() && p.Id != _personID ).Count();
-                if(curpStored > 0){
-                    errorsRelations.Add( "curp", new string[]{ "El CURP ingresado ya está registrado en nuestro sistema."} );
+                if(!string.IsNullOrEmpty(personRequest.Curp))
+                {
+                    var curpStored = dbContext.People.Where( p => p.DeletedAt == null && p.Curp == personRequest.Curp.Trim() && p.Id != _personID ).Count();
+                    if(curpStored > 0){
+                        errorsRelations.Add( "curp", new string[]{ "El CURP ingresado ya está registrado en nuestro sistema."} );
+                    }
+                    person.Curp = personRequest.Curp.Trim();
                 }
-                person.Curp = personRequest.Curp.Trim();
-            }
-            else
-            {
-                person.Curp = String.Empty;
+                else
+                {
+                    person.Curp = String.Empty;
+                }
             }
 
             if(!string.IsNullOrEmpty(personRequest.Email))
