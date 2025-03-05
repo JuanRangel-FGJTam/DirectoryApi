@@ -18,6 +18,8 @@ public class PersonFile
     public string? MimmeType {get;set;}
     public long FileSize {get;set;}
     public string? Folio {get;set;}
+    public string? FilePathBack {get;set;}
+    public long? FileSizeBack {get;set;}
 
     [DataType(DataType.Date)]
     public DateTime Validation {get;set;}
