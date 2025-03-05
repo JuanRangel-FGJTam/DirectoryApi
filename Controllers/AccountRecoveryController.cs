@@ -104,7 +104,6 @@ namespace AuthApi.Controllers
         }
 
 
-
         /// <summary>
         /// Register a new account recovery request
         /// </summary>
@@ -275,8 +274,20 @@ namespace AuthApi.Controllers
                 });
             }
 
+
+            // * retrive the template
+            if(!Enum.IsDefined(typeof(RecoveryAccountTemplate), request.TemplateId))
+            {
+                return BadRequest( new {
+                    Title = "El TemplateId seleccionado es incorrecto.",
+                    Message = "El TemplateId ingresado no existe."
+                });
+            }
+            RecoveryAccountTemplate recoveryAccountTemplate = (RecoveryAccountTemplate)request.TemplateId;
+
             try
             {
+                // * updated the request
                 var authenticatedUser = this.GetCurrentUser();
                 recoveryRequest.ResponseComments = request.ResponseComments;
                 recoveryRequest.AttendingAt = DateTime.Now;
@@ -290,10 +301,9 @@ namespace AuthApi.Controllers
                     var personName = string.Join(" ", [recoveryRequest.Name, recoveryRequest.FirstName, recoveryRequest.LastName]);
                     if(recoveryRequest.ContactEmail != null)
                     {
-                        var response = await this.recoveryAccountService.SendSuccessEmail(personName, recoveryRequest.ContactEmail.Trim());
+                        var emailResponse = await this.recoveryAccountService.SendEmail(personName, recoveryRequest.ContactEmail.Trim(), request.ResponseComments ?? string.Empty, recoveryAccountTemplate);
                     }
                 }
-
                 return Ok();
             }
             catch(ArgumentNullException ane)
@@ -321,81 +331,17 @@ namespace AuthApi.Controllers
         }
 
 
-        /// <summary>
-        /// delete the request by a solfdelete
-        /// </summary>
-        /// <param name="accountRecoveryUUID"></param>
-        /// <param name="request"></param>
-        /// <returns></returns>
-        /// <response code="20">Request updated</response>
-        /// <response code="400">The request is not valid</response>
-        /// <response code="401">Auth token is not valid or is not present</response>
-        /// <response code="404">The request id was not found on the system</response>
-        /// <response code="409">Internal error</response>S
-        [HttpDelete("{accountRecoveryUUID}")]
-        public async Task<IActionResult> DeleteRequest([FromRoute] string accountRecoveryUUID, [FromBody] AccountRecoveryUpdateRequest request)
+        [HttpGet("templates")]
+        public IActionResult GetTemplates()
         {
-            var parseCorrect = Guid.TryParse(accountRecoveryUUID, out Guid requestUUID);
-            if(!parseCorrect){
-                return BadRequest( new {
-                    Title = "El formato del accountRecoveryUUID es incorrecto",
-                    Message = "El formato del accountRecoveryUUID es incorrecto, se espera un UUID"
-                });
-            }
-
-            // * attempt to get the recovery request
-            var recoveryRequest = this.recoveryAccountService.GetByID(requestUUID);
-            if(recoveryRequest == null)
+            var templates = new List<dynamic>()
             {
-                return NotFound(new {
-                    Title = "No se econtro el registro en la base de datos.",
-                    Message = "No se econtro el registro en la base de datos."
-                });
-            }
-            
-            try
-            {
-                var authenticatedUser = this.GetCurrentUser();
-                recoveryRequest.ResponseComments = request.ResponseComments;
-                recoveryRequest.DeletedAt = DateTime.Now;
-                recoveryRequest.DeletedBy = authenticatedUser.Id;
-                context.AccountRecoveryRequests.Update(recoveryRequest);
-                context.SaveChanges();
-
-                // * attemp to send the email
-                if(request.NotifyEmail == 1)
-                {
-                    var personName = string.Join(" ", [recoveryRequest.Name, recoveryRequest.FirstName, recoveryRequest.LastName]);
-                    if(recoveryRequest.ContactEmail != null)
-                    {
-                        var response = await this.recoveryAccountService.SendFailEmail(personName, recoveryRequest.ContactEmail.Trim(), request.ResponseComments ?? "");
-                    }
-                }
-
-                return Ok();
-            }
-            catch(ArgumentNullException ane)
-            {
-                if( ane.ParamName == "userId" || ane.ParamName == "user")
-                {
-                    return Unauthorized(
-                        new {
-                            Message = $"Cant access to the authenticated user: {ane.Message}"
-                        }
-                    );
-                }
-
-                return Conflict( new
-                {
-                    Message = ane.Message
-                });
-            }
-            catch (System.Exception err)
-            {
-                return Conflict(new {
-                    Message = err.Message
-                });
-            }
+                new { Id = 1, Name = "Finished", Label = "Solicitud finalizada" },
+                new { Id = 2, Name = "Incompleted", Label = "Solicitud incompleta" },
+                new { Id = 3, Name = "NotFound", Label = "Sin Conincidencia" },
+                new { Id = 4, Name = "Custom", Label = "Respuesta personalizada" }
+            };
+            return Ok(templates);
         }
 
         #region Private functions

@@ -221,13 +221,18 @@ namespace AuthApi.Services
             return this.directoryDBContext.SaveChanges();
         }
 
-        public async Task<string?> SendSuccessEmail(string personFullName, string email)
+        public async Task<dynamic> SendEmail(string personFullName, string email, string comments, RecoveryAccountTemplate recoveryAccountTemplate)
         {
             // * prepare the parameters
-            var _subject = "Actualización de Correo Electrónico";
+            var _subject = "Resultado de su solicitud de recuperación de cuenta.";
 
             // * Make html body
-            var _htmlBody = EmailTemplates.RecoveryAccountCompleted(personFullName, email);
+            var _htmlBody = recoveryAccountTemplate switch {
+                RecoveryAccountTemplate.Finished => EmailTemplates.RecoveryAccountCompleted(personFullName, email),
+                RecoveryAccountTemplate.Incompleted => EmailTemplates.RecoveryAccountInCompleted(personFullName, comments),
+                RecoveryAccountTemplate.NotFound => EmailTemplates.RecoveryAccountNotFound(personFullName, comments),
+                _ => EmailTemplates.RecoveryAccountEmptyEmail(personFullName, comments),
+            };
 
             // * Send email
             try
@@ -240,41 +245,20 @@ namespace AuthApi.Services
                     );
                 });
                 logger.LogInformation( "Email ID:{emailID} sending", emailID);
-                return emailID;
+
+                return new {
+                    ResponseId = emailID,
+                    Body = _htmlBody
+                };
             }
             catch(Exception err)
             {
                 logger.LogError(err, "Error at attempting to send Email for validation to email {mail}; {message}", email, err.Message);
-                return null;
+                return new {
+                    Error = err.Message
+                };
             }
         }
 
-        public async Task<string?> SendFailEmail(string personFullName, string email, string comments)
-        {
-            // * prepare the parameters
-            var _subject = "Solicitud de Recuperación de Cuenta Incompleta";
-
-            // * Make html body
-            var _htmlBody = EmailTemplates.RecoveryAccountInCompleted(personFullName, comments);
-
-            // * Send email
-            try
-            {
-                var emailID = await Task.Run<string>( async ()=>{
-                    return await this.emailProvider.SendEmail(
-                        emailDestination: email,
-                        subject: _subject,
-                        data: _htmlBody
-                    );
-                });
-                logger.LogInformation("Email ID:{emailID} sending", emailID);
-                return emailID;
-            }
-            catch(Exception err)
-            {
-                logger.LogError(err, "Error at attempting to send Email for validation to email {mail}; {message}", email, err.Message);
-                return null;
-            }
-        }
     }
 }
