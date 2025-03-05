@@ -10,6 +10,7 @@ using AuthApi.Data.Exceptions;
 using AuthApi.Entities;
 using AuthApi.Helper;
 using AuthApi.Models;
+using System.Text.Json;
 
 namespace AuthApi.Services
 {
@@ -237,25 +238,29 @@ namespace AuthApi.Services
             // * Send email
             try
             {
-                var emailID = await Task.Run<string>( async ()=>{
+                var emailResponseJson = await Task.Run<string>( async ()=>{
                     return await this.emailProvider.SendEmail(
                         emailDestination: email,
                         subject: _subject,
                         data: _htmlBody
                     );
                 });
-                logger.LogInformation( "Email ID:{emailID} sending", emailID);
+
+                // * attempt to cast the response
+                var emailResponse = JsonSerializer.Deserialize<EmailResponse>(emailResponseJson);
+
+                logger.LogInformation( "Email ID:{emailID} sending", emailResponseJson);
 
                 return new {
-                    ResponseId = emailID,
-                    Body = _htmlBody
+                    Response = $"{emailResponse?.Message}|{emailResponse?.Response?.Id}",
+                    Body = _htmlBody.Trim()
                 };
             }
             catch(Exception err)
             {
                 logger.LogError(err, "Error at attempting to send Email for validation to email {mail}; {message}", email, err.Message);
                 return new {
-                    Error = err.Message
+                    Response = err.Message
                 };
             }
         }

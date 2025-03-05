@@ -302,6 +302,11 @@ namespace AuthApi.Controllers
                     if(recoveryRequest.ContactEmail != null)
                     {
                         var emailResponse = await this.recoveryAccountService.SendEmail(personName, recoveryRequest.ContactEmail.Trim(), request.ResponseComments ?? string.Empty, recoveryAccountTemplate);
+                        // * save the email response
+                        recoveryRequest.NotificationEmailResponse = emailResponse.Response;
+                        recoveryRequest.NotificationEmailContent = emailResponse.Body;
+                        context.AccountRecoveryRequests.Update(recoveryRequest);
+                        context.SaveChanges();
                     }
                 }
                 return Ok();
