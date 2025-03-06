@@ -17,6 +17,8 @@ namespace AuthApi.Models
 
         public IFormFileCollection? File { get; set; }
 
+        public IFormFileCollection? FileBack { get; set; }
+
         public string? Folio { get; set; }
     }
 }

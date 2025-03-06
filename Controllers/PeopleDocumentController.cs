@@ -106,6 +106,8 @@ namespace AuthApi.Controllers
             try
             {
                 var _file = request.File!.First();
+                var _fileBack = request.FileBack?.First();
+
                 // * create the new file
                 newPersonFile = new PersonFile
                 {
@@ -115,13 +117,14 @@ namespace AuthApi.Controllers
                     FilePath = "",
                     MimmeType = _file.ContentType,
                     FileSize = _file.Length,
+                    FileSizeBack = _fileBack?.Length,
                     Validation = request.Validation,
                     CreatedAt = DateTime.Now,
                     Folio = request.Folio
                 };
 
 
-                // * store the file on minio
+                // * store the front file on minio
                 using(Stream stream = request.File!.First().OpenReadStream())
                 {
                     // * make the file name
@@ -135,6 +138,25 @@ namespace AuthApi.Controllers
 
                     // * store the file and retrive the path
                     newPersonFile.FilePath = await minioService.UploadFile(fileName, stream);
+                }
+
+                // * store the back file on minio
+                if(_fileBack != null)
+                {
+                    using(Stream stream = _fileBack.OpenReadStream())
+                    {
+                        // * make the file name
+                        var fileName = string.Format("{0}/{1}/{2}-back-{3}.{4}",
+                            this.FolderName,
+                            _personID.ToString(),
+                            documentType.Name.ToLower().Trim().Replace(" ", "_"),
+                            DateTime.Now.Ticks,
+                            _file.FileName.Split(".").Last()
+                        );
+
+                        // * store the file and retrive the path
+                        newPersonFile.FilePathBack = await minioService.UploadFile(fileName, stream);
+                    }
                 }
 
 
@@ -209,6 +231,12 @@ namespace AuthApi.Controllers
             foreach(var pf in personFiles)
             {
                 var fileUrl = await minioService.MakeTemporalUrl(pf.FilePath!, pf.MimmeType ?? "image/jpeg");
+                string? fileUrlBack = null;
+                if( pf.FilePathBack != null)
+                {
+                    fileUrlBack = await minioService.MakeTemporalUrl(pf.FilePathBack!, pf.MimmeType ?? "image/jpeg");
+                }
+                
                 personFilesResponse.Add(
                     new PersonDocumentResponse
                     {
@@ -216,15 +244,18 @@ namespace AuthApi.Controllers
                         PersonId = pf.PersonId,
                         FileName = pf.FileName,
                         FilePath = pf.FilePath,
+                        FilePathBack = pf.FilePathBack,
                         MimmeType = pf.MimmeType,
                         FileSize = pf.FileSize,
+                        FileSizeBack = pf.FileSizeBack,
                         DocumentTypeId = pf.DocumentTypeId,
                         DocumentTypeName = pf.DocumentTypeName,
                         CreatedAt = pf.CreatedAt,
                         DeletedAt = pf.DeletedAt,
                         Valid = pf.Valid,
                         Folio = pf.Folio,
-                        FileUrl = fileUrl
+                        FileUrl = fileUrl,
+                        FileUrlBack = fileUrlBack
                     }
                 );
             }
@@ -332,6 +363,10 @@ namespace AuthApi.Controllers
 
                 var personDocument = PersonDocumentResponse.FromEnity(personFile);
                 personDocument.FileUrl = await minioService.MakeTemporalUrl(personDocument.FilePath!, personDocument.MimmeType!);
+                if(personDocument.FilePathBack != null)
+                {
+                    personDocument.FileUrlBack = await minioService.MakeTemporalUrl(personDocument.FilePathBack!, personDocument.MimmeType!);
+                }
                 return personDocument;
             }
 
