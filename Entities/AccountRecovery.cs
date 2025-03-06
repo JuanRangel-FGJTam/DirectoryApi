@@ -32,8 +32,11 @@ public class AccountRecovery
     public DateTime? DeletedAt {get;set;}
     public int? AttendingBy {get;set;}
     public int? DeletedBy {get;set;}
-    
+
+    public string? NotificationEmailResponse {get;set;}
+    public string? NotificationEmailContent {get;set;}
+
     public virtual ICollection<AccountRecoveryFile>? Files { get; set; }
     public virtual User? UserAttended {get;set;}
-    public virtual User? UserDeleted  {get;set;}
+    public virtual User? UserDeleted {get;set;}
 }

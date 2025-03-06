@@ -8,7 +8,8 @@ namespace AuthApi.Models
 {
     public class AccountRecoveryUpdateRequest
     {
-        public string? ResponseComments {get;set;}
+        public int TemplateId {get;set;}
         public int? NotifyEmail {get;set;}
+        public string? ResponseComments {get;set;}
     }
 }

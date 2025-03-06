@@ -37,6 +37,9 @@ namespace AuthApi.Models
         public int? UserDeletedId {get;set;}
         public int TotalDocuments {get;set;}
 
+        public string? EmailNotificationResponse {get;set;}
+        public string? EmailNotificationContent {get;set;}
+
         public IEnumerable<AccountRecoveryFileResponse> Files {get;set;} = Array.Empty<AccountRecoveryFileResponse>();
 
         public static AccountRecoveryResponse FromEntity(AccountRecovery p){
@@ -87,7 +90,9 @@ namespace AuthApi.Models
                 item.UserDeleted = p.UserDeleted.FirstName + " " + p.UserDeleted.LastName;
                 item.UserDeletedId = p.UserDeleted.Id;
             }
-            
+
+            item.EmailNotificationResponse = p.NotificationEmailResponse;
+            item.EmailNotificationContent = p.NotificationEmailContent;
             return item;
         }
     }
