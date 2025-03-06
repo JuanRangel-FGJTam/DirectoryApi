@@ -45,7 +45,7 @@ namespace AuthApi.Helper
                     </td></tr>
                 </table>
                 <div style='margin-top:2rem;text-align:center;'>Atentamente</div>
-                <b style='padding-top:0.2rem;text-align:center;'>Fiscalía General de Justicia del Estado de Tamaulipas</b> </body>".Replace("{{code}}", code).Replace("{{time}}", time);
+                <div style='padding-top:0.2rem;text-align:center;'><b>Fiscalía General de Justicia del Estado de Tamaulipas</b></div> </body>".Replace("{{code}}", code).Replace("{{time}}", time);
         }
 
         public static string Welcome(string personFullName, string imageNameSrc, string imageProfileSrc, string welcomeMessage){
@@ -78,7 +78,7 @@ namespace AuthApi.Helper
                 </td></tr>
             </table>
             <div style='margin-top:2rem;text-align:center;'>Atentamente</div>
-            <b style='padding-top:0.2rem;text-align:center;'>Fiscalía General de Justicia del Estado de Tamaulipas</b>
+            <div style='padding-top:0.2rem;text-align:center;'><b>Fiscalía General de Justicia del Estado de Tamaulipas</b></div>
             </body>".Replace("{code}", code).Replace("{time}", time);
         }
 
