@@ -238,9 +238,9 @@ namespace AuthApi.Controllers
                 });
             }
             catch (System.Exception err) {
-                return BadRequest( new {
+                return Conflict( new {
                     Title = "Error no controlado al validar el registro.",
-                    err.Message
+                    Message = err.Message
                 });
             }
         }
