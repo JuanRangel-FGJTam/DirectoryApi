@@ -225,7 +225,7 @@ namespace AuthApi.Services
         public async Task<dynamic> SendEmail(string personFullName, string email, string comments, RecoveryAccountTemplate recoveryAccountTemplate)
         {
             // * prepare the parameters
-            var _subject = "Resultado de su solicitud de recuperación de cuenta.";
+            var _subject = "Solicitud de recuperación de cuenta de la Fiscalía Digital";
 
             // * Make html body
             var _htmlBody = recoveryAccountTemplate switch {
