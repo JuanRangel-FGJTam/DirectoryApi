@@ -19,8 +19,13 @@ namespace AuthApi.Models
         public string? GenderName {get;set;}
         public int? GenderId {get;set;}
         public string? Curp {get;set;}
+        public string? Rfc {get;set;}
         public string? NationalityName {get;set;} = default!;
         public int? NationalityId {get;set;} = default!;
+        public string? OccupationName {get;set;} = default!;
+        public int? OccupationId {get;set;} = default!;
+        public string? MaritalStatusName {get;set;} = default!;
+        public int? MaritalStatusId {get;set;} = default!;
         public string? ContactEmail {get;set;}
         public string? ContactEmail2 {get;set;}
         public string? ContactPhone {get;set;}
@@ -51,6 +56,7 @@ namespace AuthApi.Models
                 LastName = p.LastName,
                 BirthDate = p.BirthDate,
                 Curp = p.Curp,
+                Rfc = p.Rfc,
                 ContactEmail = p.ContactEmail,
                 ContactEmail2 = p.ContactEmail2,
                 ContactPhone = p.ContactPhone,
@@ -77,6 +83,16 @@ namespace AuthApi.Models
             if(p.Nationality != null){
                 item.NationalityName = p.Nationality.Name;
                 item.NationalityId = p.Nationality.Id;
+            }
+
+            if(p.Occupation != null){
+                item.OccupationName = p.Occupation.Name;
+                item.OccupationId = p.Occupation.Id;
+            }
+
+            if(p.MaritalStatus != null){
+                item.MaritalStatusName = p.MaritalStatus.Name;
+                item.MaritalStatusId = p.MaritalStatus.Id;
             }
 
             if(p.UserAttended != null)

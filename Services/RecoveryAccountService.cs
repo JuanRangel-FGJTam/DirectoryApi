@@ -43,6 +43,8 @@ namespace AuthApi.Services
                 .Where(item => item.Files != null)
                 .Include(p => p.Nationality)
                 .Include(p => p.Gender)
+                .Include(p => p.Occupation)
+                .Include(p => p.MaritalStatus)
                 .Include( p => p.Files!)
                     .ThenInclude( f => f.DocumentType)
                 .Include(p => p.UserDeleted)
@@ -96,6 +98,8 @@ namespace AuthApi.Services
             return this.directoryDBContext.AccountRecoveryRequests
                 .Include( item => item.Gender)
                 .Include( item => item.Nationality)
+                .Include( item => item.Occupation)
+                .Include( item => item.MaritalStatus)
                 .Include( item => item.UserAttended)
                 .Include( item => item.UserDeleted)
                 .FirstOrDefault( item => item.Id == requestId);
@@ -109,7 +113,7 @@ namespace AuthApi.Services
 
             this.directoryDBContext
                 .Entry(data)
-                .Collection(p => p.Files)
+                .Collection(p => p.Files!)
                 .Query()
                 .Include( f => f.DocumentType)
                 .Load();
@@ -171,6 +175,7 @@ namespace AuthApi.Services
                 throw new SimpleValidationException("Fecha de nacimiento incorrecta", errors);
             }
 
+            // * get relations
             Gender? gender = null;
             if(request.GenderId != null )
             {
@@ -183,16 +188,32 @@ namespace AuthApi.Services
                 nacionality = directoryDBContext.Nationality.FirstOrDefault(item => item.Id == request.NationalityId);
             }
 
+            Occupation? occupation = null;
+            if(request.OccupationId != null)
+            {
+                occupation = directoryDBContext.Occupation.FirstOrDefault(item => item.Id == request.OccupationId);
+            }
+
+            MaritalStatus? maritalStatus = null;
+            if(request.MaritalStatusId != null)
+            {
+                maritalStatus = directoryDBContext.MaritalStatus.FirstOrDefault(item => item.Id == request.MaritalStatusId);
+            }
+
 
             // * create the record
-            var accountRecoveryRequest = new AccountRecovery {
+            var accountRecoveryRequest = new AccountRecovery
+            {
                 Name = request.Name!,
                 FirstName = request.FirstName,
                 LastName = request.LastName,
                 BirthDate = birthDate1!.Value,
                 Gender = gender,
                 Curp = request.Curp,
+                Rfc = request.Rfc,
                 Nationality = nacionality,
+                Occupation = occupation,
+                MaritalStatus = maritalStatus,
                 ContactEmail = request.ContactEmail,
                 ContactEmail2 = request.ContactEmail2,
                 ContactPhone = request.ContactPhone,
