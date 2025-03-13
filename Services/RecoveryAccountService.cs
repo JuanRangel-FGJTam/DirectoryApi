@@ -41,6 +41,8 @@ namespace AuthApi.Services
             // * get data raw
             var recordsQuery = directoryDBContext.AccountRecoveryRequests
                 .Where(item => item.Files != null)
+                .Include(p => p.Nationality)
+                .Include(p => p.Gender)
                 .Include( p => p.Files!)
                     .ThenInclude( f => f.DocumentType)
                 .Include(p => p.UserDeleted)
@@ -92,6 +94,8 @@ namespace AuthApi.Services
 
         public AccountRecovery? GetByID(Guid requestId){
             return this.directoryDBContext.AccountRecoveryRequests
+                .Include( item => item.Gender)
+                .Include( item => item.Nationality)
                 .Include( item => item.UserAttended)
                 .Include( item => item.UserDeleted)
                 .FirstOrDefault( item => item.Id == requestId);
