@@ -14,11 +14,14 @@ namespace AuthApi.Models
         public string? BirthDate {get;set;}
         public int? GenderId {get;set;}
         public string? Curp {get;set;}
+        public string? Rfc {get;set;}
         public int? NationalityId {get;set;}
         public string? ContactEmail {get;set;}
         public string? ContactEmail2 {get;set;}
         public string? ContactPhone {get;set;}
         public string? ContactPhone2 {get;set;}
         public string? RequestComments {get;set;}
+        public int? OccupationId {get;set;}
+        public int? MaritalStatusId {get;set;}
     }
 }

@@ -109,7 +109,7 @@ namespace AuthApi.Services
 
             this.directoryDBContext
                 .Entry(data)
-                .Collection(p => p.Files)
+                .Collection(p => p.Files ?? Array.Empty<AccountRecoveryFile>())
                 .Query()
                 .Include( f => f.DocumentType)
                 .Load();
@@ -171,6 +171,7 @@ namespace AuthApi.Services
                 throw new SimpleValidationException("Fecha de nacimiento incorrecta", errors);
             }
 
+            // * get relations
             Gender? gender = null;
             if(request.GenderId != null )
             {
@@ -183,16 +184,32 @@ namespace AuthApi.Services
                 nacionality = directoryDBContext.Nationality.FirstOrDefault(item => item.Id == request.NationalityId);
             }
 
+            Occupation? occupation = null;
+            if(request.OccupationId != null)
+            {
+                occupation = directoryDBContext.Occupation.FirstOrDefault(item => item.Id == request.OccupationId);
+            }
+
+            MaritalStatus? maritalStatus = null;
+            if(request.MaritalStatusId != null)
+            {
+                maritalStatus = directoryDBContext.MaritalStatus.FirstOrDefault(item => item.Id == request.MaritalStatusId);
+            }
+
 
             // * create the record
-            var accountRecoveryRequest = new AccountRecovery {
+            var accountRecoveryRequest = new AccountRecovery
+            {
                 Name = request.Name!,
                 FirstName = request.FirstName,
                 LastName = request.LastName,
                 BirthDate = birthDate1!.Value,
                 Gender = gender,
                 Curp = request.Curp,
+                Rfc = request.Rfc,
                 Nationality = nacionality,
+                Occupation = occupation,
+                MaritalStatus = maritalStatus,
                 ContactEmail = request.ContactEmail,
                 ContactEmail2 = request.ContactEmail2,
                 ContactPhone = request.ContactPhone,
