@@ -19,6 +19,7 @@ namespace AuthApi.Models
         public string? GenderName {get;set;}
         public int? GenderId {get;set;}
         public string? Curp {get;set;}
+        public string? Rfc {get;set;}
         public string? NationalityName {get;set;} = default!;
         public int? NationalityId {get;set;} = default!;
         public string? OccupationName {get;set;} = default!;
@@ -55,6 +56,7 @@ namespace AuthApi.Models
                 LastName = p.LastName,
                 BirthDate = p.BirthDate,
                 Curp = p.Curp,
+                Rfc = p.Rfc,
                 ContactEmail = p.ContactEmail,
                 ContactEmail2 = p.ContactEmail2,
                 ContactPhone = p.ContactPhone,
