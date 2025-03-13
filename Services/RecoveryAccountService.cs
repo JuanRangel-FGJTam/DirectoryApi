@@ -113,7 +113,7 @@ namespace AuthApi.Services
 
             this.directoryDBContext
                 .Entry(data)
-                .Collection(p => p.Files ?? Array.Empty<AccountRecoveryFile>())
+                .Collection(p => p.Files!)
                 .Query()
                 .Include( f => f.DocumentType)
                 .Load();
