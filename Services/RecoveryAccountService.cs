@@ -43,6 +43,8 @@ namespace AuthApi.Services
                 .Where(item => item.Files != null)
                 .Include(p => p.Nationality)
                 .Include(p => p.Gender)
+                .Include(p => p.Occupation)
+                .Include(p => p.MaritalStatus)
                 .Include( p => p.Files!)
                     .ThenInclude( f => f.DocumentType)
                 .Include(p => p.UserDeleted)
@@ -96,6 +98,8 @@ namespace AuthApi.Services
             return this.directoryDBContext.AccountRecoveryRequests
                 .Include( item => item.Gender)
                 .Include( item => item.Nationality)
+                .Include( item => item.Occupation)
+                .Include( item => item.MaritalStatus)
                 .Include( item => item.UserAttended)
                 .Include( item => item.UserDeleted)
                 .FirstOrDefault( item => item.Id == requestId);
