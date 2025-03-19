@@ -996,18 +996,34 @@ namespace AuthApi.Controllers
 
         private async Task<string> SendResetPasswordEmailv2(Person person){
             // * Set token life time for 1 hour
-            var tokenLifeTime = TimeSpan.FromSeconds( resetPasswordSettings.TokenLifeTimeSeconds );
+            var tokenLifeTime = TimeSpan.FromSeconds(resetPasswordSettings.TokenLifeTimeSeconds);
+            var date = DateTime.Now.Add(tokenLifeTime);
 
-            // * Generate the code
-            var _guidString = Guid.NewGuid().ToString().ToUpper();
-            var resetCode = _guidString.Substring(_guidString.Length - 6);
+            var resetCode = string.Empty;
 
-            var lifeTime = TimeSpan.FromSeconds( this.resetPasswordSettings.TokenLifeTimeSeconds );
-            var date = DateTime.Now.Add(lifeTime);
+            // * Check if a previous record exist
+            var _record = resetPasswordState.GetByPersonId(person.Id);
+            if(_record != null)
+            {
+                // * check if the code is still valid
+                if(resetPasswordState.Validate(_record.ResetCode) != null)
+                {
+                    // * save the code to be reused
+                    resetCode = _record.ResetCode;
+                }
+            }
+
+
+            // * if a previous reset code does not exist, make a new one
+            if(string.IsNullOrEmpty(resetCode))
+            {
+                // * Generate the new code
+                var _guidString = Guid.NewGuid().ToString().ToUpper();
+                resetCode = _guidString.Substring(_guidString.Length - 6);
+            }
 
             // * Store the record
-            resetPasswordState.AddRecord( person.Id, resetCode, date );
-
+            resetPasswordState.AddRecord(person.Id, resetCode, date);
 
             // * Generate html
             var htmlBody = EmailTemplates.ResetPasswordCode( resetCode, date.ToShortTimeString() );

@@ -34,6 +34,10 @@ namespace AuthApi.Services
             this.resetPasswordRecords.RemoveAll( item => item.PersonID == person_id);
         }
 
+        public ResetPasswordRecord? GetByPersonId(Guid person_id)
+        {
+            return resetPasswordRecords.Where(item => item.PersonID == person_id).OrderByDescending(item => item.Time).FirstOrDefault();
+        }
     }
 
     public class ResetPasswordRecord
