@@ -19,7 +19,10 @@ public class AccountRecovery
     public DateTime BirthDate {get;set;}
     public Gender? Gender {get;set;} = default!;
     public string? Curp {get;set;}
+    public string? Rfc {get;set;}
     public Nationality? Nationality {get;set;} = default!;
+    public Occupation? Occupation {get;set;} = default!;
+    public MaritalStatus? MaritalStatus {get;set;} = default!;
     public string? ContactEmail {get;set;}
     public string? ContactEmail2 {get;set;}
     public string? ContactPhone {get;set;}
