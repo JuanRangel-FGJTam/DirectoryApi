@@ -2,9 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Net;
+using System.Data.Common;
 using System.Net.Mime;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Components.Web;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using AuthApi.Data;
 using AuthApi.Models;
@@ -14,8 +18,7 @@ using AuthApi.Data.Exceptions;
 using AuthApi.Validators.AccountRecovery;
 using AuthApi.Models.Responses;
 using AuthApi.Services;
-using Microsoft.AspNetCore.Components.Web;
-using System.Net;
+using Minio.DataModel;
 
 namespace AuthApi.Controllers
 {
@@ -123,6 +126,16 @@ namespace AuthApi.Controllers
             if(!validationResults.IsValid){
                 return UnprocessableEntity( new UnprocesableResponse(validationResults.Errors));
             }
+
+            // * check if already exist a request
+            if(ExistAPendingRequest(request))
+            {
+                return BadRequest( new {
+                    Title = "Ya existe una petición de recuperación de cuenta registrada.",
+                    Message = "Ya existe una petición de recuperación de cuenta registrada, espere que concluya o comuníquese con el administrador."
+                });
+            }
+
 
             // * store the request
             try {
@@ -359,6 +372,31 @@ namespace AuthApi.Controllers
         {
             var userIdValue = (HttpContext.User?.FindFirst("userId")?.Value) ?? throw new ArgumentNullException("userId", "UserId value of the authenticated user not found.");
             return context.Users.FirstOrDefault(item => item.Id == Convert.ToInt32(userIdValue)) ?? throw new ArgumentNullException("user", "User not foun on the system.");
+        }
+        
+        private bool ExistAPendingRequest(AccountRecoveryRequest request)
+        {
+            AccountRecovery? accountRecovery = null;
+
+            var nationalityMX = context.Nationality.Where(item => EF.Functions.Like(item.Name, "mexicana")).FirstOrDefault();
+            if(request.NationalityId == nationalityMX?.Id )
+            {
+                accountRecovery = context.AccountRecoveryRequests
+                    .Where(item => EF.Functions.Like(item.Curp!, request.Curp))
+                    .Where(item => item.AttendingAt == null || item.DeletedAt == null)
+                    .OrderByDescending( item => item.CreatedAt)
+                    .FirstOrDefault();
+            }
+            else
+            {
+                accountRecovery = context.AccountRecoveryRequests
+                    .Where(item => EF.Functions.Like(item.ContactEmail!, request.ContactEmail))
+                    .Where(item => item.AttendingAt == null || item.DeletedAt == null)
+                    .OrderByDescending( item => item.CreatedAt)
+                    .FirstOrDefault();
+            }
+
+            return accountRecovery != null;
         }
         #endregion
 
