@@ -16,6 +16,7 @@ namespace AuthApi.Models
         public string? Folio {get;set;}
         public string? DenunciaId {get;set;}
         public string? Observations {get;set;}
+        public string? OfficeLocation {get;set;}
 
         public string? Status {get;set;}
         public int StatusId {get;set;}
@@ -35,7 +36,8 @@ namespace AuthApi.Models
                 Folio = p.Folio,
                 CreatedAt = p.CreatedAt,
                 DenunciaId = p.DenunciaId,
-                Observations = p.Observations
+                Observations = p.Observations,
+                OfficeLocation = p.OfficeLocation
             };
             
             if ( p.Status != null){
