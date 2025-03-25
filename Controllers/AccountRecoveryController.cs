@@ -112,6 +112,7 @@ namespace AuthApi.Controllers
         /// </summary>
         /// <returns></returns>
         /// <response code="201">Stored the recovery request</response>
+        /// <response code="400">The person already has a recovery request</response>
         /// <response code="401">Auth token is not valid or is not present</response>
         /// <response code="409">Some error at attempt to store the request</response>
         /// <response code="422">The request params are not valid</response>
@@ -130,10 +131,27 @@ namespace AuthApi.Controllers
             // * check if already exist a request
             if(ExistAPendingRequest(request))
             {
-                return BadRequest( new {
-                    Title = "Ya existe una petición de recuperación de cuenta registrada.",
-                    Message = "Ya existe una petición de recuperación de cuenta registrada, espere que concluya o comuníquese con el administrador."
-                });
+                var nationalityMX = context.Nationality.Where(item => EF.Functions.Like(item.Name, "mexicana")).FirstOrDefault();
+                if(request.NationalityId == nationalityMX?.Id )
+                {
+                    return BadRequest( new {
+                        Title = "Ya existe una petición de recuperación de cuenta registrada.",
+                        Errors = new Dictionary<string,string>
+                        {
+                            { "curp","Ya existe una petición de recuperación de cuenta registrada, espere que concluya o comuníquese con el administrador."}
+                        }
+                    });
+                }
+                else
+                {
+                    return BadRequest( new {
+                        Title = "Ya existe una petición de recuperación de cuenta registrada.",
+                        Errors = new Dictionary<string,string>
+                        {
+                            { "email","Ya existe una petición de recuperación de cuenta registrada, espere que concluya o comuníquese con el administrador."}
+                        }
+                    });
+                }
             }
 
 
