@@ -11,6 +11,7 @@ using AuthApi.Entities;
 using AuthApi.Helper;
 using AuthApi.Models;
 using AuthApi.Models.Responses;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace AuthApi.Controllers
 {
@@ -479,6 +480,144 @@ namespace AuthApi.Controllers
                     err.Message
                 });
             }
+        }
+
+
+        /// <summary>
+        /// Get a catalog of document types
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("document-types")]
+        public ActionResult<IEnumerable<Colony>> GetDocumentType([FromQuery] int municipality_id = 41 )
+        {
+            return Ok(dbContext.DocumentTypes
+                .Where(item => item.DeletedAt == null)
+                .OrderBy(item =>item.Name)
+                .ToArray()
+            );
+        }
+
+        /// <summary>
+        /// Store a new document type
+        /// </summary>
+        /// <param name="request"></param>
+        /// <returns></returns>
+        [HttpPost("document-types")]
+        public ActionResult<IEnumerable<State>> StoreDocumentType(NewDocumentTypeRequest request)
+        {
+            if(!ModelState.IsValid)
+            {
+                return UnprocessableEntity(ModelState);
+            }
+
+            // * check if the name is not taken
+            var _model = this.dbContext.DocumentTypes.Where(item => item.DeletedAt == null).FirstOrDefault(item => EF.Functions.Like(item.Name, request.Name));
+            if(_model != null)
+            {
+                return UnprocessableEntity(
+                    new UnprocesableResponse("El tipo de documento ya existe", new Dictionary<string,string>{
+                        {"name", "El nombre del tipo de documento ya existe."}
+                    })
+                );
+            }
+
+            // * register the new model
+            try
+            {
+                var newModel = new DocumentType
+                {
+                    Name = request.Name!
+                };
+                this.dbContext.DocumentTypes.Add(newModel);
+                this.dbContext.SaveChanges();
+                return StatusCode(201, newModel);
+            }
+            catch (System.Exception err)
+            {
+                this._logger.LogError(err, "Fail at store the new document type");
+                return Conflict( new {
+                    err.Message
+                });
+            }
+        }
+
+        /// <summary>
+        /// Delete a document type
+        /// </summary>
+        /// <param name="documentTypeId"></param>
+        /// <returns></returns>
+        [HttpDelete("document-types/{documentTypeId}")]
+        public ActionResult<IEnumerable<State>> DeleteDocumentType([FromRoute] int documentTypeId)
+        {
+            // * check if the name is not taken
+            var _model = this.dbContext.DocumentTypes.Where(item => item.DeletedAt == null).FirstOrDefault(item => item.Id == documentTypeId);
+            if(_model != null)
+            {
+
+                // * check if the document type has records linked
+                var total = 0;
+                total += this.dbContext.PersonFiles.Where(item => item.DeletedAt == null && item.DocumentTypeId == _model.Id).Count();
+                total += this.dbContext.AccountRecoveryFiles.Where(item => item.DeletedAt == null && item.DocumentType.Id == _model.Id).Count();
+                if(total > 0)
+                {
+                    return BadRequest( new {
+                        Title = "No se puede eliminar el tipo de documento",
+                        Errors = new Dictionary<string,string>{
+                            {"documentType", "El tipo de documento no se puede eliminar, continene registros ligados."}
+                        }
+                    });
+                }
+
+                _model.DeletedAt = DateTime.Now;
+                this.dbContext.DocumentTypes.Update(_model);
+                this.dbContext.SaveChanges();
+                this._logger.LogInformation("Document type '{id}|{name}' was removed", documentTypeId, _model.Name);
+                return Ok();
+            }
+
+            return Ok();
+        }
+
+        /// <summary>
+        /// Update a new document type
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="documentTypeId"></param>
+        /// <returns></returns>
+        [HttpPatch("document-types/{documentTypeId}")]
+        public ActionResult<IEnumerable<State>> UpdateDocumentType([FromRoute] int documentTypeId, [FromBody] NewDocumentTypeRequest request)
+        {
+            if(!ModelState.IsValid)
+            {
+                return UnprocessableEntity(ModelState);
+            }
+
+            // * check if the name is not taken
+            var _model = this.dbContext.DocumentTypes.Where(item => item.DeletedAt == null).FirstOrDefault(item => item.Id == documentTypeId);
+            if(_model == null)
+            {
+                return NotFound();
+            }
+
+
+            // * check if the name is not taken
+            var _model2 = this.dbContext.DocumentTypes.Where(item => item.DeletedAt == null).FirstOrDefault(item => EF.Functions.Like(item.Name, request.Name) && item.Id != _model.Id);
+            if(_model2 != null)
+            {
+                return UnprocessableEntity(
+                    new UnprocesableResponse("El tipo de documento ya existe", new Dictionary<string,string>{
+                        {"name", "El nombre del tipo de documento ya existe."}
+                    })
+                );
+            }
+
+            // Update the model
+            _model.Name = request.Name.Trim();
+            this.dbContext.DocumentTypes.Update(_model);
+            this.dbContext.SaveChanges();
+            this._logger.LogInformation("The document type '{id}|{name}' was updated", _model.Id, _model.Name);
+            return Ok();
         }
 
     }
