@@ -69,6 +69,33 @@ namespace AuthApi.Controllers
                 return BadRequest(ModelState);
             }
 
+            IFormFile _file = request.File![0];
+            IFormFile? _fileBack = request.FileBack?[0];
+
+            // * Validate size of the file (12mb)
+            if(_file.Length > 1024 * 1024 * 12)
+            {
+                return UnprocessableEntity(new {
+                    Title = "Uno o mas campos tienen error.",
+                    Errors = new Dictionary<string, object> {
+                        {"file", "El archivo es demasiado grande."}
+                    }
+                });
+            }
+            
+            if(_fileBack != null)
+            {
+                if(_fileBack.Length > 1024 * 1024 * 12)
+                {
+                    return UnprocessableEntity( new {
+                        Title = "Uno o mas campos tienen error.",
+                        Errors = new Dictionary<string, object> {
+                            {"fileBack", "El archivo es demasiado grande."}
+                        }
+                    });
+                }
+            }
+
             // * Validate person
             Guid _personID = Guid.Empty;
             try
@@ -100,14 +127,11 @@ namespace AuthApi.Controllers
                 });
             }
 
-            
+
             // * store the file and create the record
             PersonFile newPersonFile;
             try
             {
-                var _file = request.File!.First();
-                var _fileBack = request.FileBack?.First();
-
                 // * create the new file
                 newPersonFile = new PersonFile
                 {
