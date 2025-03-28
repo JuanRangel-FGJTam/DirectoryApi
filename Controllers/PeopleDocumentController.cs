@@ -87,9 +87,18 @@ namespace AuthApi.Controllers
             // TODO: delete (softdelete) the previous file if exist a document with the same document type
 
             // * find the documentType
-            DocumentType? documentType = dbContext.DocumentTypes.FirstOrDefault( item => item.Id == request.DocumentTypeId)
+            DocumentType? documentType = dbContext.DocumentTypes.FirstOrDefault(item => item.Id == request.DocumentTypeId)
                 ?? throw new ArgumentNullException("documentTypeId", "The document type is not found");
 
+
+            // * validate if the same document type and document number are not stored
+            if(CheckIfDocumentNumberExist(_personID, documentType.Id, request.Folio!))
+            {
+                return UnprocessableEntity( new {
+                    Title = "Uno o mas campos tienen error.",
+                    Errors = new Dictionary<string, object> {{"folio", "Un documento con le mismo folio ya se encuentra registrado."}}
+                });
+            }
 
             // * validate if the file is note already stored by comparing the file size and the mime type
             if(CheckIfDocumentExist(_personID, documentType.Id, request.File!.First()))
@@ -100,7 +109,6 @@ namespace AuthApi.Controllers
                 });
             }
 
-            
             // * store the file and create the record
             PersonFile newPersonFile;
             try
@@ -426,6 +434,15 @@ namespace AuthApi.Controllers
                 }
             }
             return exist;
+        }
+
+        private bool CheckIfDocumentNumberExist(Guid personId, int documentTypeId, string documentName )
+        {
+            var personDocuments = this.dbContext.PersonFiles
+                .Where(item => item.PersonId == personId)
+                .Where(item => item.DocumentTypeId == documentTypeId && EF.Functions.Like(item.Folio, documentName) && item.DeletedAt == null)
+                .ToList();
+            return personDocuments.Any();
         }
 
         #endregion
