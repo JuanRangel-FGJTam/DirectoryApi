@@ -463,7 +463,6 @@ namespace AuthApi.Controllers
         private bool CheckIfDocumentNumberExist(Guid personId, int documentTypeId, string documentName )
         {
             var personDocuments = this.dbContext.PersonFiles
-                .Where(item => item.PersonId == personId)
                 .Where(item => item.DocumentTypeId == documentTypeId && EF.Functions.Like(item.Folio, documentName) && item.DeletedAt == null)
                 .ToList();
             return personDocuments.Any();
