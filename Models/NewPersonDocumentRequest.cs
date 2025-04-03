@@ -13,7 +13,7 @@ namespace AuthApi.Models
         public int? DocumentTypeId {get;set;}
         
         [DataType(DataType.Date)]
-        public DateTime Validation {get;set;}
+        public DateTime? Validation {get;set;}
 
         public IFormFileCollection? File { get; set; }
 

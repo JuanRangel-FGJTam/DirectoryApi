@@ -22,7 +22,7 @@ public class PersonFile
     public long? FileSizeBack {get;set;}
 
     [DataType(DataType.Date)]
-    public DateTime Validation {get;set;}
+    public DateTime? Validation {get;set;}
     public DateTime CreatedAt {get;set;}
     public DateTime? DeletedAt {get;set;}
 

@@ -40,7 +40,7 @@ namespace AuthApi.Models
             response.DeletedAt = pf.DeletedAt;
             response.DocumentTypeId = pf.DocumentType!.Id;
             response.DocumentTypeName = pf.DocumentType?.Name;
-            response.Valid = pf.Validation.ToString("yyyy-MM-dd");
+            response.Valid = pf.Validation?.ToString("yyyy-MM-dd");
             response.Folio = pf.Folio;
             response.FileUrl = null;
             response.FileUrlBack = null;
