@@ -108,6 +108,29 @@ namespace AuthApi.Controllers
         }
 
         /// <summary>
+        ///  Get state info
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("states/{stateId}")]
+        public ActionResult<State> GetStateById([FromRoute] int stateId)
+        {
+            try
+            {
+                var stateData = dbContext.States
+                    .Include( c => c.Country )
+                    .FirstOrDefault( item => item.Id == stateId) ?? throw new KeyNotFoundException();
+                return Ok(stateData);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound(new {
+                    Message = "El estado no se encuentra registrado en el sistema."
+                });
+            }
+        }
+
+        /// <summary>
         ///  Store a new state
         /// </summary>
         /// <param name="request"></param>
@@ -153,7 +176,7 @@ namespace AuthApi.Controllers
         [HttpGet]
         [Route("municipalities")]
         public ActionResult<IEnumerable<Municipality>> GetMunicipalities([FromQuery] int state_id = 28)
-        {   
+        {
             return Ok( dbContext.Municipalities
                 .Include( c => c.State )
                 .Where( c => c.State!.Id == state_id)
@@ -168,7 +191,7 @@ namespace AuthApi.Controllers
         /// <param name="request"></param>
         /// <returns></returns>
         [HttpPost("municipalities")]
-        public ActionResult<IEnumerable<State>> StoreMunicipality(NewMunicipalityRequest request)
+        public ActionResult<IEnumerable<Municipality>> StoreMunicipality(NewMunicipalityRequest request)
         {
             if(!ModelState.IsValid)
             {
@@ -209,6 +232,29 @@ namespace AuthApi.Controllers
         }
         
         /// <summary>
+        ///  Get municipality info
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("municipalities/{municipalityId}")]
+        public ActionResult<Municipality> GetMunicipalityById([FromRoute] int municipalityId)
+        {
+            try
+            {
+                var municipality = dbContext.Municipalities
+                    .Include( c => c.State )
+                    .FirstOrDefault( m => m.Id == municipalityId) ?? throw new KeyNotFoundException();
+                return Ok(municipality);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound(new {
+                    Message = "El municipio no se encuentra registrado en el sistema."
+                });
+            }
+        }
+
+        /// <summary>
         ///  Get colonies catalog
         /// </summary>
         /// <returns></returns>
@@ -230,7 +276,7 @@ namespace AuthApi.Controllers
         /// <param name="request"></param>
         /// <returns></returns>
         [HttpPost("colonies")]
-        public ActionResult<IEnumerable<State>> StoreColony(NewColonyRequest request)
+        public ActionResult<IEnumerable<Colony>> StoreColony(NewColonyRequest request)
         {
             if(!ModelState.IsValid)
             {
@@ -278,6 +324,29 @@ namespace AuthApi.Controllers
             }
         }
 
+        /// <summary>
+        ///  Get colony info
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("colonies/{colonyId}")]
+        public ActionResult<Colony> GetColoniesById([FromRoute] int colonyId)
+        {
+            try
+            {
+                var colony = dbContext.Colonies
+                    .Include( c => c.Municipality )
+                    .FirstOrDefault( m => m.Id == colonyId) ?? throw new KeyNotFoundException();
+                return Ok(colony);
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound(new {
+                    Message = "La colonia no se encuentra registrado en el sistema."
+                });
+            }
+        }
+        
         [HttpGet("/api/zipcode/search")]
         public ActionResult<Object> SearchZipCode([FromQuery] string zipcode)
         {
@@ -489,7 +558,7 @@ namespace AuthApi.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("document-types")]
-        public ActionResult<IEnumerable<Colony>> GetDocumentType([FromQuery] int municipality_id = 41 )
+        public ActionResult<IEnumerable<DocumentType>> GetDocumentType([FromQuery] int municipality_id = 41 )
         {
             return Ok(dbContext.DocumentTypes
                 .Where(item => item.DeletedAt == null)
@@ -504,7 +573,7 @@ namespace AuthApi.Controllers
         /// <param name="request"></param>
         /// <returns></returns>
         [HttpPost("document-types")]
-        public ActionResult<IEnumerable<State>> StoreDocumentType(NewDocumentTypeRequest request)
+        public ActionResult<IEnumerable<DocumentType>> StoreDocumentType(NewDocumentTypeRequest request)
         {
             if(!ModelState.IsValid)
             {
@@ -548,7 +617,7 @@ namespace AuthApi.Controllers
         /// <param name="documentTypeId"></param>
         /// <returns></returns>
         [HttpDelete("document-types/{documentTypeId}")]
-        public ActionResult<IEnumerable<State>> DeleteDocumentType([FromRoute] int documentTypeId)
+        public ActionResult<IEnumerable<DocumentType>> DeleteDocumentType([FromRoute] int documentTypeId)
         {
             // * check if the name is not taken
             var _model = this.dbContext.DocumentTypes.Where(item => item.DeletedAt == null).FirstOrDefault(item => item.Id == documentTypeId);
@@ -586,7 +655,7 @@ namespace AuthApi.Controllers
         /// <param name="documentTypeId"></param>
         /// <returns></returns>
         [HttpPatch("document-types/{documentTypeId}")]
-        public ActionResult<IEnumerable<State>> UpdateDocumentType([FromRoute] int documentTypeId, [FromBody] NewDocumentTypeRequest request)
+        public ActionResult<IEnumerable<DocumentType>> UpdateDocumentType([FromRoute] int documentTypeId, [FromBody] NewDocumentTypeRequest request)
         {
             if(!ModelState.IsValid)
             {
