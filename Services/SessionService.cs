@@ -10,6 +10,7 @@ using AuthApi.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Newtonsoft.Json.Serialization;
 
 namespace AuthApi.Services
 {
@@ -89,21 +90,29 @@ namespace AuthApi.Services
         /// <param name="sessionToken"></param>
         /// <returns>Person</returns>
         /// <exception cref="SessionNotValid">The session token is not valid or expired</exception>
-        public Person? GetPersonSession(string sessionToken){
-
+        public (bool success, Person? person, string? message ) GetPersonSession(string sessionToken)
+        {
             var session = this.directoryDBContext.Sessions
                 .Where( s => s.DeletedAt == null)
                 .Include( s => s.Person)
                 .Where( s => s.Token == sessionToken)
                 .FirstOrDefault();
             
-            if( session != null){
-                return session.Person;
+            if(session == null)
+            {
+                return (false, null, "La sesión no es válida o ha expirado.");
             }
-            return null;
+
+            if( session.Person.BannedAt != null)
+            {
+                return (false, null, "La persona se encuentra bloqueada del sistema.");
+            }
+
+            return (true, session.Person, "Sesión válida.");
         }
 
-        public Session? ValidateSession( string sessionToken, string ipAddress, string? userAgent, out string message){
+        public Session? ValidateSession(string sessionToken, string ipAddress, string? userAgent, out string message)
+        {
 
             var session = this.directoryDBContext.Sessions
                 .Where( s => s.DeletedAt == null)
