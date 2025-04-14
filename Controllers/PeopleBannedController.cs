@@ -52,15 +52,16 @@ namespace AuthApi.Controllers
         /// Ban a person
         /// </summary>
         /// <param name="personId"></param>
+        /// <param name="request">Reason for the ban</param>
         /// <response code="200">Successfully banned the person</response>
         /// <response code="400">The request is not valid</response>
         /// <response code="401">Auth token is not valid or is not present</response>
         /// <response code="404">Person not found</response>
         [HttpPost("{personId}")]
-        public IActionResult BanPerson([FromRoute] Guid personId)
+        public IActionResult BanPerson([FromRoute] Guid personId, BanPersonRequest request)
         {
             // * attempt to ban the person
-            var (Success, Message, Person) = personBanService.BanPerson(personId);
+            var (Success, Message, Person) = personBanService.BanPerson(personId, request.Message);
             if(Success)
             {
                 return Ok(new {
@@ -78,15 +79,16 @@ namespace AuthApi.Controllers
         /// Unbans a person by clearing the BannedAt timestamp.
         /// </summary>
         /// <param name="personId">The unique identifier of the person to unban.</param>
+        /// <param name="request">Reson of the unban.</param>
         /// <response code="200">Successfully unbanned the person</response>
         /// <response code="400">The person is not currently banned</response>
         /// <response code="401">Auth token is not valid or is not present</response>
         /// <response code="404">Person not found</response>
         [HttpPost("{personId}/unban")]
-        public IActionResult UnbanPerson([FromRoute] Guid personId)
+        public IActionResult UnbanPerson([FromRoute] Guid personId, BanPersonRequest request)
         {
             // * attempt to unband the person
-            var (Success, Message, Person) = this.personBanService.UnbanPerson(personId);
+            var (Success, Message, Person) = this.personBanService.UnbanPerson(personId, request.Message);
             if(Success)
             {
                 return Ok(new {
@@ -98,6 +100,30 @@ namespace AuthApi.Controllers
             return Person == null
                 ? NotFound(new { Message })
                 : BadRequest(new { Message });
+        }
+
+        /// <summary>
+        /// Return the people banned
+        /// </summary>
+        /// <param name="personId"></param>
+        /// <param name="take"></param>
+        /// <param name="offset"></param>
+        /// <returns></returns>
+        /// <response code="200">Returns the person</response>
+        [HttpGet("{personId}/history")]
+        public ActionResult<IEnumerable<PersonResponse>?> GetHistory( [FromRoute] Guid personId, [FromQuery] int take = 25, [FromQuery] int offset = 0 )
+        {
+            try
+            {
+                var banHistoryData = this.personBanService.GetBanHistory(personId);
+                return Ok(banHistoryData);
+            }
+            catch (KeyNotFoundException knfe)
+            {
+                return NotFound( new {
+                    knfe.Message
+                });
+            }
         }
 
     }

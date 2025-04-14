@@ -33,6 +33,7 @@ namespace AuthApi.Data
         public DbSet<UserRole> UserRoles {get;set;} = default!;
         public DbSet<UserClaim> UserClaims {get;set;} = default!;
         public DbSet<PersonFile> PersonFiles {get;set;} = default!;
+        public DbSet<PersonBanHistory> PersonBanHistories {get;set;} = default!;
 
         private readonly ICryptographyService cryptographyService;
 
@@ -254,8 +255,18 @@ namespace AuthApi.Data
                     .HasColumnType("date");
             });
 
-            base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<PersonBanHistory>(entity => {
+                entity.HasOne(pf => pf.Person)
+                    .WithMany()
+                    .HasForeignKey(pf => pf.PersonId)
+                    .OnDelete(DeleteBehavior.Cascade);
 
+                entity.Property(pf => pf.CreatedAt)
+                    .HasDefaultValueSql("getDate()")
+                    .HasColumnType("datetime2");
+            });
+
+            base.OnModelCreating(modelBuilder);
         }
 
     }
