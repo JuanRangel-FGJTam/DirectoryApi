@@ -63,17 +63,18 @@ namespace AuthApi.Controllers
             }
 
             // * Validate credentials
-            var person = this.personService.AuthPerson( authenticateRequest.Email!, authenticateRequest.Password!);
-            if( person == null){
+            var (success, person, message) = this.personService.AuthPerson( authenticateRequest.Email!, authenticateRequest.Password!);
+            if(!success)
+            {
                 return Unauthorized(new {
-                    Message = "Usuario y/o contraseña incorrectos"
+                    Message = message ?? "Usuario y/o contraseña incorrectos"
                 });
             }
 
             // * Create a session record
             try{
                 // * Make the session
-                var SessionToken = sessionService.StartPersonSession(person, authenticateRequest.IpAddress, authenticateRequest.UserAgent);
+                var SessionToken = sessionService.StartPersonSession(person!, authenticateRequest.IpAddress, authenticateRequest.UserAgent);
 
                 // * Set the cookie for the response
                 Response.Cookies.Append( cookieName, SessionToken, new CookieOptions
@@ -86,7 +87,7 @@ namespace AuthApi.Controllers
 
                 // * Return all data
                 return Ok(new{
-                    Id = person.Id,
+                    Id = person!.Id,
                     Name = person.FullName,
                     SessionToken
                 });
@@ -122,14 +123,20 @@ namespace AuthApi.Controllers
             string sessionToken = (string) HttpContext.Items["session_token"]!;
 
             // * Attempt to get the person data
-            try{
-                var person = sessionService.GetPersonSession(sessionToken) ?? throw new Exception("La respuesta es nula");
-                directoryDBContext.Entry(person).Reference( e => e.Gender).Load();
-                directoryDBContext.Entry(person).Reference( e => e.MaritalStatus).Load();
-                directoryDBContext.Entry(person).Reference( e => e.Nationality).Load();
-                directoryDBContext.Entry(person).Reference( e => e.Occupation).Load();
-                directoryDBContext.Entry(person).Collection( e => e.Addresses!).Query().Where(item => item.DeletedAt == null).Load();
-                directoryDBContext.Entry(person).Collection( e => e.ContactInformations!).Query().Where(item => item.DeletedAt == null ).Load();
+            try
+            {
+                var (success, person, message) = this.sessionService.GetPersonSession(sessionToken);
+                if(!success)
+                {
+                    throw new SessionNotValid(message ?? "Sesion no valida");
+                }
+
+                directoryDBContext.Entry(person!).Reference( e => e.Gender).Load();
+                directoryDBContext.Entry(person!).Reference( e => e.MaritalStatus).Load();
+                directoryDBContext.Entry(person!).Reference( e => e.Nationality).Load();
+                directoryDBContext.Entry(person!).Reference( e => e.Occupation).Load();
+                directoryDBContext.Entry(person!).Collection( e => e.Addresses!).Query().Where(item => item.DeletedAt == null).Load();
+                directoryDBContext.Entry(person!).Collection( e => e.ContactInformations!).Query().Where(item => item.DeletedAt == null ).Load();
 
                 var camelSettings = new JsonSerializerSettings { ContractResolver = new CamelCasePropertyNamesContractResolver() };
                 var json = JsonConvert.SerializeObject( PersonResponse.FromEntity(person!), camelSettings );
@@ -138,17 +145,20 @@ namespace AuthApi.Controllers
                     ContentType = "application/json; charset=utf-8",
                     StatusCode = 200
                 };
-                
 
-            }catch(SessionNotValid sbv){
+            }
+            catch(SessionNotValid sbv)
+            {
                 _logger.LogError(sbv, "Session token not valid");
-                return StatusCode( 403, new { sbv.Message });
-            }catch(Exception err){
+                return StatusCode(403, new { sbv.Message });
+            }
+            catch(Exception err)
+            {
                 _logger.LogError(err, "Error no controlado al obtener los datos de la sesion");
                 return Conflict( new {
                     Message = "Error no controlado al obtener los datos de la sesion"
                 });
-            } 
+            }
         }
 
 
@@ -171,21 +181,32 @@ namespace AuthApi.Controllers
             string sessionToken = (string) HttpContext.Items["session_token"]!;
 
             // * Attempt to get the person data
-            try{
+            try
+            {
 
-                var person = sessionService.GetPersonSession(sessionToken) ?? throw new Exception("La respuesta es nula");
-                directoryDBContext.Entry(person).Collection( e => e.Addresses!).Query().Where(item => item.DeletedAt == null).Load();
-                return Ok( (person.Addresses??[]).Select( addr => AddressResponse.FromEntity(addr)) );
+                var (success, person, message) = sessionService.GetPersonSession(sessionToken);
+                if(!success)
+                {
+                    throw new SessionNotValid(message!);
+                }
 
-            }catch(SessionNotValid sbv){
+                directoryDBContext.Entry(person!).Collection( e => e.Addresses!).Query().Where(item => item.DeletedAt == null).Load();
+                var addresses = (person!.Addresses??[]).Select( addr => AddressResponse.FromEntity(addr));
+
+                return Ok(addresses);
+            }
+            catch(SessionNotValid sbv)
+            {
                 _logger.LogError(sbv, "Session token not valid");
                 return StatusCode( 403, new { sbv.Message });
-            }catch(Exception err){
+            }
+            catch(Exception err)
+            {
                 _logger.LogError(err, "Error no controlado al obtener los datos de la sesion");
                 return Conflict( new {
                     Message = "Error no controlado al obtener los datos de la sesion"
                 });
-            } 
+            }
         }
 
 
@@ -216,10 +237,14 @@ namespace AuthApi.Controllers
 
             // * Attempt to get the person data
             try {
-                // Get the person
-                var person = sessionService.GetPersonSession(sessionToken) ?? throw new Exception("La respuesta es nula");
+                
+                var (success, person, message) = sessionService.GetPersonSession(sessionToken);
+                if(!success)
+                {
+                    throw new SessionNotValid(message!);
+                }
 
-                this.personService.UpdateThePassword( person.Id, updatePasswordRequest.OldPassword!, updatePasswordRequest.NewPassword!);
+                this.personService.UpdateThePassword( person!.Id, updatePasswordRequest.OldPassword!, updatePasswordRequest.NewPassword!);
 
                 return Ok( new {
                     Title = "Contraseña actualizada",
@@ -240,7 +265,7 @@ namespace AuthApi.Controllers
                 return Conflict( new {
                     Message = "Error no controlado al obtener los datos de la sesion"
                 });
-            } 
+            }
         }
 
 
@@ -263,12 +288,16 @@ namespace AuthApi.Controllers
             string sessionToken = (string) HttpContext.Items["session_token"]!;
 
             // * Attempt to get the person data
-            try{
+            try {
 
-                var person = sessionService.GetPersonSession(sessionToken) ?? throw new Exception("La respuesta es nula");
-                directoryDBContext.Entry(person).Collection( e => e.ContactInformations!).Query().Where(item => item.DeletedAt == null).Load();
+                var (success, person, message) = sessionService.GetPersonSession(sessionToken);
+                if(!success)
+                {
+                    throw new SessionNotValid(message!);
+                }
 
-                return Ok( (person.ContactInformations??[]).Select( cont => ContactResponse.FromEntity(cont)) );
+                directoryDBContext.Entry(person!).Collection( e => e.ContactInformations!).Query().Where(item => item.DeletedAt == null).Load();
+                return Ok( (person!.ContactInformations??[]).Select( cont => ContactResponse.FromEntity(cont)) );
 
             }catch(SessionNotValid sbv){
                 _logger.LogError(sbv, "Session token not valid");

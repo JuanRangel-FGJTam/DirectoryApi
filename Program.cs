@@ -65,6 +65,7 @@ builder.Services.AddScoped<IEmailProvider, FGJEmailProvider>();
 builder.Services.AddScoped<SessionService>();
 builder.Services.AddScoped<RecoveryAccountService>();
 builder.Services.AddScoped<CatalogService>();
+builder.Services.AddScoped<PersonBanService>();
 builder.Services.AddSingleton<ResetPasswordState>();
 builder.Services.AddSingleton<ChangeEmailState>();
 builder.Services.AddMySwaggerConfig();
