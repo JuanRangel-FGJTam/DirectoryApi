@@ -42,6 +42,7 @@ builder.Services.Configure<JwtSettings>( builder.Configuration.GetSection("JwtSe
 builder.Services.Configure<ResetPasswordSettings>( builder.Configuration.GetSection("ResetPasswordSettings"));
 builder.Services.Configure<EmailSettings>( builder.Configuration.GetSection("EmailSettings"));
 builder.Services.Configure<WelcomeEmailSources>( builder.Configuration.GetSection("WelcomeEmailSources"));
+builder.Services.Configure<MinioSettings>( builder.Configuration.GetSection("MinioSettings"));
 builder.Services.AddJwtAuthentication( builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>()! );
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
