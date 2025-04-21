@@ -45,6 +45,8 @@ namespace AuthApi.Models
 
         public string? AppName {get;set;}
 
+        public DateTime? BannedAt {get;set;}
+
         public string FullName {
             get {
                 return string.Join(' ', new string[]{Name??"", FirstName??"", LastName??""});
@@ -107,7 +109,8 @@ namespace AuthApi.Models
                 LastName = person.LastName,
                 Email = person.Email,
                 Birthdate = DateOnly.FromDateTime(person.Birthdate),
-                AppName = person.AppOwner
+                AppName = person.AppOwner,
+                BannedAt = person.BannedAt
             };
 
             if (person.Gender != null){

@@ -485,19 +485,19 @@ namespace AuthApi.Controllers
                 });
             }
 
-            var person = this.personService.AuthPerson( authenticateRequest.Email!, authenticateRequest.Password!);
-            if( person == null){
-                return Unauthorized(new {
-                    Message = "Usuario y/o contraseña incorrectos"
+            var (success, person, message) = this.personService.AuthPerson( authenticateRequest.Email!, authenticateRequest.Password!);
+            if(success)
+            {
+                return Ok(new{
+                    Id = person!.Id,
+                    Name = person.FullName,
+                    Email = person.Email
                 });
             }
-
-            return Ok(new{
-                Id = person.Id,
-                Name = person.FullName,
-                Email = person.Email
+            
+            return Unauthorized(new {
+                Message = message
             });
-
         }
 
         /// <summary>
@@ -969,7 +969,7 @@ namespace AuthApi.Controllers
 
                 var person = this.personService.StorePerson(requ);
 
-                createdPeople.Add(person.FullName);
+                createdPeople.Add(person!.FullName);
             }
 
             return Ok( createdPeople );

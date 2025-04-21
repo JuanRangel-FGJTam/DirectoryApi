@@ -20,7 +20,7 @@ namespace AuthApi.Entities
         public string? Name {get;set;}
         
         public string? FirstName {get;set;}
-       
+
         public string? LastName {get;set;}
         
         public string? Email {get;set;}
@@ -43,6 +43,7 @@ namespace AuthApi.Entities
 
         public DateTime? DeletedAt {get;set;}
         public DateTime? ValidatedAt {get;set;}
+        public DateTime? BannedAt {get;set;}
 
         public virtual IEnumerable<Address>? Addresses {get;set;}
         public virtual IEnumerable<ContactInformation>? ContactInformations {get;set;}

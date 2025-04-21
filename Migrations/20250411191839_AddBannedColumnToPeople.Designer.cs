@@ -4,6 +4,7 @@ using AuthApi.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AuthApi.Migrations
 {
     [DbContext(typeof(DirectoryDBContext))]
-    partial class DirectoryDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250411191839_AddBannedColumnToPeople")]
+    partial class AddBannedColumnToPeople
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -679,42 +682,6 @@ namespace AuthApi.Migrations
                     b.ToTable("People");
                 });
 
-            modelBuilder.Entity("AuthApi.Entities.PersonBanHistory", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasColumnName("id");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Activo")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)")
-                        .HasColumnName("activo");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("datetime2")
-                        .HasColumnName("createdAt")
-                        .HasDefaultValueSql("getDate()");
-
-                    b.Property<string>("Message")
-                        .HasColumnType("nvarchar(max)")
-                        .HasColumnName("message");
-
-                    b.Property<Guid>("PersonId")
-                        .HasColumnType("uniqueidentifier")
-                        .HasColumnName("personId");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PersonId");
-
-                    b.ToTable("PersonBanHistories");
-                });
-
             modelBuilder.Entity("AuthApi.Entities.PersonFile", b =>
                 {
                     b.Property<int>("Id")
@@ -1338,17 +1305,6 @@ namespace AuthApi.Migrations
                     b.Navigation("Nationality");
 
                     b.Navigation("Occupation");
-                });
-
-            modelBuilder.Entity("AuthApi.Entities.PersonBanHistory", b =>
-                {
-                    b.HasOne("AuthApi.Entities.Person", "Person")
-                        .WithMany()
-                        .HasForeignKey("PersonId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Person");
                 });
 
             modelBuilder.Entity("AuthApi.Entities.PersonFile", b =>

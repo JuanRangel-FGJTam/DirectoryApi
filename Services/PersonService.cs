@@ -265,10 +265,24 @@ namespace AuthApi.Services
         }
 
 
-        public Person? AuthPerson( string email, string password)
+        public (bool success, Person? person, string? message) AuthPerson( string email, string password)
         {
+            // * attempt to retrive the person
             var hashedPassword = this.cryptographyService.HashData(password);
-            return this.dbContext.People.Where( p => p.Email == email && p.Password == hashedPassword).FirstOrDefault();
+            var person = this.dbContext.People.Where(p => p.Email == email && p.Password == hashedPassword).FirstOrDefault();
+            if( person == null)
+            {
+                return (false, null, "El correo y/o contraseña son incorrectos.");
+            }
+
+            // * check if the person is banned
+            if(person.BannedAt != null)
+            {
+                return (false, null, "La persona está bloqueada  del sistema.");
+            }
+
+            return (true, person, "Persona authenticada.");
+
         }
         
         public IEnumerable<Address>? GetPersonAddress(Guid personId){
