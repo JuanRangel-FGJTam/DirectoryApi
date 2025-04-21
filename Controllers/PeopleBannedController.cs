@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using AuthApi.Data;
 using AuthApi.Models;
 using AuthApi.Services;
+using AuthApi.Models.Responses;
 
 namespace AuthApi.Controllers
 {
@@ -31,9 +32,12 @@ namespace AuthApi.Controllers
         /// <returns></returns>
         /// <response code="200">Returns the person</response>
         [HttpGet]
-        public ActionResult<IEnumerable<PersonResponse>?> GetPeople( [FromQuery] string orderBy = "createdAt", [FromQuery] bool ascending = false, [FromQuery] int take = 5, [FromQuery] int offset = 0 )
+        public ActionResult<PagedResponse<PersonResponse>?> GetPeople( [FromQuery] string orderBy = "createdAt", [FromQuery] bool ascending = false, [FromQuery] int take = 5, [FromQuery] int offset = 0 )
         {
             var peopleQuery = this.personService.GetPeople().Where(p => p.BannedAt != null).AsQueryable();
+
+            // * get total items
+            var totalItems = peopleQuery.Count();
 
             // * ordering and retrive the data
             string ordering = ascending ? $"{orderBy} asc" : $"{orderBy} desc";
@@ -44,8 +48,18 @@ namespace AuthApi.Controllers
                 .Select(p => PersonResponse.FromEntity(p))
                 .ToArray<PersonResponse>();
 
+            // * prepare the response
+
+            var response = new PagedResponse<PersonResponse>
+            {
+                Items = peopleData,
+                TotalItems = totalItems,
+                PageNumber = (offset / take) + 1,
+                PageSize = take
+            };
+
             // * Return response
-            return Ok(peopleData);
+            return Ok(response);
         }
 
         /// <summary>
