@@ -169,7 +169,7 @@ namespace AuthApi.Controllers
                     );
 
                     // * store the file and retrive the path
-                    newPersonFile.FilePath = await minioService.UploadFile(fileName, stream);
+                    newPersonFile.FilePath = await minioService.UploadFile(fileName, stream, null);
                 }
 
                 // * store the back file on minio
@@ -187,7 +187,7 @@ namespace AuthApi.Controllers
                         );
 
                         // * store the file and retrive the path
-                        newPersonFile.FilePathBack = await minioService.UploadFile(fileName, stream);
+                        newPersonFile.FilePathBack = await minioService.UploadFile(fileName, stream, null);
                     }
                 }
 

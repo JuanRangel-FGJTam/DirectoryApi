@@ -16,37 +16,34 @@ namespace AuthApi.Services
         private readonly IMinioClient minioClient = minioClient;
 
 
-        public async Task EnsureBuketIsCreated(){
-
-            var bucketName = configuration["MinioSettings:BucketName"]!;
-            var beArgs = new BucketExistsArgs().WithBucket( bucketName );
-            var found = await minioClient.BucketExistsAsync(beArgs).ConfigureAwait(false);
-            if(!found){
+        public async Task EnsureBuketIsCreated(string bucketName)
+        {
+            var beArgs = new BucketExistsArgs().WithBucket( bucketName);
+            var found = await minioClient.BucketExistsAsync(beArgs);
+            if(!found) {
                 var mbArgs = new MakeBucketArgs().WithBucket( bucketName );
-                await minioClient.MakeBucketAsync(mbArgs).ConfigureAwait(false);
+                await minioClient.MakeBucketAsync(mbArgs);
                 logger.LogInformation("Bucket {buketName} created", bucketName);
             }
         }
 
         
-        public async Task<string> UploadFile(string filePath, Stream stream)
+        public async Task<string> UploadFile(string filePath, Stream stream, string? bucketName = null)
         {
             // * upload the file
             var putObjectArgs = new PutObjectArgs()
-                .WithBucket( configuration["MinioSettings:BucketName"] )
+                .WithBucket(bucketName ?? configuration["MinioSettings:BucketName"] )
                 .WithObject(filePath)
                 .WithStreamData(stream)
                 .WithObjectSize(stream.Length)
                 .WithContentType("application/octet-stream");
-            Console.WriteLine("Size: " + stream.Length);
             var response = await minioClient.PutObjectAsync(putObjectArgs);
-            Console.WriteLine("Resp: " + response);
 
             return response.ObjectName;
         }
 
-        public async Task<string> UploadFile(string originalName, Stream stream, string path = ""){
-            
+        public async Task<string> UploadFile(string originalName, Stream stream, string path = "", string? bucketName = null)
+        {
             // * make file path
             var filePath = string.Format("{0}.{1}", Guid.NewGuid().ToString(), originalName.Split(".").Last() );
             if( !string.IsNullOrEmpty(path)){
@@ -55,7 +52,7 @@ namespace AuthApi.Services
             
             // * upload the file
             var putObjectArgs = new PutObjectArgs()
-                .WithBucket( configuration["MinioSettings:BucketName"] )
+                .WithBucket( bucketName ?? configuration["MinioSettings:BucketName"] )
                 .WithObject(filePath)
                 .WithStreamData(stream)
                 .WithObjectSize(stream.Length)
@@ -65,8 +62,8 @@ namespace AuthApi.Services
             return response.ObjectName;
         }
 
-        public async Task<string> UploadFile(string originalName, Stream stream, Guid guid, string path = ""){
-            
+        public async Task<string> UploadFile(string originalName, Stream stream, Guid guid, string path = "", string? bucketName = null)
+        {
             // * make file path
             var filePath = string.Format("{0}.{1}", guid.ToString(), originalName.Split(".").Last() );
             if( !string.IsNullOrEmpty(path)){
@@ -75,7 +72,7 @@ namespace AuthApi.Services
             
             // * upload the file
             var putObjectArgs = new PutObjectArgs()
-                .WithBucket( configuration["MinioSettings:BucketName"] )
+                .WithBucket( bucketName ?? configuration["MinioSettings:BucketName"] )
                 .WithObject(filePath)
                 .WithStreamData(stream)
                 .WithObjectSize(stream.Length)
@@ -85,12 +82,10 @@ namespace AuthApi.Services
             return response.ObjectName;
         }
 
-        public async Task<string?> MakeTemporalUrl(string fileName, string mimmeType){
-
+        public async Task<string?> MakeTemporalUrl(string fileName, string mimmeType, string? bucketName = null)
+        {
             // URL expiration time (in seconds)
             int expiryDurationInSeconds = Convert.ToInt32(configuration["MinioSettings:ExpiryDuration"]);
-            string bucketName = configuration["MinioSettings:BucketName"]!;
-
             string? presignedUrl = null;
             try {
                 // Generate a presigned URL for the file
@@ -98,7 +93,7 @@ namespace AuthApi.Services
                     { "response-content-type", mimmeType }
                 };
                 var presignedGetObjectArgs = new PresignedGetObjectArgs()
-                    .WithBucket(bucketName)
+                    .WithBucket(bucketName ?? configuration["MinioSettings:BucketName"])
                     .WithObject(fileName)
                     .WithExpiry(expiryDurationInSeconds)
                     .WithHeaders(reqParams);
@@ -110,18 +105,35 @@ namespace AuthApi.Services
             return presignedUrl;
         }
 
-        public async Task RemoveFiles(IEnumerable<string> fileNames){
-            string bucketName = configuration["MinioSettings:BucketName"]!;
-
+        public async Task RemoveFiles(IEnumerable<string> fileNames, string? bucketName = null)
+        {
             var tasks = fileNames.Select( async fileName => {
                 var removeArgs = new RemoveObjectArgs()
-                    .WithBucket(bucketName)
+                    .WithBucket(bucketName ?? configuration["MinioSettings:BucketName"])
                     .WithObject(fileName);
                 await minioClient.RemoveObjectAsync(removeArgs);
             });
 
             await Task.WhenAll( tasks.ToArray() );
+        }
+
+        public async Task<bool> FileExist(string filePath, string bucketName)
+        {
+            var stateArgs = new StatObjectArgs()
+                .WithBucket(bucketName)
+                .WithObject(filePath);
             
+            Minio.DataModel.ObjectStat? objectMinio = null;
+            try
+            {
+                objectMinio = await minioClient.StatObjectAsync(stateArgs);
+            }
+            catch (System.Exception)
+            {
+                return false;
+            }
+
+            return objectMinio != null;
         }
     }
 }

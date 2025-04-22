@@ -7,14 +7,15 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Azure.Core;
+using Minio;
+using Minio.DataModel.Args;
 using AuthApi.Data;
 using AuthApi.Entities;
 using AuthApi.Models;
 using AuthApi.Helper;
 using AuthApi.Services;
-using Azure.Core;
-using Minio;
-using Minio.DataModel.Args;
 
 
 namespace AuthApi.Controllers
@@ -22,11 +23,11 @@ namespace AuthApi.Controllers
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
-    public class ProcedureController(ILogger<ProcedureController> logger, IConfiguration configuration, DirectoryDBContext context, MinioService minioService ) : ControllerBase
+    public class ProcedureController(ILogger<ProcedureController> logger, IOptions<MinioSettings> optionsMinio, DirectoryDBContext context, MinioService minioService ) : ControllerBase
     {
         #region Injected properties
         private readonly ILogger<ProcedureController> _logger = logger;
-        private readonly IConfiguration configuration = configuration;
+        private readonly MinioSettings minioSettings = optionsMinio.Value;
         private readonly DirectoryDBContext dbContext = context;
         private readonly MinioService minioService = minioService;
         #endregion
@@ -224,8 +225,7 @@ namespace AuthApi.Controllers
                 });
             }
 
-
-            dbContext.Database.BeginTransaction();
+            var transaction = dbContext.Database.BeginTransaction();
 
             // * insert the proceding
             Proceeding newProceeding;
@@ -288,7 +288,7 @@ namespace AuthApi.Controllers
 
 
             }catch(Exception err){
-                dbContext.Database.RollbackTransaction();
+                await transaction.RollbackAsync();
                 return Conflict( new {
                     Message = err.Message
                 });
@@ -297,13 +297,14 @@ namespace AuthApi.Controllers
 
             // * insert the files
             var procedingFiles = new List<ProceedingFile>();
-            try {
-
+            try
+            {
                 // * verify if the buket is created
-                await minioService.EnsureBuketIsCreated();
+                await minioService.EnsureBuketIsCreated(minioSettings.BucketNameTmp);
                 
                 // * upload the files to minio
-                foreach(var uploadedFile in request.File!){
+                foreach(var uploadedFile in request.File!)
+                {
                     var _newProcedingFile = new ProceedingFile {
                         FileName = uploadedFile.FileName,
                         FilePath = "",
@@ -315,9 +316,10 @@ namespace AuthApi.Controllers
                     };
 
                     // * store the file on minio
-                    using var uploadFileStream = uploadedFile.OpenReadStream();
-                    _newProcedingFile.FilePath = await minioService.UploadFile( uploadedFile.FileName, uploadFileStream);
-                    
+                    using( var uploadFileStream = uploadedFile.OpenReadStream())
+                    {
+                        _newProcedingFile.FilePath = await minioService.UploadFile(uploadedFile.FileName, uploadFileStream, minioSettings.BucketNameTmp);
+                    }
                     procedingFiles.Add( _newProcedingFile );
                 }
 
@@ -325,13 +327,13 @@ namespace AuthApi.Controllers
                 dbContext.SaveChanges();
 
             } catch(Exception err){
-                dbContext.Database.RollbackTransaction();
+                await transaction.RollbackAsync();
                 return Conflict( new {
                     Message = err.Message
                 });
             }
 
-            dbContext.Database.CommitTransaction();
+            await transaction.CommitAsync();
 
             // * return the data stored
             return StatusCode(201, new {
@@ -419,7 +421,19 @@ namespace AuthApi.Controllers
                     if( file.DeletedAt != null || string.IsNullOrEmpty(file.FilePath)){
                         return file;
                     }
-                    var fileUrl = await minioService.MakeTemporalUrl(file.FilePath!, file.FileType??"application/pdf");
+                    
+                    // * check if the file is in the original bucket or in the tmp bucket
+                    var fileUrl = string.Empty;
+                    var found = await minioService.FileExist(file.FilePath!, this.minioSettings.BucketName);
+                    if(found)
+                    {
+                        fileUrl = await minioService.MakeTemporalUrl(file.FilePath!, file.FileType??"application/pdf", this.minioSettings.BucketName);
+                    }
+                    else
+                    {
+                        fileUrl = await minioService.MakeTemporalUrl(file.FilePath!, file.FileType??"application/pdf", this.minioSettings.BucketNameTmp);
+                    }
+
                     return new ProceedingFileResponse {
                         Id = file.Id,
                         FileName = file.FileName,
@@ -497,7 +511,19 @@ namespace AuthApi.Controllers
                 if( file.DeletedAt != null || string.IsNullOrEmpty(file.FilePath)){
                     return file;
                 }
-                var fileUrl = await minioService.MakeTemporalUrl(file.FilePath!, file.FileType??"application/pdf");
+
+                // * check if the file is in the original bucket or in the tmp bucket
+                var fileUrl = string.Empty;
+                var found = await minioService.FileExist(file.FilePath!, this.minioSettings.BucketName);
+                if(found)
+                {
+                    fileUrl = await minioService.MakeTemporalUrl(file.FilePath!, file.FileType??"application/pdf", this.minioSettings.BucketName);
+                }
+                else
+                {
+                    fileUrl = await minioService.MakeTemporalUrl(file.FilePath!, file.FileType??"application/pdf", this.minioSettings.BucketNameTmp);
+                }
+
                 return new ProceedingFileResponse {
                     Id = file.Id,
                     FileName = file.FileName,
@@ -666,7 +692,7 @@ namespace AuthApi.Controllers
             var procedingFiles = new List<ProceedingFile>();
             try {
                 // * verify if the buket is created
-                await minioService.EnsureBuketIsCreated();
+                await minioService.EnsureBuketIsCreated(this.minioSettings.BucketNameTmp);
                 
                 // * upload the files to minio
                 foreach(var uploadedFile in updateProceedingRequest.File!){
@@ -682,7 +708,7 @@ namespace AuthApi.Controllers
 
                     // * store the file on minio
                     using var uploadFileStream = uploadedFile.OpenReadStream();
-                    _newProcedingFile.FilePath = await minioService.UploadFile( uploadedFile.FileName, uploadFileStream);
+                    _newProcedingFile.FilePath = await minioService.UploadFile( uploadedFile.FileName, uploadFileStream, this.minioSettings.BucketNameTmp);
                     
                     procedingFiles.Add( _newProcedingFile );
                 }
@@ -862,7 +888,19 @@ namespace AuthApi.Controllers
                         if( file.DeletedAt != null || string.IsNullOrEmpty(file.FilePath)){
                             return file;
                         }
-                        var fileUrl = await minioService.MakeTemporalUrl(file.FilePath!, file.FileType??"application/pdf");
+                        
+                        // * check if the file is in the original bucket or in the tmp bucket
+                        var fileUrl = string.Empty;
+                        var found = await minioService.FileExist(file.FilePath!, this.minioSettings.BucketName);
+                        if(found)
+                        {
+                            fileUrl = await minioService.MakeTemporalUrl(file.FilePath!, file.FileType??"application/pdf", this.minioSettings.BucketName);
+                        }
+                        else
+                        {
+                            fileUrl = await minioService.MakeTemporalUrl(file.FilePath!, file.FileType??"application/pdf", this.minioSettings.BucketNameTmp);
+                        }
+                        
                         return new ProceedingFileResponse {
                             Id = file.Id,
                             FileName = file.FileName,
