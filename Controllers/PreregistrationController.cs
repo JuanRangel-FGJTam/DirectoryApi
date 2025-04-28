@@ -167,7 +167,9 @@ namespace AuthApi.Controllers
         ///       "firstName": "Rangel",
         ///       "lastName": "Almaguer",
         ///       "birthdate": "1993-12-17",
-        ///       "appName" : string
+        ///       "appName" : string,
+        ///       "ipAddress" : string,
+        ///       "userAgent" : string,
         ///     }
         /// 
         /// Sample response:
@@ -218,8 +220,8 @@ namespace AuthApi.Controllers
                 }
 
                 // * Create a session 
-                string ipAddress = HttpContext.Connection.RemoteIpAddress!.ToString();
-                string userAgent = Request.Headers["User-Agent"].ToString();
+                string ipAddress = request.IpAddress ?? HttpContext.Connection.RemoteIpAddress!.ToString();
+                string userAgent = request.UserAgent ?? Request.Headers.UserAgent.ToString();
                 var sessionToken = sessionService.StartPersonSession( newPerson, ipAddress, userAgent );
 
                 // * Return the data

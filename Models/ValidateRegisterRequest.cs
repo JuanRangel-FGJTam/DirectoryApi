@@ -41,5 +41,8 @@ namespace AuthApi.Models
         [Required (ErrorMessage = "El codigo de pre-registro es requerido")]
         public string? Token {get;set;}
 
+        public string? IpAddress { get; set; }
+
+        public string? UserAgent { get; set; }
     }
 }
