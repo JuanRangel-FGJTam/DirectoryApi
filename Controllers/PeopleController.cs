@@ -796,7 +796,7 @@ namespace AuthApi.Controllers
         /// <returns></returns>
         [HttpPost]
         [Route("{personID}/updateEmail/sendCode" )]
-        public IActionResult SendEmailChangePassword(string personID, [FromBody] UpdateEmailRequest updateEmailRequest){
+        public IActionResult SendCode2ChangedEmail(string personID, [FromBody] UpdateEmailRequest updateEmailRequest){
             
             // * Validate request
             if (!ModelState.IsValid) {
@@ -827,6 +827,15 @@ namespace AuthApi.Controllers
                 return NotFound(new {
                     Title = "Person not found",
                     Message = "Person not found"
+                });
+            }
+
+            // TODO: check if the person has an active processing
+            if(CheckIfHasActiveProcessing(person))
+            {
+                return UnprocessableEntity(new {
+                    Title = "No se puede cambiar el correo",
+                    Message = "El usuario tiene un procedimiento activo de antecedentes penales.",
                 });
             }
 
@@ -881,9 +890,18 @@ namespace AuthApi.Controllers
                         }
                     });
                 }
-                
+
                 // * Retrive the person data
                 Person person = this.dbContext.People.Find(personID) ?? throw new KeyNotFoundException($"Person id {personID} not found");
+
+                // TODO: check if the person has an active processing
+                if(CheckIfHasActiveProcessing(person))
+                {
+                    return UnprocessableEntity(new {
+                        Title = "No se puede cambiar el correo",
+                        Message = "El usuario tiene un procedimiento activo de antecedentes penales.",
+                    });
+                }
 
                 // * Update the password
                 this.personService.UpdateEmail(person.Id, newEmailRequest.Email);
@@ -1058,5 +1076,24 @@ namespace AuthApi.Controllers
             );
         }
 
+        private bool CheckIfHasActiveProcessing(Person person)
+        {
+            // * get the last proceding
+            var lastProceding = dbContext.Proceeding.Where(p=> p.PersonId == person.Id)
+                .Where(p=>EF.Functions.Like(p.Name, "%antecedentes penales%"))
+                .OrderByDescending(p=>p.UpdatedAt)
+                .GroupBy(p => p.Folio)
+                .Select(g => g.OrderByDescending(p => p.UpdatedAt).First())
+                .FirstOrDefault();
+
+            if( lastProceding == null )
+            {
+                return false;
+            }
+            
+            // Check if the status is not one of the completed/canceled ones
+            var statusesToExclude = new List<string>() { "ATENDIDA", "CANCELADA" };
+            return !statusesToExclude.Contains(lastProceding.Status?.Name, StringComparer.OrdinalIgnoreCase);
+        }
     }
 }
