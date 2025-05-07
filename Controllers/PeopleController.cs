@@ -185,6 +185,20 @@ namespace AuthApi.Controllers
                     message = $"Person id {personID} not found"
                 });
             }
+
+            // * if attempt to update the email check if is allowed
+            if(person.Email != personRequest.Email && !string.IsNullOrEmpty(personRequest.Email))
+            {
+                if(CheckIfHasActiveProcessing(person!))
+                {
+                    return UnprocessableEntity(new {
+                        Title = "No se puede cambiar el correo",
+                        Errors = new {
+                            email = new string[] {"No es posible actualizar el correo electrónico del usuario debido a que actualmente tiene un procedimiento activo relacionado con la constancia de antecedentes penales."}
+                        }
+                    });
+                }
+            }
             
             // Update information
             if(!string.IsNullOrEmpty(personRequest.Name))
@@ -830,12 +844,14 @@ namespace AuthApi.Controllers
                 });
             }
 
-            // TODO: check if the person has an active processing
+            // * Check if the person has an active processing before attempting to change the email
             if(CheckIfHasActiveProcessing(person))
             {
                 return UnprocessableEntity(new {
                     Title = "No se puede cambiar el correo",
-                    Message = "El usuario tiene un procedimiento activo de antecedentes penales.",
+                    Errors = new {
+                        email = new string[] {"No es posible actualizar el correo electrónico del usuario debido a que actualmente tiene un procedimiento activo relacionado con la constancia de antecedentes penales."}
+                    }
                 });
             }
 
@@ -894,12 +910,14 @@ namespace AuthApi.Controllers
                 // * Retrive the person data
                 Person person = this.dbContext.People.Find(personID) ?? throw new KeyNotFoundException($"Person id {personID} not found");
 
-                // TODO: check if the person has an active processing
+                // * Check if the person has an active processing before update the email
                 if(CheckIfHasActiveProcessing(person))
                 {
                     return UnprocessableEntity(new {
                         Title = "No se puede cambiar el correo",
-                        Message = "El usuario tiene un procedimiento activo de antecedentes penales.",
+                        Errors = new {
+                            email = new string[] {"No es posible actualizar el correo electrónico del usuario debido a que actualmente tiene un procedimiento activo relacionado con la constancia de antecedentes penales."}
+                        },
                     });
                 }
 
@@ -1080,10 +1098,12 @@ namespace AuthApi.Controllers
         {
             // * get the last proceding
             var lastProceding = dbContext.Proceeding.Where(p=> p.PersonId == person.Id)
+                .Include(p => p.Status)
                 .Where(p=>EF.Functions.Like(p.Name, "%antecedentes penales%"))
-                .OrderByDescending(p=>p.UpdatedAt)
-                .GroupBy(p => p.Folio)
+                .GroupBy(p => p.DenunciaId)
                 .Select(g => g.OrderByDescending(p => p.UpdatedAt).First())
+                .ToList()
+                .OrderByDescending(p=>p.UpdatedAt)
                 .FirstOrDefault();
 
             if( lastProceding == null )
