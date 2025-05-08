@@ -3,15 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
+using AuthApi.Helper;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
+using AuthApi.Services;
+using AuthApi.Data.Exceptions;
 using AuthApi.Models;
 using AuthApi.Entities;
 using AuthApi.Data;
-using AuthApi.Helper;
-using Microsoft.AspNetCore.Authorization;
-using AuthApi.Services;
-using AuthApi.Data.Exceptions;
-using System.ComponentModel.DataAnnotations;
 
 namespace AuthApi.Controllers
 {
@@ -69,10 +70,26 @@ namespace AuthApi.Controllers
         /// <param name="ascending"></param>
         /// <param name="take"></param>
         /// <param name="offset"></param>
+        /// <param name="search"></param>
         [HttpGet]
-        public ActionResult<IEnumerable<Preregistration>?> GetAllPreregisters([FromQuery] string orderBy = "createdAt", [FromQuery] bool ascending = false, [FromQuery] int take = 25, [FromQuery] int offset = 0)
+        public ActionResult<IEnumerable<Preregistration>?> GetAllPreregisters(
+            [FromQuery] string orderBy = "createdAt",
+            [FromQuery] bool ascending = false,
+            [FromQuery] int take = 25,
+            [FromQuery] int offset = 0,
+            [FromQuery] string? search = null
+        )
         {
             var peopleQuery = this.dbContext.Preregistrations.AsQueryable();
+
+            if(string.IsNullOrEmpty(search) == false)
+            {
+                // * filter by search
+                peopleQuery = peopleQuery.Where(item => 
+                    EF.Functions.Like(item.Mail, $"%{search}%") ||
+                    item.Token == search
+                );
+            }
 
             var totalRecords = peopleQuery.Count();
 
