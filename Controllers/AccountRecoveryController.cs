@@ -12,13 +12,12 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using AuthApi.Data;
 using AuthApi.Models;
+using AuthApi.Models.Responses;
 using AuthApi.Helper;
 using AuthApi.Entities;
 using AuthApi.Data.Exceptions;
 using AuthApi.Validators.AccountRecovery;
-using AuthApi.Models.Responses;
 using AuthApi.Services;
-using Minio.DataModel;
 
 namespace AuthApi.Controllers
 {
@@ -26,13 +25,14 @@ namespace AuthApi.Controllers
     [Authorize]
     [ApiController]
     [Route("api/[Controller]")]
-    public class AccountRecoveryController(ILogger<AccountRecoveryController> logger, RecoveryAccountService ras, MinioService ms, CatalogService cs, DirectoryDBContext c) : ControllerBase
+    public class AccountRecoveryController(ILogger<AccountRecoveryController> logger, RecoveryAccountService ras, MinioService ms, CatalogService cs, DirectoryDBContext c, PersonService ps) : ControllerBase
     {
         private readonly ILogger<AccountRecoveryController> _logger = logger;
         private readonly RecoveryAccountService recoveryAccountService = ras;
         private readonly MinioService minioService = ms;
         private readonly CatalogService catalogService = cs;
         private readonly DirectoryDBContext context = c;
+        private readonly PersonService personService = ps;
 
         /// <summary>
         /// List the accounts recovery request
@@ -108,7 +108,7 @@ namespace AuthApi.Controllers
 
 
         /// <summary>
-        /// Register a new account recovery request
+        /// Register a new account recovery request, only one request per person is allowed
         /// </summary>
         /// <returns></returns>
         /// <response code="201">Stored the recovery request</response>
@@ -379,6 +379,59 @@ namespace AuthApi.Controllers
             };
             return Ok(templates);
         }
+
+
+        /// <summary>
+        /// Retorna el listado de las peticiones de recuperacion de cuentas de la persona
+        /// </summary>
+        /// <param name="personId">Id de la persona en formato UUID</param>
+        /// <param name="take"></param>
+        /// <param name="offset"></param>
+        /// <response code="200">return the data</response>
+        /// <response code="400">The request is not valid ore some error are present</response>
+        /// <response code="404">La persona no se encuentro en el sistema</response>
+        [HttpGet]
+        [Route("people/{personId}")]
+        public ActionResult<PagedResponse<AccountRecoveryResponse>> GetRequestFromPerson([FromRoute] Guid personId, [FromQuery] int take = 5, [FromQuery] int offset = 0)
+        {
+            // * attempt to get the person
+            var person = this.personService.GetPeople().FirstOrDefault(item => item.Id == personId);
+            if(person == null)
+            {
+                return NotFound( new {
+                    Title = "La persona no existe",
+                    Message = "No se encontro la persona en el sistema"
+                });
+            }
+
+            // * prepare the query
+            var queryRecords = this.context.AccountRecoveryRequests
+                .Where(item => item.PersonId == person.Id)
+                .Include( p => p.Files!)
+                    .ThenInclude( f => f.DocumentType)
+                .AsQueryable();
+            
+            var totalRecords = queryRecords.Count();
+            
+            // * retrive the data
+            var records = queryRecords.OrderByDescending(item => item.CreatedAt)
+                .Skip(offset)
+                .Take(take)
+                .Select(item => AccountRecoveryResponse.FromEntity(item))
+                .ToList();
+
+            var response = new PagedResponse<AccountRecoveryResponse>()
+            {
+                Items = records,
+                TotalItems = totalRecords,
+                PageSize = take,
+                PageNumber = (offset / take) + 1
+            };
+
+            // * return the data
+            return response;
+        }
+
 
         #region Private functions
         /// <summary>
