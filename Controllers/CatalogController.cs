@@ -5,13 +5,13 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
 using AuthApi.Data;
 using AuthApi.Entities;
 using AuthApi.Helper;
 using AuthApi.Models;
 using AuthApi.Models.Responses;
-using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace AuthApi.Controllers
 {
@@ -97,12 +97,14 @@ namespace AuthApi.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("states")]
-        public ActionResult<IEnumerable<State>> GetStates([FromQuery] int country_id = 138)
+        public ActionResult<IEnumerable<State>> GetStates([FromQuery] int country_id = 138, [FromQuery] string? search = null)
         {
-            return Ok( dbContext.States
-                .Include( c => c.Country )
-                .Where( item => item.Country!.Id == country_id)
-                .OrderBy( item => item.Name)
+            this._logger.LogCritical("CountryId: {id}, Search:{search}", country_id, search);
+            return Ok(dbContext.States
+                .Include(c => c.Country)
+                .Where(item => country_id == 0 || item.Country!.Id == country_id)
+                .Where(item => string.IsNullOrEmpty(search) || EF.Functions.Like(item.Name, $"%{search}%"))
+                .OrderBy(item => item.Name)
                 .ToList()
             );
         }
@@ -175,12 +177,14 @@ namespace AuthApi.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("municipalities")]
-        public ActionResult<IEnumerable<Municipality>> GetMunicipalities([FromQuery] int state_id = 28)
+        public ActionResult<IEnumerable<Municipality>> GetMunicipalities([FromQuery] int state_id = 28, [FromQuery] string? search = null)
         {
-            return Ok( dbContext.Municipalities
-                .Include( c => c.State )
-                .Where( c => c.State!.Id == state_id)
-                .OrderBy( item => item.Name)
+            return Ok(dbContext.Municipalities
+                .Include(c => c.State)
+                    .ThenInclude(s => s.Country)
+                .Where(c => state_id == 0 || c.State!.Id == state_id)
+                .Where(c => string.IsNullOrEmpty(search) || EF.Functions.Like(c.Name, $"%{search}%"))
+                .OrderBy(item => item.Name)
                 .ToArray()
             );
         }
@@ -260,11 +264,14 @@ namespace AuthApi.Controllers
         /// <returns></returns>
         [HttpGet]
         [Route("colonies")]
-        public ActionResult<IEnumerable<Colony>> GetColonies( [FromQuery] int municipality_id = 41 )
+        public ActionResult<IEnumerable<Colony>> GetColonies([FromQuery] int municipality_id = 41, [FromQuery] string? search = null)
         {
-            return Ok( dbContext.Colonies
-                .Include( c =>c.Municipality )
-                .Where( item => item.Municipality!.Id == municipality_id)
+            return Ok(dbContext.Colonies
+                .Include(c => c.Municipality)
+                    .ThenInclude(m => m.State)
+                        .ThenInclude(s => s.Country)
+                .Where(item => municipality_id == 0 || item.Municipality!.Id == municipality_id)
+                .Where(item => string.IsNullOrEmpty(search) || EF.Functions.Like(item.Name, $"%{search}%") )
                 .OrderBy(item =>item.Name)
                 .ToArray()
             );
