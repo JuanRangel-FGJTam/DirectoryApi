@@ -18,33 +18,34 @@ namespace AuthApi.Services
         private readonly ResetPasswordSettings resetPasswordSettings;
         private readonly JwtSettings jwtSettings;
 
-        public EmailNotificationsService(IOptions<ResetPasswordSettings> optionsResetPasswordSettings, IEmailProvider emailProvider, ChangeEmailState changeEmailState, JwtSettings jwtSettings, ResetPasswordState resetPasswordState)
+        public EmailNotificationsService(IOptions<ResetPasswordSettings> optionsResetPasswordSettings, IEmailProvider emailProvider, ChangeEmailState changeEmailState, IOptions<JwtSettings> optionsJwtSettings, ResetPasswordState resetPasswordState)
         {
             this.resetPasswordSettings = optionsResetPasswordSettings.Value;
             this.emailProvider = emailProvider;
             this.changeEmailState = changeEmailState;
-            this.jwtSettings = jwtSettings;
+            this.jwtSettings = optionsJwtSettings.Value;
             this.resetPasswordState = resetPasswordState;
         }
 
-        public async Task<string> SendResetPasswordEmail(Person person){
+        public async Task<string> SendResetPasswordEmail(Person person)
+        {
             // * Set token life time for 1 hour
-            var tokenLifeTime = TimeSpan.FromSeconds( resetPasswordSettings.TokenLifeTimeSeconds );
+            var tokenLifeTime = TimeSpan.FromSeconds(resetPasswordSettings.TokenLifeTimeSeconds);
 
             // * Generate the token
-            var claims = new Dictionary<string,string>(){
+            var claims = new Dictionary<string, string>(){
                 {"id", person.Id.ToString()},
                 {"email", person.Email!}
             };
             var token = await JwTokenHelper.GenerateJwtToken(claims, jwtSettings, tokenLifeTime);
 
             // * Generate html
-            var htmlBody = EmailTemplates.ResetPassword( resetPasswordSettings.DestinationUrl + $"?t={token}" );
+            var htmlBody = EmailTemplates.ResetPassword(resetPasswordSettings.DestinationUrl + $"?t={token}");
 
             // * Send email
-            return await emailProvider.SendEmail( person.Email!, "Restablecer contraseña", htmlBody );
+            return await emailProvider.SendEmail(person.Email!, "Restablecer contraseña", htmlBody);
         }
-        
+
         public async Task<string> SendResetPasswordEmailv2(Person person)
         {
             // * Set token life time for 1 hour
@@ -84,27 +85,47 @@ namespace AuthApi.Services
             return await emailProvider.SendEmail(person.Email!, "Restablecer contraseña", htmlBody);
         }
 
-        public async Task<string> SendChangeEmailCode(Person person, string newEmail){
+        public async Task<string> SendChangeEmailCode(Person person, string newEmail)
+        {
             // * Set token life time for 1 hour
-            var tokenLifeTime = TimeSpan.FromSeconds( resetPasswordSettings.TokenLifeTimeSeconds );
+            var tokenLifeTime = TimeSpan.FromSeconds(resetPasswordSettings.TokenLifeTimeSeconds);
 
             // * Generate the code
             var _guidString = Guid.NewGuid().ToString().ToUpper();
             var resetCode = _guidString.Substring(_guidString.Length - 6);
 
-            var lifeTime = TimeSpan.FromSeconds( this.resetPasswordSettings.TokenLifeTimeSeconds );
+            var lifeTime = TimeSpan.FromSeconds(this.resetPasswordSettings.TokenLifeTimeSeconds);
             var date = DateTime.Now.Add(lifeTime);
 
             // * Store the record
-            changeEmailState.AddRecord( person.Id, resetCode, date, newEmail);
+            changeEmailState.AddRecord(person.Id, resetCode, date, newEmail);
 
 
             // * Generate html
-            var htmlBody = EmailTemplates.CodeChangeEmail( resetCode, date.ToShortTimeString() );
+            var htmlBody = EmailTemplates.CodeChangeEmail(resetCode, date.ToShortTimeString());
 
             // * Send email
             return await emailProvider.SendEmail(
                 emailDestination: newEmail,
+                subject: "Solicitud de Cambio de Correo Electrónico",
+                data: htmlBody
+            );
+        }
+
+        /// <summary>
+        /// Send a notification to the previous email email before update to a new email
+        /// </summary>
+        /// <param name="oldEmail"></param>
+        /// <param name="newEmail"></param>
+        /// <returns></returns>
+        public async Task<string> SendEmailChanged(string oldEmail, string newEmail)
+        {
+            // * Generate html
+            var htmlBody = EmailTemplates.EmailUpdated(newEmail, DateTime.Now.ToShortTimeString());
+
+            // * Send email
+            return await emailProvider.SendEmail(
+                emailDestination: oldEmail,
                 subject: "Solicitud de Cambio de Correo Electrónico",
                 data: htmlBody
             );

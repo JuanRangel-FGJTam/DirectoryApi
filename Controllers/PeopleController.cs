@@ -162,7 +162,7 @@ namespace AuthApi.Controllers
         /// <response code="422">The validation fails</response>
         [HttpPatch]
         [Route ("{personID}")]
-        public IActionResult UpdatePerson(string personID, [FromBody] UpdatePersonRequest personRequest)
+        public async Task<IActionResult> UpdatePerson(string personID, [FromBody] UpdatePersonRequest personRequest)
         {
             // Validate ID
             Guid _personID = Guid.Empty;
@@ -186,14 +186,17 @@ namespace AuthApi.Controllers
             }
 
             // * if attempt to update the email check if is allowed
-            if(person.Email != personRequest.Email && !string.IsNullOrEmpty(personRequest.Email))
+            string _oldEmail = string.Empty;
+            if (person.Email != personRequest.Email && !string.IsNullOrEmpty(personRequest.Email))
             {
-                if(CheckIfHasActiveProcessing(person!))
+                if (CheckIfHasActiveProcessing(person!))
                 {
-                    return UnprocessableEntity(new {
+                    return UnprocessableEntity(new
+                    {
                         Title = "No se puede cambiar el correo",
-                        Errors = new {
-                            email = new string[] {"No es posible actualizar el correo electrónico del usuario debido a que actualmente tiene un procedimiento activo relacionado con la constancia de antecedentes penales."}
+                        Errors = new
+                        {
+                            email = new string[] { "No es posible actualizar el correo electrónico del usuario debido a que actualmente tiene un procedimiento activo relacionado con la constancia de antecedentes penales." }
                         }
                     });
                 }
@@ -256,10 +259,13 @@ namespace AuthApi.Controllers
 
             if(!string.IsNullOrEmpty(personRequest.Email))
             {
-                var emailStored =  dbContext.People.Where(p => p.DeletedAt == null && p.Email == personRequest.Email.Trim() && p.Id != _personID ).Count();
+                var emailStored = dbContext.People.Where(p => p.DeletedAt == null && p.Email == personRequest.Email.Trim() && p.Id != _personID ).Count();
                 if(emailStored > 0){
                     errorsRelations.Add( "email", new string[]{ "El correo ya se encuentra en uso."} );
                 }
+
+                // * save the old email for the notification
+                _oldEmail = person.Email ?? string.Empty;
                 person.Email = personRequest.Email.Trim();
             }
 
@@ -300,8 +306,22 @@ namespace AuthApi.Controllers
                 person.Occupation = _occupation;
             }
 
+            // notify of the email changed if requires
+            if (!string.IsNullOrEmpty(_oldEmail))
+            {
+                try
+                {
+                    this._logger.LogDebug("Notify of email changed to: {email}", _oldEmail);
+                    await this.emailNotificationsService.SendEmailChanged(_oldEmail, person.Email!);
+                }
+                catch (System.Exception err)
+                {
+                    this._logger.LogError(err, "Failed to notify the previous email address when changing email for person ID '{PersonId}': {ErrorMessage}", person.Id, err.Message);
+                }
+            }
+
             // Aply changes
-            this.dbContext.Update( person );
+            this.dbContext.Update(person);
             this.dbContext.SaveChanges();
 
             // Update password
@@ -886,7 +906,7 @@ namespace AuthApi.Controllers
         /// <returns></returns>
         [HttpPatch]
         [Route("updateEmail" )]
-        public IActionResult ChangeEmail( [FromBody] NewEmailRequest newEmailRequest){
+        public async Task<IActionResult> ChangeEmail( [FromBody] NewEmailRequest newEmailRequest){
 
             // Validate request
             if(!ModelState.IsValid){
@@ -920,7 +940,18 @@ namespace AuthApi.Controllers
                     });
                 }
 
-                // * Update the password
+                // * Send a notification to the previous email
+                try
+                {
+                    var _oldEmail = person.Email ?? throw new ArgumentException("El usuario no tiene un correo electrónico válido registrado.", nameof(person.Email));
+                    await this.emailNotificationsService.SendEmailChanged(_oldEmail, newEmailRequest.Email);
+                }
+                catch (System.Exception err)
+                {
+                    this._logger.LogError(err, "Failed to notify the previous email address when changing email for person ID '{PersonId}': {ErrorMessage}", person.Id, err.Message);
+                }
+
+                // * Update the email
                 this.personService.UpdateEmail(person.Id, newEmailRequest.Email);
 
                 // * Remove reset password record
