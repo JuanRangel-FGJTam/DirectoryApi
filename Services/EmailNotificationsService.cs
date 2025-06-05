@@ -121,7 +121,7 @@ namespace AuthApi.Services
         public async Task<string> SendEmailChanged(string oldEmail, string newEmail)
         {
             // * Generate html
-            var htmlBody = EmailTemplates.EmailUpdated(newEmail, DateTime.Now.ToShortTimeString());
+            var htmlBody = EmailTemplates.EmailUpdated(newEmail, DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss"));
 
             // * Send email
             return await emailProvider.SendEmail(
