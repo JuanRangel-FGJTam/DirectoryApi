@@ -126,7 +126,7 @@ namespace AuthApi.Services
             // * Send email
             return await emailProvider.SendEmail(
                 emailDestination: oldEmail,
-                subject: "Solicitud de Cambio de Correo Electrónico",
+                subject: "Aviso de actualización de correo electrónico en Fiscalía Digital",
                 data: htmlBody
             );
         }
