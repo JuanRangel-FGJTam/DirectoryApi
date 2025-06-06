@@ -1,3 +1,4 @@
+#pragma warning disable CS9124
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,19 +31,17 @@ namespace AuthApi.Controllers
     [Authorize]
     [ApiController]
     [Route("api/people")]
-    public class PeopleController(ILogger<PeopleController> logger, DirectoryDBContext context, PersonService personService, IEmailProvider emailProvider, IOptions<JwtSettings> optionsJwtSettings, IOptions<ResetPasswordSettings> optionsResetPasswordSettings, ResetPasswordState resetPasswordState, ChangeEmailState changeEmailState, ICryptographyService cryptographyService) : ControllerBase
+    public class PeopleController(ILogger<PeopleController> logger, DirectoryDBContext context, PersonService personService, ResetPasswordState resetPasswordState, ChangeEmailState changeEmailState, ICryptographyService cryptographyService, EmailNotificationsService emailNotificationsService) : ControllerBase
     {
         private readonly ILogger<PeopleController> _logger = logger;
         private readonly DirectoryDBContext dbContext = context;
         private readonly PersonService personService = personService;
-        private readonly IEmailProvider emailProvider = emailProvider;
-        private readonly JwtSettings jwtSettings = optionsJwtSettings.Value;
-        private readonly ResetPasswordSettings resetPasswordSettings = optionsResetPasswordSettings.Value;
         private readonly ResetPasswordState resetPasswordState = resetPasswordState;
         private readonly ChangeEmailState changeEmailState = changeEmailState;
         private readonly ICryptographyService cryptographyService = cryptographyService;
-        
-        
+        private readonly EmailNotificationsService emailNotificationsService = emailNotificationsService;
+
+
         /// <summary>
         /// Return the people stored, by default returns 5 ordered by `createdAt`
         /// </summary>
@@ -163,7 +162,7 @@ namespace AuthApi.Controllers
         /// <response code="422">The validation fails</response>
         [HttpPatch]
         [Route ("{personID}")]
-        public IActionResult UpdatePerson(string personID, [FromBody] UpdatePersonRequest personRequest)
+        public async Task<IActionResult> UpdatePerson(string personID, [FromBody] UpdatePersonRequest personRequest)
         {
             // Validate ID
             Guid _personID = Guid.Empty;
@@ -187,14 +186,17 @@ namespace AuthApi.Controllers
             }
 
             // * if attempt to update the email check if is allowed
-            if(person.Email != personRequest.Email && !string.IsNullOrEmpty(personRequest.Email))
+            string _oldEmail = string.Empty;
+            if (person.Email != personRequest.Email && !string.IsNullOrEmpty(personRequest.Email))
             {
-                if(CheckIfHasActiveProcessing(person!))
+                if (CheckIfHasActiveProcessing(person!))
                 {
-                    return UnprocessableEntity(new {
+                    return UnprocessableEntity(new
+                    {
                         Title = "No se puede cambiar el correo",
-                        Errors = new {
-                            email = new string[] {"No es posible actualizar el correo electrónico del usuario debido a que actualmente tiene un procedimiento activo relacionado con la constancia de antecedentes penales."}
+                        Errors = new
+                        {
+                            email = new string[] { "No es posible actualizar el correo electrónico del usuario debido a que actualmente tiene un procedimiento activo relacionado con la constancia de antecedentes penales." }
                         }
                     });
                 }
@@ -257,10 +259,13 @@ namespace AuthApi.Controllers
 
             if(!string.IsNullOrEmpty(personRequest.Email))
             {
-                var emailStored =  dbContext.People.Where(p => p.DeletedAt == null && p.Email == personRequest.Email.Trim() && p.Id != _personID ).Count();
+                var emailStored = dbContext.People.Where(p => p.DeletedAt == null && p.Email == personRequest.Email.Trim() && p.Id != _personID ).Count();
                 if(emailStored > 0){
                     errorsRelations.Add( "email", new string[]{ "El correo ya se encuentra en uso."} );
                 }
+
+                // * save the old email for the notification
+                _oldEmail = person.Email ?? string.Empty;
                 person.Email = personRequest.Email.Trim();
             }
 
@@ -301,8 +306,22 @@ namespace AuthApi.Controllers
                 person.Occupation = _occupation;
             }
 
+            // notify of the email changed if requires
+            if (!string.IsNullOrEmpty(_oldEmail))
+            {
+                try
+                {
+                    this._logger.LogDebug("Notify of email changed to: {email}", _oldEmail);
+                    await this.emailNotificationsService.SendEmailChanged(_oldEmail, person.Email!);
+                }
+                catch (System.Exception err)
+                {
+                    this._logger.LogError(err, "Failed to notify the previous email address when changing email for person ID '{PersonId}': {ErrorMessage}", person.Id, err.Message);
+                }
+            }
+
             // Aply changes
-            this.dbContext.Update( person );
+            this.dbContext.Update(person);
             this.dbContext.SaveChanges();
 
             // Update password
@@ -434,8 +453,8 @@ namespace AuthApi.Controllers
             }
 
             var person = this.personService.GetPeople()
-                .Include(p => p.Addresses.Where( a=> a != null && a.DeletedAt == null ) )
-                .Include(p => p.ContactInformations.Where( a => a != null && a.DeletedAt == null))
+                .Include(p => p.Addresses!.Where( a=> a != null && a.DeletedAt == null ) )
+                .Include(p => p.ContactInformations!.Where( a => a != null && a.DeletedAt == null))
                 .FirstOrDefault(p => p.Id == _personID);
 
             if ( person == null)
@@ -715,7 +734,7 @@ namespace AuthApi.Controllers
 
             // * Send email
             try {
-                var emailID = await SendResetPasswordEmailv2(person)
+                var emailID = await emailNotificationsService.SendResetPasswordEmailv2(person)
                     ?? throw new Exception($"Error at sending the email to {person.Email!}, the response was null");
 
                 _logger.LogInformation("Email sended for reset the password of the user ID:'{person_id}' to the email '{email}' : response:{response}", person.Id.ToString(), person.Email!, emailID );
@@ -857,7 +876,7 @@ namespace AuthApi.Controllers
 
             // * attemp to send the validation email code
             try {
-                var emailSendingTask = this.SendChangeEmailCode(person, updateEmailRequest.Email);
+                var emailSendingTask = this.emailNotificationsService.SendChangeEmailCode(person, updateEmailRequest.Email);
                 emailSendingTask.Wait();
 
                 return Ok( new {
@@ -877,7 +896,7 @@ namespace AuthApi.Controllers
 
 
         /// <summary>
-        /// Send email with a code for validate the new email
+        /// Updates the person's email address after validating the verification code sent previously.
         /// </summary>
         /// <param name="newEmailRequest"></param>
         /// <returns code="200">Email sended</returns>
@@ -887,7 +906,7 @@ namespace AuthApi.Controllers
         /// <returns></returns>
         [HttpPatch]
         [Route("updateEmail" )]
-        public IActionResult ChangeEmail( [FromBody] NewEmailRequest newEmailRequest){
+        public async Task<IActionResult> ChangeEmail( [FromBody] NewEmailRequest newEmailRequest){
 
             // Validate request
             if(!ModelState.IsValid){
@@ -921,7 +940,18 @@ namespace AuthApi.Controllers
                     });
                 }
 
-                // * Update the password
+                // * Send a notification to the previous email
+                try
+                {
+                    var _oldEmail = person.Email ?? throw new ArgumentException("El usuario no tiene un correo electrónico válido registrado.", nameof(person.Email));
+                    await this.emailNotificationsService.SendEmailChanged(_oldEmail, newEmailRequest.Email);
+                }
+                catch (System.Exception err)
+                {
+                    this._logger.LogError(err, "Failed to notify the previous email address when changing email for person ID '{PersonId}': {ErrorMessage}", person.Id, err.Message);
+                }
+
+                // * Update the email
                 this.personService.UpdateEmail(person.Id, newEmailRequest.Email);
 
                 // * Remove reset password record
@@ -1011,88 +1041,6 @@ namespace AuthApi.Controllers
             return Ok( createdPeople );
         }
 
-
-        private async Task<string> SendResetPasswordEmail(Person person){
-            // * Set token life time for 1 hour
-            var tokenLifeTime = TimeSpan.FromSeconds( resetPasswordSettings.TokenLifeTimeSeconds );
-
-            // * Generate the token
-            var claims = new Dictionary<string,string>(){
-                {"id", person.Id.ToString()},
-                {"email", person.Email!}
-            };
-            var token = await JwTokenHelper.GenerateJwtToken(claims, jwtSettings, tokenLifeTime);
-
-            // * Generate html
-            var htmlBody = EmailTemplates.ResetPassword( resetPasswordSettings.DestinationUrl + $"?t={token}" );
-
-            // * Send email
-            return await emailProvider.SendEmail( person.Email!, "Restablecer contraseña", htmlBody );
-        }
-
-        private async Task<string> SendResetPasswordEmailv2(Person person){
-            // * Set token life time for 1 hour
-            var tokenLifeTime = TimeSpan.FromSeconds(resetPasswordSettings.TokenLifeTimeSeconds);
-            var date = DateTime.Now.Add(tokenLifeTime);
-
-            var resetCode = string.Empty;
-
-            // * Check if a previous record exist
-            var _record = resetPasswordState.GetByPersonId(person.Id);
-            if(_record != null)
-            {
-                // * check if the code is still valid
-                if(resetPasswordState.Validate(_record.ResetCode) != null)
-                {
-                    // * save the code to be reused
-                    resetCode = _record.ResetCode;
-                }
-            }
-
-
-            // * if a previous reset code does not exist, make a new one
-            if(string.IsNullOrEmpty(resetCode))
-            {
-                // * Generate the new code
-                var _guidString = Guid.NewGuid().ToString().ToUpper();
-                resetCode = _guidString.Substring(_guidString.Length - 6);
-            }
-
-            // * Store the record
-            resetPasswordState.AddRecord(person.Id, resetCode, date);
-
-            // * Generate html
-            var htmlBody = EmailTemplates.ResetPasswordCode( resetCode, date.ToShortTimeString() );
-
-            // * Send email
-            return await emailProvider.SendEmail( person.Email!, "Restablecer contraseña", htmlBody );
-        }
-
-        private async Task<string> SendChangeEmailCode(Person person, string newEmail){
-            // * Set token life time for 1 hour
-            var tokenLifeTime = TimeSpan.FromSeconds( resetPasswordSettings.TokenLifeTimeSeconds );
-
-            // * Generate the code
-            var _guidString = Guid.NewGuid().ToString().ToUpper();
-            var resetCode = _guidString.Substring(_guidString.Length - 6);
-
-            var lifeTime = TimeSpan.FromSeconds( this.resetPasswordSettings.TokenLifeTimeSeconds );
-            var date = DateTime.Now.Add(lifeTime);
-
-            // * Store the record
-            changeEmailState.AddRecord( person.Id, resetCode, date, newEmail);
-
-
-            // * Generate html
-            var htmlBody = EmailTemplates.CodeChangeEmail( resetCode, date.ToShortTimeString() );
-
-            // * Send email
-            return await emailProvider.SendEmail(
-                emailDestination: newEmail,
-                subject: "Solicitud de Cambio de Correo Electrónico",
-                data: htmlBody
-            );
-        }
 
         private bool CheckIfHasActiveProcessing(Person person)
         {
