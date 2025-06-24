@@ -91,6 +91,7 @@ namespace AuthApi.Controllers
             return Ok( dbContext.Countries.OrderBy(item =>item.Name).ToArray() );
         }
 
+        #region Catalogo Estados
         /// <summary>
         ///  Get states catalog
         /// </summary>
@@ -171,6 +172,60 @@ namespace AuthApi.Controllers
             }
         }
 
+        /// <summary>
+        ///  Actualiza el Estado
+        /// </summary>
+        /// <returns></returns>
+        /// <response code="200">Estado actualizado correctamente</response>
+        /// <response code="404">Estado no encontrado</response>
+        /// <response code="422">Datos inválidos</response>
+        /// <response code="409">Conflicto al actualizar el Estado</response>
+        [HttpPatch("states/{stateId:int}")]
+        public IActionResult UpdateState([FromRoute] int stateId, UdpateCatalogRequest request)
+        {
+            if (string.IsNullOrEmpty(request.Name))
+            {
+                var errors = new Dictionary<string, string> { { "Name", "El campo es requerido" } };
+                return UnprocessableEntity(new UnprocesableResponse(errors));
+            }
+
+            // * retrieve the municipality
+            var state = this.dbContext.States.Find(stateId);
+            if (state == null)
+            {
+                return NotFound(new
+                {
+                    Title = $"El Estado no se encontro",
+                    Message = $"El Estado con id '{stateId}' no se encuentra en el sistema.",
+                });
+            }
+
+            try
+            {
+                // * update the entity
+                state.Name = request.Name!.ToUpper().Trim();
+                this.dbContext.States.Update(state);
+                this.dbContext.SaveChanges();
+
+                return Ok(new
+                {
+                    Title = "Estado actualizado",
+                    Message = "El Estado se actualizó correctamente."
+                });
+            }
+            catch (Exception err)
+            {
+                this._logger.LogError(err, "Error al actualizar el estado '{id}': {message}", stateId, err.Message);
+                return Conflict(new
+                {
+                    Title = "Error al actualizar el Estado",
+                    Message = "Ocurrió un error al intentar actualizar el estado. Por favor, intente nuevamente más tarde."
+                });
+            }
+        }
+        #endregion
+
+        #region Catalogo Municipios
         /// <summary>
         ///  Get municipalities catalog
         /// </summary>
@@ -259,6 +314,60 @@ namespace AuthApi.Controllers
         }
 
         /// <summary>
+        ///  Actualiza el municipio
+        /// </summary>
+        /// <returns></returns>
+        /// <response code="200">Municipio actualizado correctamente</response>
+        /// <response code="404">Municipio no encontrado</response>
+        /// <response code="422">Datos inválidos</response>
+        /// <response code="409">Conflicto al actualizar el Municipio</response>
+        [HttpPatch("municipalities/{municipalityId:int}")]
+        public IActionResult UpdateMunicipality([FromRoute] int municipalityId, UdpateCatalogRequest request)
+        {
+            if (string.IsNullOrEmpty(request.Name))
+            {
+                var errors = new Dictionary<string, string> { { "Name", "El campo es requerido" } };
+                return UnprocessableEntity(new UnprocesableResponse(errors));
+            }
+
+            // * retrieve the municipality
+            var municipality = this.dbContext.Municipalities.Find(municipalityId);
+            if (municipality == null)
+            {
+                return NotFound(new
+                {
+                    Title = $"El municipio no se encontro",
+                    Message = $"El municipio con id '{municipalityId}' no se encuentra en el sistema.",
+                });
+            }
+
+            try
+            {
+                // * update the entity
+                municipality.Name = request.Name!.ToUpper().Trim();
+                this.dbContext.Municipalities.Update(municipality);
+                this.dbContext.SaveChanges();
+
+                return Ok(new
+                {
+                    Title = "Municipio actualizado",
+                    Message = "El municipio se actualizó correctamente."
+                });
+            }
+            catch (Exception err)
+            {
+                this._logger.LogError(err, "Error al actualizar el municipio '{id}': {message}", municipalityId, err.Message);
+                return Conflict(new
+                {
+                    Title = "Error al actualizar el Municipio",
+                    Message = "Ocurrió un error al intentar actualizar el municipio. Por favor, intente nuevamente más tarde."
+                });
+            }
+        }
+        #endregion
+
+        #region Catalogo Colonias
+        /// <summary>
         ///  Get colonies catalog
         /// </summary>
         /// <returns></returns>
@@ -271,7 +380,7 @@ namespace AuthApi.Controllers
                     .ThenInclude(m => m.State)
                         .ThenInclude(s => s.Country)
                 .Where(item => municipality_id == 0 || item.Municipality!.Id == municipality_id)
-                .Where(item => string.IsNullOrEmpty(search) || EF.Functions.Like(item.Name, $"%{search}%") )
+                .Where(item => string.IsNullOrEmpty(search) || EF.Functions.Like(item.Name, $"%{search}%") || EF.Functions.Like(item.ZipCode, $"{search}%"))
                 .OrderBy(item =>item.Name)
                 .ToArray()
             );
@@ -332,6 +441,61 @@ namespace AuthApi.Controllers
         }
 
         /// <summary>
+        ///  Actualiza la colonia
+        /// </summary>
+        /// <returns></returns>
+        /// <response code="200">Colonia actualizada correctamente</response>
+        /// <response code="404">Colonia no encontrada</response>
+        /// <response code="422">Datos inválidos</response>
+        /// <response code="409">Conflicto al actualizar la colonia</response>
+        [HttpPatch("colonies/{colonyId:int}")]
+        public IActionResult UpdateColony([FromRoute] int colonyId, UdpateCatalogRequest request)
+        {
+            if (string.IsNullOrEmpty(request.Name))
+            {
+                var errors = new Dictionary<string,string>{{"Name", "El campo es requerido"}};
+                return UnprocessableEntity( new UnprocesableResponse(errors));
+            }
+
+            // * retrive the colony
+            var colony = this.dbContext.Colonies.Find(colonyId);
+            if (colony == null)
+            {
+                return NotFound( new {
+                    Title = $"Colonia no encontrada",
+                    Message = $"La colonia con id '{colonyId}' no se encuentra en el sistema.",
+                });
+            }
+
+            try
+            {
+                // * update the entity
+                colony.Name = request.Name!.ToUpper().Trim();
+                if (!string.IsNullOrEmpty(request.ZipCode))
+                {
+                    colony.ZipCode = request.ZipCode!.ToUpper().Trim();
+                }
+                this.dbContext.Colonies.Update(colony);
+                this.dbContext.SaveChanges();
+
+                return Ok(new
+                {
+                    Title = "Colonia actualizada",
+                    Message = "La colonia se actualizó correctamente."
+                });
+            }
+            catch (Exception err)
+            {
+                this._logger.LogError(err, "Error al actualizar la colonia '{id}': {message}", colonyId, err.Message);
+                return Conflict(new
+                {
+                    Title = "Error al actualizar la colonia",
+                    Message = "Ocurrió un error al intentar actualizar la colonia. Por favor, intente nuevamente más tarde."
+                });
+            }
+        }
+
+        /// <summary>
         ///  Get colony info
         /// </summary>
         /// <returns></returns>
@@ -353,7 +517,8 @@ namespace AuthApi.Controllers
                 });
             }
         }
-        
+        #endregion
+
         [HttpGet("/api/zipcode/search")]
         public ActionResult<Object> SearchZipCode([FromQuery] string zipcode)
         {
