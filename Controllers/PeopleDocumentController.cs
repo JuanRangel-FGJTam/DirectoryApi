@@ -416,6 +416,80 @@ namespace AuthApi.Controllers
                 });
             }
         }
+        
+        /// <summary>
+        /// Retornat un documento en especifico
+        /// </summary>
+        /// <param name="personId"> identificador de la person in formato GUID</param>
+        /// <param name="documentId"> identificador del documento a recuperar</param>
+        /// <param name="withTrash">incluir documentos eliminados</param>
+        /// <response code="200">retornar el documento</response>
+        /// <response code="400">The request is not valid ore some error are present</response>
+        /// <response code="404">La persona o el documento no se encuentran</response>
+        [HttpGet]
+        [Route("/api/people/{personId}/documents/{documentId}")]
+        public async Task<ActionResult<PersonDocumentResponse>> GetPersonDocuments([FromRoute] string personId, [FromRoute] string documentId, [FromQuery] bool withTrash = false)
+        {
+            // * Validate person
+            Guid _personID = Guid.Empty;
+            try
+            {
+                _personID = ValidatePerson(personId);
+            }
+            catch(ArgumentException)
+            {
+                return BadRequest(new { message = $"Person id has formatted not valid" });
+            }
+            catch(KeyNotFoundException)
+            {
+                return NotFound(new { Message = "The person is not found" });
+            }
+            // * validate the person
+            if(!this.dbContext.People.Where(item => item.Id == _personID).Any())
+            {
+                return NotFound(new { Message = "The person is not found" });
+            }
+
+
+            // * get files data
+            var personFile = this.dbContext.PersonFiles
+                .Where(item => item.PersonId == _personID && item.DeletedAt == null)
+                .Include(p => p.DocumentType)
+                .FirstOrDefault();
+
+            if (personFile == null)
+            {
+                return NotFound(new {
+                    Title = "No encontrado",
+                    Message = $"El documento con id:{documentId} no se encuentra registrado."
+                });
+            }
+
+            if (!withTrash && personFile.DeletedAt != null)
+            {
+                return NotFound(new {
+                    Title = "No encontrado",
+                    Message = $"El documento con id:{documentId} no se encuentra registrado."
+                });
+            }
+
+            // * make temporal url for files
+            var fileUrl = await minioService.MakeTemporalUrl(personFile.FilePath!, personFile.MimmeType ?? "image/jpeg");
+            string? fileUrlBack = null;
+            if( !string.IsNullOrEmpty(personFile.FilePathBack))
+            {
+                fileUrlBack = await minioService.MakeTemporalUrl(personFile.FilePathBack!, personFile.MimmeType ?? "image/jpeg");
+            }
+
+            // * make temporal url for files
+            PersonDocumentResponse fileModel = PersonDocumentResponse.FromEnity(personFile);
+            fileModel.FileUrl = fileUrl;
+            fileModel.FileUrlBack = fileUrlBack;
+
+            // * return the data
+            return fileModel;
+        }
+
 
         #region Private methods
         /// <summary>
