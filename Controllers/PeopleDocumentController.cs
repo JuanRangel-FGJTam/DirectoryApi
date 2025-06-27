@@ -436,11 +436,11 @@ namespace AuthApi.Controllers
             {
                 _personID = ValidatePerson(personId);
             }
-            catch(ArgumentException)
+            catch (ArgumentException)
             {
                 return BadRequest(new { message = $"Person id has formatted not valid" });
             }
-            catch(KeyNotFoundException)
+            catch (KeyNotFoundException)
             {
                 return NotFound(new { Message = "The person is not found" });
             }
@@ -450,12 +450,17 @@ namespace AuthApi.Controllers
                 return NotFound(new { Message = "The person is not found" });
             }
 
+            if (!int.TryParse(documentId, out int docId))
+            {
+                return BadRequest(new { message = $"DocumentId id has formatted not valid" });
+            }
+
 
             // * get files data
             var personFile = this.dbContext.PersonFiles
-                .Where(item => item.PersonId == _personID && item.DeletedAt == null)
-                .Include(p => p.DocumentType)
-                .FirstOrDefault();
+            .Where(item => item.PersonId == _personID && item.Id == docId)
+            .Include(p => p.DocumentType)
+            .FirstOrDefault();
 
             if (personFile == null)
             {
