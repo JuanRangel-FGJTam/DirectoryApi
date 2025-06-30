@@ -16,6 +16,7 @@ using AuthApi.Entities;
 using AuthApi.Models;
 using AuthApi.Helper;
 using AuthApi.Services;
+using AuthApi.Models.Responses;
 
 
 namespace AuthApi.Controllers
@@ -374,7 +375,7 @@ namespace AuthApi.Controllers
         /// <response code="404">The person is not found</response>
         [HttpGet]
         [Route("/api/people/{personId}/procedures")]
-        public async Task<ActionResult<IEnumerable<ProceedingResponse>>> GetPersonProcedings([FromRoute] string personId, [FromQuery] string orderBy = "createdAt", [FromQuery] bool ascending = false, [FromQuery] int take = 5, [FromQuery] int offset = 0){
+        public async Task<ActionResult<PagedResponse<ProceedingResponse>>> GetPersonProcedings([FromRoute] string personId, [FromQuery] string orderBy = "createdAt", [FromQuery] bool ascending = false, [FromQuery] int take = 5, [FromQuery] int offset = 0){
             
             // * Validate person id
             Guid _personID = Guid.Empty;
@@ -400,6 +401,8 @@ namespace AuthApi.Controllers
                 .Include(p => p.Status)
                 .Include(p => p.Area)
                 .AsQueryable();
+
+            var totalElements = query.Count();
 
             // * ordering the data
             string ordering = ascending ? $"{orderBy} asc" : $"{orderBy} desc";
@@ -450,8 +453,16 @@ namespace AuthApi.Controllers
                 p.Files = await Task.WhenAll(fileTasks);
             }
 
+            var response = new PagedResponse<ProceedingResponse>()
+            {
+                Items = proccedings ?? [],
+                TotalItems = totalElements,
+                PageSize = take,
+                PageNumber = take > 0 ? (offset / take) + 1 : 1
+            };
+
             // * return the data
-            return proccedings;
+            return response;
         }
 
         /// <summary>
