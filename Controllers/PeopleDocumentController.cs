@@ -218,12 +218,13 @@ namespace AuthApi.Controllers
         /// <param name="ascending"></param>
         /// <param name="take"></param>
         /// <param name="offset"></param>
+        /// <param name="withTrash">Especifica el traer documentos eliminados</param>
         /// <response code="200">return the data</response>
         /// <response code="400">The request is not valid ore some error are present</response>
         /// <response code="404">The person is not found</response>
         [HttpGet]
         [Route("/api/people/{personId}/documents")]
-        public async Task<ActionResult<IEnumerable<PersonDocumentResponse>>> GetPersonDocuments([FromRoute] string personId, [FromQuery] bool ascending = false, [FromQuery] int take = 5, [FromQuery] int offset = 0)
+        public async Task<ActionResult<IEnumerable<PersonDocumentResponse>>> GetPersonDocuments([FromRoute] string personId, [FromQuery] bool ascending = false, [FromQuery] int take = 5, [FromQuery] int offset = 0, [FromQuery] bool withTrash = false)
         {
             // * Validate person
             Guid _personID = Guid.Empty;
@@ -247,10 +248,14 @@ namespace AuthApi.Controllers
 
 
             // * get files data
-            var personFiles = this.dbContext.PersonFiles
-                .Where(item=> item.PersonId == _personID && item.DeletedAt == null)
+            var personFilesQuery = this.dbContext.PersonFiles
+                .Where(item => item.PersonId == _personID)
                 .OrderBy(item => item.CreatedAt)
-                .Include(p=>p.DocumentType)
+                .Include(p => p.DocumentType)
+                .AsQueryable();
+            if (!withTrash) personFilesQuery = personFilesQuery.Where(item => item.DeletedAt == null);
+
+            var personFiles = personFilesQuery
                 .Skip(offset)
                 .Take(take)
                 .ToList()
