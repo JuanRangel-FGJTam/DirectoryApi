@@ -4,26 +4,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using AuthApi.Data;
 using AuthApi.Entities;
 using AuthApi.Models;
 using AuthApi.Helper;
-using Microsoft.AspNetCore.Authorization;
-using System.Net.Http.Headers;
 using AuthApi.Services;
-using System.Runtime.Serialization;
-using System.ComponentModel.DataAnnotations;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using Microsoft.IdentityModel.Tokens;
-using System.Net.NetworkInformation;
-using Microsoft.AspNetCore.Http.HttpResults;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.Extensions.Options;
-using System.Diagnostics;
-using System.Security.Claims;
 using AuthApi.Models.Responses;
+using CommunityToolkit.HighPerformance.Helpers;
+using System.Security.AccessControl;
 
 namespace AuthApi.Controllers
 {
@@ -31,7 +24,7 @@ namespace AuthApi.Controllers
     [Authorize]
     [ApiController]
     [Route("api/people")]
-    public class PeopleController(ILogger<PeopleController> logger, DirectoryDBContext context, PersonService personService, ResetPasswordState resetPasswordState, ChangeEmailState changeEmailState, ICryptographyService cryptographyService, EmailNotificationsService emailNotificationsService) : ControllerBase
+    public class PeopleController(ILogger<PeopleController> logger, DirectoryDBContext context, PersonService personService, ResetPasswordState resetPasswordState, ChangeEmailState changeEmailState, ICryptographyService cryptographyService, EmailNotificationsService emailNotificationsService, PersonBanService personBanService) : ControllerBase
     {
         private readonly ILogger<PeopleController> _logger = logger;
         private readonly DirectoryDBContext dbContext = context;
@@ -40,6 +33,7 @@ namespace AuthApi.Controllers
         private readonly ChangeEmailState changeEmailState = changeEmailState;
         private readonly ICryptographyService cryptographyService = cryptographyService;
         private readonly EmailNotificationsService emailNotificationsService = emailNotificationsService;
+        private readonly PersonBanService personBanService = personBanService;
 
 
         /// <summary>
@@ -440,7 +434,7 @@ namespace AuthApi.Controllers
         /// <response code="401">Auth token is not valid or is not present</response>
         [HttpGet]
         [Route ("{personID}")]
-        public ActionResult<PersonResponse> GetPerson( string personID )
+        public ActionResult<PersonResponse> GetPerson(string personID)
         {
             // Validate ID
             Guid _personID = Guid.Empty;
@@ -463,8 +457,16 @@ namespace AuthApi.Controllers
                     Message = "Person not found"
                 });
             }
-            
-            return Ok( PersonResponse.FromEntity(person) );
+
+            var personResponse = PersonResponse.FromEntity(person);
+
+            if (person.BannedAt != null)
+            {
+                var banRecord = this.personBanService.GetBanHistory(person.Id).FirstOrDefault(item => item.Activo == "BANNED");
+                personResponse.BannedReason = banRecord?.Message;
+            }
+
+            return Ok(personResponse);
         }
         
         /// <summary>

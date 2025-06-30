@@ -46,10 +46,14 @@ namespace AuthApi.Models
         public string? AppName {get;set;}
 
         public DateTime? BannedAt {get;set;}
+        
+        public string? BannedReason {get;set;}
 
-        public string FullName {
-            get {
-                return string.Join(' ', new string[]{Name??"", FirstName??"", LastName??""});
+        public string FullName
+        {
+            get
+            {
+                return string.Join(' ', new string[] { Name ?? "", FirstName ?? "", LastName ?? "" });
             }
         }
 
