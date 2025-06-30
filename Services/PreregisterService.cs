@@ -14,7 +14,7 @@ using Microsoft.Extensions.Options;
 
 namespace AuthApi.Services
 {
-    public class PreregisterService( DirectoryDBContext dbContext, ICryptographyService cryptographyService, ILogger<PreregisterService> logger, PersonService personService, IEmailProvider emailProvider, IOptions<WelcomeEmailSources> WelcomeEmailSourcesOptions, IOptions<ResetPasswordSettings> resetPasswordOptions)
+    public class PreregisterService(DirectoryDBContext dbContext, ICryptographyService cryptographyService, ILogger<PreregisterService> logger, PersonService personService, IEmailProvider emailProvider, IOptions<WelcomeEmailSources> WelcomeEmailSourcesOptions, IOptions<RegisterPersonSettings> registerPersonOptions)
     {
         private readonly DirectoryDBContext dbContext = dbContext;
         private readonly ICryptographyService cryptographyService = cryptographyService;
@@ -22,7 +22,7 @@ namespace AuthApi.Services
         private readonly PersonService personService = personService;
         private readonly IEmailProvider emailProvider = emailProvider;
         private readonly WelcomeEmailSources welcomeEmailSources = WelcomeEmailSourcesOptions.Value;
-        private readonly ResetPasswordSettings resetPasswordSettings = resetPasswordOptions.Value;
+        private readonly RegisterPersonSettings registerPersonSettings = registerPersonOptions.Value;
         
         /// <summary>
         ///  Create a new preregister record
@@ -46,7 +46,7 @@ namespace AuthApi.Services
 
             // * prepare the validation code and the lifetime
             string validationCode = PreregisterToken.GenerateCode();
-            var lifeTime = TimeSpan.FromSeconds(resetPasswordSettings.TokenLifeTimeSeconds);
+            var lifeTime = TimeSpan.FromSeconds(registerPersonSettings.TokenLifeTimeSeconds);
             var codeLifeTime = DateTime.Now.Add(lifeTime);
 
 

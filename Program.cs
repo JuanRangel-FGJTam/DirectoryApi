@@ -39,7 +39,8 @@ builder.Services.AddCors(options =>
 
 // Add services to the container.
 builder.Services.Configure<JwtSettings>( builder.Configuration.GetSection("JwtSettings"));
-builder.Services.Configure<ResetPasswordSettings>( builder.Configuration.GetSection("ResetPasswordSettings"));
+builder.Services.Configure<ResetPasswordSettings>(builder.Configuration.GetSection("ResetPasswordSettings"));
+builder.Services.Configure<RegisterPersonSettings>(builder.Configuration.GetSection("RegisterPersonSettings"));
 builder.Services.Configure<EmailSettings>( builder.Configuration.GetSection("EmailSettings"));
 builder.Services.Configure<WelcomeEmailSources>( builder.Configuration.GetSection("WelcomeEmailSources"));
 builder.Services.Configure<MinioSettings>( builder.Configuration.GetSection("MinioSettings"));
