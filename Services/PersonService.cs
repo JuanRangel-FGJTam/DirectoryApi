@@ -276,12 +276,12 @@ namespace AuthApi.Services
             }
 
             // * check if the person is banned
-            if(person.BannedAt != null)
+            if (person.BannedAt != null)
             {
-                return (false, null, "La persona está bloqueada  del sistema.");
+                return (false, null, "Su usuario ha sido bloqueado. Si cree que esto es un error, comuniquese al número de atención telefonica de la fiscalia digital.");
             }
 
-            return (true, person, "Persona authenticada.");
+            return (true, person, "Persona autenticada correctamente.");
 
         }
         
