@@ -447,17 +447,20 @@ namespace AuthApi.Controllers
             }
 
             var person = this.personService.GetPeople()
-                .Include(p => p.Addresses!.Where( a=> a != null && a.DeletedAt == null ) )
-                .Include(p => p.ContactInformations!.Where( a => a != null && a.DeletedAt == null))
                 .FirstOrDefault(p => p.Id == _personID);
 
-            if ( person == null)
+            if (person == null)
             {
                 return NotFound( new {
                     Message = "Person not found"
                 });
             }
 
+            // * load the relations manually
+            person.Addresses = dbContext.Addresses.Where(p => p.Person.Id == person.Id && p.DeletedAt == null).ToList();
+            person.ContactInformations = dbContext.ContactInformations.Where(p => p.Person.Id == person.Id && p.DeletedAt == null).ToList();
+            
+            // * cast the person
             var personResponse = PersonResponse.FromEntity(person);
 
             if (person.BannedAt != null)
